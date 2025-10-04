@@ -201,7 +201,7 @@ jobs:
         fi
         # Run tests in the correct directory
         cd $build_dir
-        ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
+        ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-plugin && ./tests/tests-config && ./tests/tests-integration
 
     # Upload artifacts
     - name: Upload build artifacts
@@ -351,7 +351,7 @@ jobs:
       run: |
         # Change to build directory and run tests
         cd build/Debug
-        ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
+        ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-plugin && ./tests/tests-config && ./tests/tests-integration
 
     - name: Generate coverage report
       run: |
