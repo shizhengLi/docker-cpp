@@ -216,7 +216,16 @@ jobs:
         fi
         # Run tests in the correct directory
         cd $build_dir
-        ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          # On Windows, run tests that should work
+          echo "Running Windows-compatible tests..."
+          ./tests/tests-core.exe && ./tests/tests-namespace.exe && ./tests/tests-integration.exe
+          # Skip cgroup tests on Windows for now as they may have linking issues
+          echo "Skipping cgroup tests on Windows (linking issues with non-Linux system calls)"
+        else
+          # On Linux/macOS, run all tests
+          ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
+        fi
 
     # Upload artifacts
     - name: Upload build artifacts

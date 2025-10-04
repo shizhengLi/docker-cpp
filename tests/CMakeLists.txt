@@ -47,7 +47,7 @@ add_executable(tests-cgroup
 
 target_link_libraries(tests-cgroup
     PRIVATE
-    docker-cpp-lib
+    docker-cpp-core
     GTest::gtest
     GTest::gtest_main
 )
