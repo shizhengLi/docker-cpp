@@ -40,8 +40,10 @@ NamespaceManager::NamespaceManager(NamespaceType type) : type_(type), fd_(-1)
     // Create a new namespace using unshare
     int result = unshare(static_cast<int>(type_));
     if (result == -1) {
+        char error_buf[256];
+        strerror_r(errno, error_buf, sizeof(error_buf));
         throw ContainerError(ErrorCode::NAMESPACE_CREATION_FAILED,
-                             "Failed to create namespace: " + std::string(strerror(errno)));
+                             "Failed to create namespace: " + std::string(error_buf));
     }
 
     // On some systems, we might need to open the namespace file descriptor
@@ -70,8 +72,10 @@ void NamespaceManager::joinNamespace(pid_t pid, NamespaceType type)
     close(ns_fd);
 
     if (result == -1) {
+        char error_buf[256];
+        strerror_r(errno, error_buf, sizeof(error_buf));
         throw ContainerError(ErrorCode::NAMESPACE_JOIN_FAILED,
-                             "Failed to join namespace: " + std::string(strerror(errno)));
+                             "Failed to join namespace: " + std::string(error_buf));
     }
 }
 
@@ -134,9 +138,11 @@ int NamespaceManager::openNamespace(pid_t pid, NamespaceType type)
 
     int fd = open(oss.str().c_str(), O_RDONLY | O_CLOEXEC);
     if (fd == -1) {
+        char error_buf[256];
+        strerror_r(errno, error_buf, sizeof(error_buf));
         throw ContainerError(
             ErrorCode::NAMESPACE_NOT_FOUND,
-            "Failed to open namespace file: " + oss.str() + " - " + std::string(strerror(errno)));
+            "Failed to open namespace file: " + oss.str() + " - " + std::string(error_buf));
     }
 
     return fd;

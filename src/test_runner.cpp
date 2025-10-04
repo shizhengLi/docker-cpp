@@ -98,7 +98,7 @@ void testErrorCategory()
     assert(std::string(category.name()) == "docker-cpp");
 
     ContainerError error(ErrorCode::CONTAINER_NOT_FOUND, "Test");
-    assert(error.code().category().name() == category.name());
+    assert(error.code().category().name() == std::string("docker-cpp"));
 }
 
 void testSystemError()
