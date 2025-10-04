@@ -431,6 +431,9 @@ jobs:
         # We are already in build/Release directory from previous step
         # Run CPack from the directory containing CMakeCache.txt
         echo "Running CPack from build/Release directory..."
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
 
         # Debug: Check CPackConfig.cmake content
         echo "CPackConfig.cmake content:"
