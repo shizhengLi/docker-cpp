@@ -410,7 +410,8 @@ jobs:
 
     - name: Create packages
       run: |
-        # Already in build/Release directory from previous step
+        # Go back to root directory to run CPack
+        cd ../../
         cpack -G DEB
         cpack -G RPM
         cpack -G TGZ
