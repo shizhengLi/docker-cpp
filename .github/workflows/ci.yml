@@ -101,6 +101,7 @@ jobs:
         compiler=${{ matrix.compiler == 'gcc-11' && 'gcc' || matrix.compiler == 'clang-14' && 'clang' || matrix.compiler == 'apple-clang' && 'apple-clang' || 'msvc' }}
         compiler.version=${{ matrix.compiler == 'gcc-11' && '11' || matrix.compiler == 'clang-14' && '14' || matrix.compiler == 'apple-clang' && '14' || matrix.compiler == 'msvc-2022' && '193' }}
         compiler.cppstd=20
+        compiler.libcxx=${{ matrix.compiler == 'gcc-11' && 'libstdc++11' || matrix.compiler == 'clang-14' && 'libstdc++11' || matrix.compiler == 'apple-clang' && 'libc++' || 'msvc' && '' }}
         build_type=${{ matrix.build_type }}
 
         [conf]
