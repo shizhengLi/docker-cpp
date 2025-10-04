@@ -7,6 +7,22 @@
 build/
 cmake-build-*/
 out/
+.build/
+
+# CMake and Conan generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+conan_*.sh
+conanbuild*.sh
+conanrun*.sh
+deactivate_*.sh
+CPack*.cmake
+CTestTestfile.cmake
+Testing/
+test_results*.xml
 
 # IDE files
 .vscode/
@@ -15,12 +31,6 @@ out/
 *.swo
 *~
 
-# CMake generated files
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-Makefile
-*.cmake
 
 # Compiled binaries
 *.exe
@@ -39,7 +49,6 @@ test-runner
 *.lib
 
 # Test results
-*.xml
 test-results/
 
 # Logs
