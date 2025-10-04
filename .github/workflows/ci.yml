@@ -105,9 +105,8 @@ jobs:
         echo "compiler=${{ matrix.compiler == 'gcc-11' && 'gcc' || matrix.compiler == 'clang-14' && 'clang' || matrix.compiler == 'apple-clang' && 'apple-clang' || 'msvc' }}" >> custom_profile
         echo "compiler.version=${{ matrix.compiler == 'gcc-11' && '11' || matrix.compiler == 'clang-14' && '14' || matrix.compiler == 'apple-clang' && '14' || matrix.compiler == 'msvc-2022' && '193' }}" >> custom_profile
         echo "compiler.cppstd=20" >> custom_profile
-        if [ "${{ matrix.compiler }}" != "msvc-2022" ]; then
-          echo "compiler.libcxx=${{ matrix.compiler == 'gcc-11' && 'libstdc++11' || matrix.compiler == 'clang-14' && 'libstdc++11' || matrix.compiler == 'apple-clang' && 'libc++' }}" >> custom_profile
-        fi
+        # Set compiler.libcxx only for non-MSVC compilers
+        echo "compiler.libcxx=${{ matrix.compiler == 'gcc-11' && 'libstdc++11' || matrix.compiler == 'clang-14' && 'libstdc++11' || matrix.compiler == 'apple-clang' && 'libc++' || matrix.compiler == 'msvc-2022' && '' }}" >> custom_profile
         echo "build_type=${{ matrix.build_type }}" >> custom_profile
         echo '' >> custom_profile
         echo '[conf]' >> custom_profile
@@ -121,6 +120,15 @@ jobs:
       run: |
         conan install . --build=missing --profile:build=custom_profile --profile:host=custom_profile
 
+        # Copy CMakePresets to root directory for CMake to find them
+        if [ -d "build/Release/generators" ]; then
+          cp build/Release/generators/CMakePresets.json . 2>/dev/null || true
+          cp build/Release/generators/conan_toolchain.cmake . 2>/dev/null || true
+        elif [ -d "build/Debug/generators" ]; then
+          cp build/Debug/generators/CMakePresets.json . 2>/dev/null || true
+          cp build/Debug/generators/conan_toolchain.cmake . 2>/dev/null || true
+        fi
+
     # Setup CMake
     - name: Configure CMake
       run: |
@@ -133,16 +141,27 @@ jobs:
     # Build
     - name: Build
       run: |
+        preset_name="conan-release"
+        build_dir="build/Release"
+        if [ "${{ matrix.build_type }}" == "Debug" ]; then
+          preset_name="conan-debug"
+          build_dir="build/Debug"
+        fi
+        cd $build_dir
         cmake --build . --config ${{ matrix.build_type }} --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu || echo 4)
 
     # Test
     - name: Test
       run: |
         preset_name="conan-release"
+        build_dir="build/Release"
         if [ "${{ matrix.build_type }}" == "Debug" ]; then
           preset_name="conan-debug"
+          build_dir="build/Debug"
         fi
-        ctest --preset $preset_name --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu || echo 4)
+        cd $build_dir
+        # Run tests directly since CTest presets might not work in build subdirectories
+        ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
 
     # Upload artifacts
     - name: Upload build artifacts
@@ -246,15 +265,25 @@ jobs:
 
     - name: Build with coverage
       run: |
+        # Copy CMakePresets to root directory for CMake to find them
+        if [ -d "build/Debug/generators" ]; then
+          cp build/Debug/generators/CMakePresets.json . 2>/dev/null || true
+          cp build/Debug/generators/conan_toolchain.cmake . 2>/dev/null || true
+        fi
+
         cmake --preset conan-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+        cd build/Debug
         cmake --build . --parallel
 
     - name: Run tests
       run: |
-        ctest --preset conan-debug --output-on-failure
+        cd build/Debug
+        # Run tests directly
+        ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
 
     - name: Generate coverage report
       run: |
+        cd build/Debug
         gcovr --xml --output coverage.xml .
 
     - name: Upload coverage to Codecov
@@ -291,11 +320,20 @@ jobs:
       run: |
         conan profile detect --force
         conan install . --build=missing -s:h build_type=Release
+
+        # Copy CMakePresets to root directory for CMake to find them
+        if [ -d "build/Release/generators" ]; then
+          cp build/Release/generators/CMakePresets.json . 2>/dev/null || true
+          cp build/Release/generators/conan_toolchain.cmake . 2>/dev/null || true
+        fi
+
         cmake --preset conan-release -DCMAKE_BUILD_TYPE=Release
+        cd build/Release
         cmake --build . --parallel
 
     - name: Create packages
       run: |
+        cd build/Release
         cpack -G DEB
         cpack -G RPM
         cpack -G TGZ
