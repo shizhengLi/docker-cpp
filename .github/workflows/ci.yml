@@ -109,7 +109,9 @@ jobs:
         echo "compiler.version=${{ matrix.compiler == 'gcc-11' && '11' || matrix.compiler == 'clang-14' && '14' || matrix.compiler == 'apple-clang' && '14' || matrix.compiler == 'msvc-2022' && '193' }}" >> custom_profile
         echo "compiler.cppstd=20" >> custom_profile
         # Set compiler.libcxx only for non-MSVC compilers
-        echo "compiler.libcxx=${{ matrix.compiler == 'gcc-11' && 'libstdc++11' || matrix.compiler == 'clang-14' && 'libstdc++11' || matrix.compiler == 'apple-clang' && 'libc++' || matrix.compiler == 'msvc-2022' && '' }}" >> custom_profile
+        if [ "${{ matrix.compiler }}" != "msvc-2022" ]; then
+          echo "compiler.libcxx=${{ matrix.compiler == 'gcc-11' && 'libstdc++11' || matrix.compiler == 'clang-14' && 'libstdc++11' || 'libc++' }}" >> custom_profile
+        fi
         echo "build_type=${{ matrix.build_type }}" >> custom_profile
         echo '' >> custom_profile
         echo '[conf]' >> custom_profile
@@ -123,11 +125,13 @@ jobs:
       run: |
         conan install . --build=missing --profile:build=custom_profile --profile:host=custom_profile
 
-        # Copy conan_toolchain to root and remove duplicate presets
+        # Copy CMakePresets.json and conan_toolchain to root and remove duplicate presets
         if [ -d "build/Release/generators" ]; then
+          cp build/Release/generators/CMakePresets.json . 2>/dev/null || true
           cp build/Release/generators/conan_toolchain.cmake . 2>/dev/null || true
           rm -f CMakeUserPresets.json 2>/dev/null || true
         elif [ -d "build/Debug/generators" ]; then
+          cp build/Debug/generators/CMakePresets.json . 2>/dev/null || true
           cp build/Debug/generators/conan_toolchain.cmake . 2>/dev/null || true
           rm -f CMakeUserPresets.json 2>/dev/null || true
         fi
@@ -142,14 +146,26 @@ jobs:
           build_dir="build/Debug"
         fi
 
+        # Debug: Check if build directory and files exist
+        echo "Build directory: $build_dir"
+        ls -la $build_dir/ 2>/dev/null || echo "Build directory does not exist"
+        echo "Checking for generators directory:"
+        ls -la $build_dir/generators/ 2>/dev/null || echo "Generators directory does not exist"
+
         # Copy CMakePresets.json to root directory for CMake to find it
         if [ -d "$build_dir/generators" ]; then
+          echo "Found generators directory, copying files..."
           cp $build_dir/generators/CMakePresets.json . 2>/dev/null || true
           cp $build_dir/generators/conan_toolchain.cmake . 2>/dev/null || true
           rm -f CMakeUserPresets.json 2>/dev/null || true
+          echo "Files copied. Current directory contents:"
+          ls -la CMake* 2>/dev/null || echo "No CMake files found"
+        else
+          echo "ERROR: Generators directory not found at $build_dir/generators"
         fi
 
         # Use CMake preset from root directory
+        echo "Running CMake with preset: $preset_name"
         cmake --preset $preset_name -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     # Build
