@@ -41,12 +41,12 @@ public:
     }
 
 public:
-    // cppcheck-suppress unusedFunction
+    /* cppcheck-suppress unusedFunction */
     static int getTotalCount()
     {
         return total_count_;
     }
-    // cppcheck-suppress unusedFunction
+    /* cppcheck-suppress unusedFunction */
     static int getPassedCount()
     {
         return passed_count_;
