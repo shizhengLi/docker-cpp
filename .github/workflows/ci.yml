@@ -19,6 +19,9 @@ jobs:
   build-and-test:
     name: Build & Test (${{ matrix.os }}, ${{ matrix.compiler }})
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash  # 添加这一行：全局使用 Bash shell，修复 Windows 兼容性
     strategy:
       fail-fast: false
       matrix:
