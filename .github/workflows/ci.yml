@@ -428,8 +428,8 @@ jobs:
 
     - name: Create packages
       run: |
-        # We are already in build/Release directory from previous step
-        # Run CPack from the directory containing CMakeCache.txt
+        # Go to build/Release directory where CMakeCache.txt and CPackConfig.cmake are located
+        cd build/Release
         echo "Running CPack from build/Release directory..."
         echo "Current directory: $(pwd)"
         echo "Directory contents:"
