@@ -37,7 +37,7 @@ test_results*.xml
 *.exe
 *.out
 *.app
-docker-cpp
+/docker-cpp
 docker-cpp-*
 *-tests
 test-runner
