@@ -431,6 +431,16 @@ jobs:
         # We are already in build/Release directory from previous step
         # Run CPack from the directory containing CMakeCache.txt
         echo "Running CPack from build/Release directory..."
+
+        # Debug: Check CPackConfig.cmake content
+        echo "CPackConfig.cmake content:"
+        grep -E "CPACK_PACKAGE_NAME|CPACK_PACKAGE_VERSION" CPackConfig.cmake || echo "Package info not found in CPackConfig.cmake"
+
+        # Debug: Check CMakeCache.txt for project info
+        echo "CMakeCache.txt project info:"
+        grep -E "CMAKE_PROJECT_NAME|PROJECT_NAME" CMakeCache.txt || echo "Project name not found in CMakeCache.txt"
+
+        # Try running CPack with verbose output
         cpack --verbose -G DEB
         cpack --verbose -G RPM
         cpack --verbose -G TGZ
