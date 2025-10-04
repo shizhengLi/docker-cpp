@@ -296,14 +296,15 @@ jobs:
 
     - name: Run tests
       run: |
-        # Already in build/Debug directory from previous step
-        # Run tests directly
+        # Change to build directory and run tests
+        cd build/Debug
         ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
 
     - name: Generate coverage report
       run: |
-        # Already in build/Debug directory from previous step
-        gcovr --xml --output coverage.xml .
+        # Change to build directory and generate coverage report
+        cd build/Debug
+        gcovr --xml --output ../../coverage.xml .
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
