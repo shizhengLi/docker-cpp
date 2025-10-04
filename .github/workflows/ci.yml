@@ -107,12 +107,13 @@ jobs:
         tools.cmake.cmaketoolchain:generator=Ninja
         EOF
 
-        conan profile show custom_profile
+        # Show the created profile (optional)
+        cat custom_profile
 
     # Install dependencies with Conan
     - name: Install dependencies
       run: |
-        conan install . --build=missing --profile custom_profile
+        conan install . --build=missing --profile:build=custom_profile --profile:host=custom_profile
 
     # Setup CMake
     - name: Configure CMake
