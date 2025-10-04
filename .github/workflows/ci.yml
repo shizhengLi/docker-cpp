@@ -99,38 +99,19 @@ jobs:
         conan profile detect --force
 
         # Create custom profile
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          # Windows PowerShell syntax
-          $profileContent = @"
-[settings]
-os=${{ runner.os == 'Linux' && 'Linux' || runner.os == 'macOS' && 'Macos' || 'Windows' }}
-arch=${{ matrix.arch == 'arm64' && 'armv8' || 'x86_64' }}
-compiler=${{ matrix.compiler == 'gcc-11' && 'gcc' || matrix.compiler == 'clang-14' && 'clang' || matrix.compiler == 'apple-clang' && 'apple-clang' || 'msvc' }}
-compiler.version=${{ matrix.compiler == 'gcc-11' && '11' || matrix.compiler == 'clang-14' && '14' || matrix.compiler == 'apple-clang' && '14' || matrix.compiler == 'msvc-2022' && '193' }}
-compiler.cppstd=20
-compiler.libcxx=${{ matrix.compiler == 'gcc-11' && 'libstdc++11' || matrix.compiler == 'clang-14' && 'libstdc++11' || matrix.compiler == 'apple-clang' && 'libc++' || 'msvc' && '' }}
-build_type=${{ matrix.build_type }}
-
-[conf]
-tools.cmake.cmaketoolchain:generator=Ninja
-"@
-          Set-Content -Path custom_profile -Value $profileContent
-        else
-          # Unix shell syntax
-          cat > custom_profile << EOF
-[settings]
-os=${{ runner.os == 'Linux' && 'Linux' || runner.os == 'macOS' && 'Macos' || 'Windows' }}
-arch=${{ matrix.arch == 'arm64' && 'armv8' || 'x86_64' }}
-compiler=${{ matrix.compiler == 'gcc-11' && 'gcc' || matrix.compiler == 'clang-14' && 'clang' || matrix.compiler == 'apple-clang' && 'apple-clang' || 'msvc' }}
-compiler.version=${{ matrix.compiler == 'gcc-11' && '11' || matrix.compiler == 'clang-14' && '14' || matrix.compiler == 'apple-clang' && '14' || matrix.compiler == 'msvc-2022' && '193' }}
-compiler.cppstd=20
-compiler.libcxx=${{ matrix.compiler == 'gcc-11' && 'libstdc++11' || matrix.compiler == 'clang-14' && 'libstdc++11' || matrix.compiler == 'apple-clang' && 'libc++' || 'msvc' && '' }}
-build_type=${{ matrix.build_type }}
-
-[conf]
-tools.cmake.cmaketoolchain:generator=Ninja
-EOF
-        fi
+        {
+          echo '[settings]'
+          echo "os=${{ runner.os == 'Linux' && 'Linux' || runner.os == 'macOS' && 'Macos' || 'Windows' }}"
+          echo "arch=${{ matrix.arch == 'arm64' && 'armv8' || 'x86_64' }}"
+          echo "compiler=${{ matrix.compiler == 'gcc-11' && 'gcc' || matrix.compiler == 'clang-14' && 'clang' || matrix.compiler == 'apple-clang' && 'apple-clang' || 'msvc' }}"
+          echo "compiler.version=${{ matrix.compiler == 'gcc-11' && '11' || matrix.compiler == 'clang-14' && '14' || matrix.compiler == 'apple-clang' && '14' || matrix.compiler == 'msvc-2022' && '193' }}"
+          echo "compiler.cppstd=20"
+          echo "compiler.libcxx=${{ matrix.compiler == 'gcc-11' && 'libstdc++11' || matrix.compiler == 'clang-14' && 'libstdc++11' || matrix.compiler == 'apple-clang' && 'libc++' || 'msvc' && '' }}"
+          echo "build_type=${{ matrix.build_type }}"
+          echo ''
+          echo '[conf]'
+          echo 'tools.cmake.cmaketoolchain:generator=Ninja'
+        } > custom_profile
 
         # Show the created profile (optional)
         cat custom_profile
