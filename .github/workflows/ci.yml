@@ -111,6 +111,9 @@ jobs:
         # Set compiler.libcxx only for non-MSVC compilers
         if [ "${{ matrix.compiler }}" != "msvc-2022" ]; then
           echo "compiler.libcxx=${{ matrix.compiler == 'gcc-11' && 'libstdc++11' || matrix.compiler == 'clang-14' && 'libstdc++11' || 'libc++' }}" >> custom_profile
+        else
+          # Set runtime for MSVC
+          echo "compiler.runtime=dynamic" >> custom_profile
         fi
         echo "build_type=${{ matrix.build_type }}" >> custom_profile
         echo '' >> custom_profile
@@ -126,15 +129,27 @@ jobs:
         conan install . --build=missing --profile:build=custom_profile --profile:host=custom_profile
 
         # Copy CMakePresets.json and conan_toolchain to root and remove duplicate presets
+        echo "Checking for generated files after conan install..."
+
+        # Check all possible build directory locations
         if [ -d "build/Release/generators" ]; then
+          echo "Found build/Release/generators"
           cp build/Release/generators/CMakePresets.json . 2>/dev/null || true
           cp build/Release/generators/conan_toolchain.cmake . 2>/dev/null || true
           rm -f CMakeUserPresets.json 2>/dev/null || true
         elif [ -d "build/Debug/generators" ]; then
+          echo "Found build/Debug/generators"
           cp build/Debug/generators/CMakePresets.json . 2>/dev/null || true
           cp build/Debug/generators/conan_toolchain.cmake . 2>/dev/null || true
           rm -f CMakeUserPresets.json 2>/dev/null || true
+        else
+          echo "No generators directory found, listing build directory contents:"
+          ls -la build/ 2>/dev/null || echo "No build directory found"
+          find . -name "CMakePresets.json" -type f 2>/dev/null || echo "No CMakePresets.json files found anywhere"
         fi
+
+        echo "Current directory contents after copying:"
+        ls -la CMake* 2>/dev/null || echo "No CMake files in current directory"
 
     # Setup CMake
     - name: Configure CMake
@@ -146,23 +161,32 @@ jobs:
           build_dir="build/Debug"
         fi
 
-        # Debug: Check if build directory and files exist
-        echo "Build directory: $build_dir"
-        ls -la $build_dir/ 2>/dev/null || echo "Build directory does not exist"
-        echo "Checking for generators directory:"
-        ls -la $build_dir/generators/ 2>/dev/null || echo "Generators directory does not exist"
+        # Debug: Check if CMakePresets.json already exists from previous step
+        echo "Checking if CMakePresets.json exists from previous step:"
+        ls -la CMakePresets.json 2>/dev/null || echo "CMakePresets.json not found in root"
 
-        # Copy CMakePresets.json to root directory for CMake to find it
-        if [ -d "$build_dir/generators" ]; then
-          echo "Found generators directory, copying files..."
-          cp $build_dir/generators/CMakePresets.json . 2>/dev/null || true
-          cp $build_dir/generators/conan_toolchain.cmake . 2>/dev/null || true
-          rm -f CMakeUserPresets.json 2>/dev/null || true
-          echo "Files copied. Current directory contents:"
-          ls -la CMake* 2>/dev/null || echo "No CMake files found"
-        else
-          echo "ERROR: Generators directory not found at $build_dir/generators"
+        # If not found, try to find and copy it
+        if [ ! -f "CMakePresets.json" ]; then
+          echo "CMakePresets.json not found, searching for it..."
+          find . -name "CMakePresets.json" -type f 2>/dev/null | head -5
+
+          # Try to copy from the expected location
+          if [ -f "$build_dir/generators/CMakePresets.json" ]; then
+            echo "Found CMakePresets.json at $build_dir/generators/, copying..."
+            cp $build_dir/generators/CMakePresets.json .
+            cp $build_dir/generators/conan_toolchain.cmake . 2>/dev/null || true
+            rm -f CMakeUserPresets.json 2>/dev/null || true
+          else
+            echo "ERROR: CMakePresets.json not found at $build_dir/generators/CMakePresets.json"
+            echo "All CMakePresets.json files in repository:"
+            find . -name "CMakePresets.json" -type f 2>/dev/null || echo "None found"
+            exit 1
+          fi
         fi
+
+        # Final verification
+        echo "Final verification - CMake files in root:"
+        ls -la CMakePresets.json CMakeUserPresets.json conan_toolchain.cmake 2>/dev/null || echo "Some files missing"
 
         # Use CMake preset from root directory
         echo "Running CMake with preset: $preset_name"
