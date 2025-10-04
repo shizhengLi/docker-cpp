@@ -238,6 +238,34 @@ jobs:
         python -m pip install --upgrade pip
         pip install conan==2.0.16
 
+    - name: Create Conan profile
+      run: |
+        conan profile detect --force
+
+        # Create custom profile
+        echo '[settings]' > custom_profile
+        echo "os=Linux" >> custom_profile
+        echo "arch=x86_64" >> custom_profile
+        echo "compiler=gcc" >> custom_profile
+        echo "compiler.version=11" >> custom_profile
+        echo "compiler.cppstd=20" >> custom_profile
+        echo "compiler.libcxx=libstdc++11" >> custom_profile
+        echo "build_type=Release" >> custom_profile
+        echo '' >> custom_profile
+        echo '[conf]' >> custom_profile
+        echo 'tools.cmake.cmaketoolchain:generator=Ninja' >> custom_profile
+
+    - name: Install dependencies
+      run: |
+        conan install . --build=missing --profile:build=custom_profile --profile:host=custom_profile
+
+        # Copy CMakePresets and conan_toolchain to root directory
+        if [ -d "build/Release/generators" ]; then
+          cp build/Release/generators/CMakePresets.json . 2>/dev/null || true
+          cp build/Release/generators/conan_toolchain.cmake . 2>/dev/null || true
+          rm -f CMakeUserPresets.json 2>/dev/null || true
+        fi
+
     - name: Generate compilation database
       run: |
         cmake --preset conan-release -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
