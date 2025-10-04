@@ -99,19 +99,17 @@ jobs:
         conan profile detect --force
 
         # Create custom profile
-        {
-          echo '[settings]'
-          echo "os=${{ runner.os == 'Linux' && 'Linux' || runner.os == 'macOS' && 'Macos' || 'Windows' }}"
-          echo "arch=${{ matrix.arch == 'arm64' && 'armv8' || 'x86_64' }}"
-          echo "compiler=${{ matrix.compiler == 'gcc-11' && 'gcc' || matrix.compiler == 'clang-14' && 'clang' || matrix.compiler == 'apple-clang' && 'apple-clang' || 'msvc' }}"
-          echo "compiler.version=${{ matrix.compiler == 'gcc-11' && '11' || matrix.compiler == 'clang-14' && '14' || matrix.compiler == 'apple-clang' && '14' || matrix.compiler == 'msvc-2022' && '193' }}"
-          echo "compiler.cppstd=20"
-          echo "compiler.libcxx=${{ matrix.compiler == 'gcc-11' && 'libstdc++11' || matrix.compiler == 'clang-14' && 'libstdc++11' || matrix.compiler == 'apple-clang' && 'libc++' || 'msvc' && '' }}"
-          echo "build_type=${{ matrix.build_type }}"
-          echo ''
-          echo '[conf]'
-          echo 'tools.cmake.cmaketoolchain:generator=Ninja'
-        } > custom_profile
+        echo '[settings]' > custom_profile
+        echo "os=${{ runner.os == 'Linux' && 'Linux' || runner.os == 'macOS' && 'Macos' || 'Windows' }}" >> custom_profile
+        echo "arch=${{ matrix.arch == 'arm64' && 'armv8' || 'x86_64' }}" >> custom_profile
+        echo "compiler=${{ matrix.compiler == 'gcc-11' && 'gcc' || matrix.compiler == 'clang-14' && 'clang' || matrix.compiler == 'apple-clang' && 'apple-clang' || 'msvc' }}" >> custom_profile
+        echo "compiler.version=${{ matrix.compiler == 'gcc-11' && '11' || matrix.compiler == 'clang-14' && '14' || matrix.compiler == 'apple-clang' && '14' || matrix.compiler == 'msvc-2022' && '193' }}" >> custom_profile
+        echo "compiler.cppstd=20" >> custom_profile
+        echo "compiler.libcxx=${{ matrix.compiler == 'gcc-11' && 'libstdc++11' || matrix.compiler == 'clang-14' && 'libstdc++11' || matrix.compiler == 'apple-clang' && 'libc++' || 'msvc' && '' }}" >> custom_profile
+        echo "build_type=${{ matrix.build_type }}" >> custom_profile
+        echo '' >> custom_profile
+        echo '[conf]' >> custom_profile
+        echo 'tools.cmake.cmaketoolchain:generator=Ninja' >> custom_profile
 
         # Show the created profile (optional)
         cat custom_profile

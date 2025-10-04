@@ -9,6 +9,9 @@
 // Mock implementations for macOS
 static int mock_unshare(int flags)
 {
+    // Suppress unused parameter warning
+    (void)flags;
+
     // Simulate namespace creation for testing
     // On macOS, we just return success to allow testing
     return 0;
@@ -16,6 +19,10 @@ static int mock_unshare(int flags)
 
 static int mock_setns(int fd, int nstype)
 {
+    // Suppress unused parameter warnings
+    (void)fd;
+    (void)nstype;
+
     // Simulate namespace joining for testing
     return 0;
 }
