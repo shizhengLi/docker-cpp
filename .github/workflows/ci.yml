@@ -272,11 +272,11 @@ jobs:
 
     - name: Check code formatting
       run: |
-        find . -name '*.cpp' -o -name '*.hpp' | xargs clang-format-14 --dry-run --Werror
+        find . -name '*.cpp' -o -name '*.hpp' -not -path "./build/*" | xargs clang-format-14 --dry-run --Werror
 
     - name: Run static analysis
       run: |
-        find . -name '*.cpp' -o -name '*.hpp' | xargs clang-tidy-14 --warnings-as-errors='*'
+        find . -name '*.cpp' -o -name '*.hpp' -not -path "./build/*" | xargs clang-tidy-14 --warnings-as-errors='*'
 
     - name: Run cppcheck
       run: |

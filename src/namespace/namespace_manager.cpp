@@ -28,8 +28,8 @@ static int mock_setns(int fd, int nstype)
     return 0;
 }
 
-#define unshare mock_unshare
-#define setns mock_setns
+    #define unshare mock_unshare
+    #define setns mock_setns
 
 #endif
 
