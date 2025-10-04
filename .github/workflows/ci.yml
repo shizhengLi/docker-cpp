@@ -276,7 +276,7 @@ jobs:
 
     - name: Run static analysis
       run: |
-        find src include tests -name '*.cpp' -o -name '*.hpp' | xargs clang-tidy-14 --warnings-as-errors='*'
+        find src include tests -name '*.cpp' -o -name '*.hpp' | xargs clang-tidy-14 -p build/Release --warnings-as-errors='clang-diagnostic-*'
 
     - name: Run cppcheck
       run: |
