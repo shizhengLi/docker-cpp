@@ -19,7 +19,7 @@
                 "CMAKE_BUILD_TYPE": "Release"
             },
             "toolchainFile": "conan_toolchain.cmake",
-            "binaryDir": "/Users/lishizheng/Desktop/Code/docker-learning"
+            "binaryDir": "${sourceDir}/build"
         }
     ],
     "buildPresets": [
