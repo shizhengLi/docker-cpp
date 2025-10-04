@@ -6,6 +6,15 @@ A high-performance container runtime implementation in modern C++, following TDD
 
 This project aims to reimplement Docker functionality using C++20/23, leveraging the language's performance advantages and systems programming capabilities. The implementation follows a test-driven development (TDD) approach with comprehensive unit tests.
 
+## How to use
+
+```
+make clean
+make setup
+make build && make test
+
+```
+
 ## Current Status: Week 1 Infrastructure Complete ✅
 
 ### 🎯 Week 1 Achievements (Project Setup and Infrastructure)
