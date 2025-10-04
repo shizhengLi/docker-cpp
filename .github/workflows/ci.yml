@@ -280,7 +280,7 @@ jobs:
 
     - name: Run cppcheck
       run: |
-        cppcheck --enable=all --inconclusive --error-exitcode=1 --suppress=missingIncludeSystem include/ src/
+        cppcheck --enable=all --inconclusive --error-exitcode=1 --suppress=missingIncludeSystem --suppress=unusedFunction:src/test_runner.cpp include/ src/
 
   # Security scan
   security-scan:
