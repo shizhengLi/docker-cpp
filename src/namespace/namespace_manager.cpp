@@ -3,18 +3,18 @@
 #include <docker-cpp/namespace/namespace_manager.hpp>
 #include <sstream>
 
-// Mock implementation for non-Linux platforms
+// Mock implementation for macOS compatibility
 // In a real Linux environment, these would use the actual system calls
-#if defined(__APPLE__) || defined(_WIN32) || defined(_WIN64)
+#ifdef __APPLE__
 
-// Mock implementations for non-Linux platforms
+// Mock implementations for macOS
 static int mock_unshare(int flags)
 {
     // Suppress unused parameter warning
     (void)flags;
 
     // Simulate namespace creation for testing
-    // On non-Linux platforms, we just return success to allow testing
+    // On macOS, we just return success to allow testing
     return 0;
 }
 
@@ -28,19 +28,8 @@ static int mock_setns(int fd, int nstype)
     return 0;
 }
 
-// Mock definitions for missing constants
-#ifndef O_CLOEXEC
-#define O_CLOEXEC 02000000
-#endif
-
 #define unshare mock_unshare
 #define setns mock_setns
-
-// Add missing includes for Windows
-#ifdef _WIN32
-#include <fcntl.h>
-#include <unistd.h>
-#endif
 
 #endif
 

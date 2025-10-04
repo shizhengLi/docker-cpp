@@ -12,7 +12,7 @@ This project aims to reimplement Docker functionality using C++20/23, leveraging
 
 #### ✅ Professional Build System
 - **CMake Configuration**: Modern CMake 3.20+ with Conan 2.0 package management
-- **Cross-Platform CI/CD**: GitHub Actions pipeline supporting Linux, macOS, and Windows
+- **Cross-Platform CI/CD**: GitHub Actions pipeline supporting Linux and macOS
 - **Code Quality Tools**: Integrated clang-format, clang-tidy, and cppcheck
 - **Package Management**: Automated dependency resolution with Conan
 - **Testing Infrastructure**: Google Test 1.14.0 integration with comprehensive test coverage
@@ -69,7 +69,6 @@ docker-cpp/
 ### Cross-Platform Development
 - **Linux**: Primary target with full container functionality
 - **macOS**: Development platform with mock implementations
-- **Windows**: CI/CD testing with MSVC compiler support
 
 ### Testing Excellence
 - **TDD Approach**: Red-Green-Refactor development cycle
@@ -81,7 +80,7 @@ docker-cpp/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Compiler**: C++20 compatible (GCC 11+, Clang 14+, MSVC 2022+)
+- **Compiler**: C++20 compatible (GCC 11+, Clang 14+)
 - **CMake**: Version 3.20 or higher
 - **Conan**: Package manager (pip install conan==2.0.16)
 - **Python**: For Conan package management
@@ -132,7 +131,7 @@ make clean
 **Status**: 🎉 **COMPLETED** - All infrastructure working, CI/CD passing
 
 - [x] **Professional Build System**: CMake 3.20+ with Conan 2.0 integration
-- [x] **CI/CD Pipeline**: Multi-platform GitHub Actions (Linux, macOS, Windows)
+- [x] **CI/CD Pipeline**: Multi-platform GitHub Actions (Linux, macOS)
 - [x] **Code Quality**: clang-format, clang-tidy, cppcheck integration
 - [x] **Testing Framework**: Google Test 1.14.0 with 14/14 passing tests
 - [x] **Project Structure**: Clean, professional organization with .build/ directory
@@ -185,7 +184,7 @@ make clean
 | Test Execution | < 10s | ✅ ~2s (14 tests) |
 | Test Coverage | > 90% | ✅ 100% (implemented) |
 | Code Quality | Zero Issues | ✅ clang-tidy/cppcheck clean |
-| CI/CD Pipeline | All Platforms | ✅ Linux/macOS/Windows passing |
+| CI/CD Pipeline | All Platforms | ✅ Linux/macOS passing |
 
 ### Project Health
 - **Build System**: ✅ Professional CMake + Conan setup
@@ -223,7 +222,7 @@ This project is open source. License details to be determined.
 
 ### 🎉 Recent Achievement
 - **Week 1 Goals**: 100% Complete - Professional project infrastructure established
-- **CI/CD Pipeline**: All platforms passing (Linux, macOS, Windows)
+- **CI/CD Pipeline**: All platforms passing (Linux, macOS)
 - **Test Suite**: 14/14 tests passing with 100% coverage of implemented features
 - **Code Quality**: Professional standards met with automated quality gates
 
