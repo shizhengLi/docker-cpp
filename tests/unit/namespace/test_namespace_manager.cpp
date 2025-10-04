@@ -60,7 +60,7 @@ TEST_F(NamespaceManagerTest, MoveConstructor)
 
         // ns1 should be in a moved-from state (fd is -1, but type remains the same)
         EXPECT_EQ(ns1.getType(), original_type); // Type should remain the same
-        EXPECT_FALSE(ns1.isValid()); // Should be invalid after move
+        EXPECT_FALSE(ns1.isValid());             // Should be invalid after move
     }
     catch (const ContainerError& e) {
         GTEST_LOG_(INFO) << "Move constructor test skipped due to namespace creation failure: "
