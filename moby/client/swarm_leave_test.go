@@ -1,0 +1,59 @@
+package client
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"testing"
+
+	cerrdefs "github.com/containerd/errdefs"
+	"gotest.tools/v3/assert"
+	is "gotest.tools/v3/assert/cmp"
+)
+
+func TestSwarmLeaveError(t *testing.T) {
+	client, err := NewClientWithOpts(WithMockClient(errorMock(http.StatusInternalServerError, "Server error")))
+	assert.NilError(t, err)
+
+	err = client.SwarmLeave(context.Background(), false)
+	assert.Check(t, is.ErrorType(err, cerrdefs.IsInternal))
+}
+
+func TestSwarmLeave(t *testing.T) {
+	const expectedURL = "/swarm/leave"
+
+	leaveCases := []struct {
+		force         bool
+		expectedForce string
+	}{
+		{
+			expectedForce: "",
+		},
+		{
+			force:         true,
+			expectedForce: "1",
+		},
+	}
+
+	for _, leaveCase := range leaveCases {
+		client, err := NewClientWithOpts(WithMockClient(func(req *http.Request) (*http.Response, error) {
+			if err := assertRequest(req, http.MethodPost, expectedURL); err != nil {
+				return nil, err
+			}
+			force := req.URL.Query().Get("force")
+			if force != leaveCase.expectedForce {
+				return nil, fmt.Errorf("force not set in URL query properly. expected '%s', got %s", leaveCase.expectedForce, force)
+			}
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(bytes.NewReader([]byte(""))),
+			}, nil
+		}))
+		assert.NilError(t, err)
+
+		err = client.SwarmLeave(context.Background(), leaveCase.force)
+		assert.NilError(t, err)
+	}
+}

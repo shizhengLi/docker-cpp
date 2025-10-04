@@ -1,0 +1,61 @@
+package client
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"testing"
+
+	cerrdefs "github.com/containerd/errdefs"
+	"github.com/moby/moby/api/types/container"
+	"gotest.tools/v3/assert"
+	is "gotest.tools/v3/assert/cmp"
+)
+
+func TestContainerUpdateError(t *testing.T) {
+	client, err := NewClientWithOpts(WithMockClient(errorMock(http.StatusInternalServerError, "Server error")))
+	assert.NilError(t, err)
+	_, err = client.ContainerUpdate(context.Background(), "nothing", container.UpdateConfig{})
+	assert.Check(t, is.ErrorType(err, cerrdefs.IsInternal))
+
+	_, err = client.ContainerUpdate(context.Background(), "", container.UpdateConfig{})
+	assert.Check(t, is.ErrorType(err, cerrdefs.IsInvalidArgument))
+	assert.Check(t, is.ErrorContains(err, "value is empty"))
+
+	_, err = client.ContainerUpdate(context.Background(), "    ", container.UpdateConfig{})
+	assert.Check(t, is.ErrorType(err, cerrdefs.IsInvalidArgument))
+	assert.Check(t, is.ErrorContains(err, "value is empty"))
+}
+
+func TestContainerUpdate(t *testing.T) {
+	const expectedURL = "/containers/container_id/update"
+
+	client, err := NewClientWithOpts(WithMockClient(func(req *http.Request) (*http.Response, error) {
+		if err := assertRequest(req, http.MethodPost, expectedURL); err != nil {
+			return nil, err
+		}
+
+		b, err := json.Marshal(container.UpdateResponse{})
+		if err != nil {
+			return nil, err
+		}
+
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(b)),
+		}, nil
+	}))
+	assert.NilError(t, err)
+
+	_, err = client.ContainerUpdate(context.Background(), "container_id", container.UpdateConfig{
+		Resources: container.Resources{
+			CPUPeriod: 1,
+		},
+		RestartPolicy: container.RestartPolicy{
+			Name: "always",
+		},
+	})
+	assert.NilError(t, err)
+}
