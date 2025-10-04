@@ -1,0 +1,78 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Build directories
+build/
+cmake-build-*/
+out/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Compiled binaries
+*.exe
+*.out
+*.app
+docker-cpp
+docker-cpp-*
+*-tests
+test-runner
+
+# Libraries
+*.a
+*.so
+*.dylib
+*.dll
+*.lib
+
+# Test results
+*.xml
+test-results/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Conan
+.conan/
+
+# Coverage reports
+*.gcov
+*.gcda
+*.gcno
+coverage/
+lcov/
+
+# Profiling
+*.prof
+*.profraw
+
+# Documentation build
+docs/_build/
+docs/build/
+
+# Package files
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+# Backup files
+*.bak
+*.backup
