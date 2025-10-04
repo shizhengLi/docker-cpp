@@ -173,19 +173,19 @@ EOF
 setup_build() {
     print_status "Setting up build directory..."
 
-    if [ -d "build" ]; then
+    if [ -d ".build" ]; then
         print_status "Cleaning existing build directory..."
-        rm -rf build
+        rm -rf .build
     fi
 
-    mkdir -p build
-    cd build
+    # Create build directory
+    mkdir -p .build
 
     print_status "Configuring project with CMake..."
 
     # Use Conan-generated preset if available
-    if [ -f "conan_toolchain.cmake" ]; then
-        cmake --preset conan-default -DCMAKE_BUILD_TYPE=Release
+    if [ -f ".build/conan_toolchain.cmake" ]; then
+        cmake --preset conan-release -DCMAKE_BUILD_TYPE=Release
     else
         cmake .. -DCMAKE_BUILD_TYPE=Release
     fi

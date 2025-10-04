@@ -8,6 +8,9 @@ nlohmann_json/3.11.2
 CMakeDeps
 CMakeToolchain
 
+[layout]
+cmake_layout
+
 [options]
 gtest/*:shared=True
 fmt/*:shared=True
