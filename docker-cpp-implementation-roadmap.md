@@ -78,7 +78,7 @@ conan_install()
 - [ ] Unit testing framework integration (Google Test)
 
 **Success Criteria**:
-- Build system compiles on Linux, macOS, and Windows
+- Build system compiles on Linux, macOS
 - CI/CD pipeline runs successfully
 - Code formatting checks pass
 - Basic test framework executes
