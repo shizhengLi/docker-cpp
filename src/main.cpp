@@ -1,6 +1,7 @@
 #include <iostream>
 
-int main() {
+int main()
+{
     std::cout << "Docker-CPP: Container Runtime in C++\n";
     return 0;
 }

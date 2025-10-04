@@ -16,6 +16,19 @@ target_include_directories(docker-cpp-core
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+target_link_libraries(docker-cpp-core
+    PUBLIC
+    $<$<BOOL:${fmt_FOUND}>:fmt::fmt>
+    $<$<BOOL:${spdlog_FOUND}>:spdlog::spdlog>
+    $<$<BOOL:${nlohmann_json_FOUND}>:nlohmann_json::nlohmann_json>
+)
+
+# Add compile definitions
+target_compile_definitions(docker-cpp-core
+    PRIVATE
+        DOCKER_CPP_CORE_EXPORTS
+)
+
 # Namespace library
 add_library(docker-cpp-namespace
     namespace/namespace_manager.cpp
@@ -54,6 +67,34 @@ target_link_libraries(docker-cpp-cgroup
     docker-cpp-core
 )
 
+# Consolidated library
+add_library(docker-cpp-lib STATIC
+    core/error.cpp
+    core/logger.cpp
+    core/config.cpp
+    core/event.cpp
+    namespace/namespace_manager.cpp
+    namespace/process_manager.cpp
+    cgroup/cgroup_manager.cpp
+    cgroup/resource_monitor.cpp
+)
+
+target_link_libraries(docker-cpp-lib
+    PUBLIC
+    $<$<BOOL:${fmt_FOUND}>:fmt::fmt>
+    $<$<BOOL:${spdlog_FOUND}>:spdlog::spdlog>
+    $<$<BOOL:${nlohmann_json_FOUND}>:nlohmann_json::nlohmann_json>
+    GTest::gtest
+)
+
+target_include_directories(docker-cpp-lib
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 # Main executable
 add_executable(docker-cpp
     main.cpp
@@ -62,18 +103,5 @@ add_executable(docker-cpp
 
 target_link_libraries(docker-cpp
     PRIVATE
-    docker-cpp-core
-    docker-cpp-namespace
-    docker-cpp-cgroup
-)
-
-# Test runner executable
-add_executable(docker-cpp-test-runner
-    test_runner.cpp
-)
-
-target_link_libraries(docker-cpp-test-runner
-    PRIVATE
-    docker-cpp-core
-    docker-cpp-namespace
+    docker-cpp-lib
 )

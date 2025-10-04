@@ -1,0 +1,118 @@
+# Clang-tidy configuration for Docker-CPP project
+---
+Checks: >
+  modernize-*,
+  performance-*,
+  readability-*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  mpi-*,
+  misc-*,
+  modernize-use-trailing-return-type,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-else-after-return,
+  -llvm-include-order,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -modernize-avoid-c-arrays,
+  -cppcoreguidelines-owning-memory,
+  -hicpp-no-malloc,
+  -hicpp-vararg,
+  -cppcoreguidelines-pro-type-cstyle-cast,
+  -modernize-use-nodiscard,
+  -readability-isolate-declaration,
+  -cppcoreguidelines-special-member-functions,
+  -cert-err58-cpp,
+  -bugprone-exception-escape,
+  -modernize-pass-by-value,
+  -readability-avoid-const-params-in-decls,
+  -readability-redundant-declaration,
+  -misc-unused-parameters,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -modernize-use-default-member-init,
+  -readability-redundant-access-specifiers,
+  -cppcoreguidelines-explicit-virtual-functions,
+  -readability-convert-member-functions-to-static
+
+WarningsAsErrors: >
+  modernize-*,
+  performance-*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  misc-*,
+  -bugprone-lambda-function-name,
+  -bugprone-narrowing-conversions,
+  -bugprone-signed-char-misuse,
+  -bugprone-sizeof-expression,
+  -bugprone-suspicious-missing-comma,
+  -bugprone-swapped-arguments,
+  -cert-dcl21-cpp,
+  -cert-dcl50-cpp,
+  -cert-dcl58-cpp,
+  -cert-err34-c,
+  -cert-err58-cpp,
+  -cert-flp30-c,
+  -cert-msc50-cpp,
+  -misc-misplaced-widening-cast,
+  -misc-no-recursion
+
+CheckOptions:
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.MemberCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: _
+  - key: readability-identifier-naming.ProtectedMemberSuffix
+    value: _
+  - key: readability-identifier-naming.PublicMemberSuffix
+    value: ""
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.ConstantPrefix
+    value: k_
+  - key: readability-identifier-naming.ConstantMemberSuffix
+    value: ""
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: g_
+  - key: modernize-loop-convert.MinConfidence
+    value: reasonable
+  - key: modernize-use-auto.MinTypeNameLength
+    value: 5
+  - key: performance-unnecessary-copy-initialization.CheckTriviallyCopyableMove
+    value: false
+  - key: bugprone-assert-side-effect.CheckAssertMacros
+    value: true
+  - key: bugprone-assert-side-effect.AssertMacros
+    value: assert,Assert,EXPECT_ASSERT_TRUE,EXPECT_ASSERT_FALSE
+  - key: bugprone-suspicious-string-compare.StringCompareLikeFunctions
+    value: strcmp,strcasecmp,strcmpi,_stricmp,_strcmpi,strncmp,strncasecmp,memcmp,StringCmp,StringCmpI,StringCmpN,StringCmpNI
+  - key: cert-dcl16-c.NewSuffixes
+    value: L;LL;ULL;F;L;ULL
+  - key: cert-dcl51-cpp.MacrosToIgnore
+    value: assert,Assert,STATIC_ASSERT_RUNTIME,STATIC_ASSERT,REQUIRE,REQUIRE_EQUAL,REQUIRE_NE,REQUIRE_LT,REQUIRE_LE,REQUIRE_GT,REQUIRE_GE,CHECK,CHECK_EQUAL,CHECK_NE,CHECK_LT,CHECK_LE,CHECK_GT,CHECK_GE

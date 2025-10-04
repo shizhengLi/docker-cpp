@@ -1,43 +1,58 @@
-#include <iostream>
-#include <string>
 #include <cassert>
-#include <functional>
 #include <docker-cpp/core/error.hpp>
 #include <docker-cpp/namespace/namespace_manager.hpp>
+#include <functional>
+#include <iostream>
+#include <string>
 
 using namespace docker_cpp;
 
 // Simple test framework
 class TestRunner {
 public:
-    static void runTest(const std::string& testName, std::function<void()> testFunc) {
+    static void runTest(const std::string& testName, std::function<void()> testFunc)
+    {
         try {
             std::cout << "Running " << testName << "... ";
             testFunc();
             std::cout << "PASSED" << std::endl;
             passed_count_++;
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e) {
             std::cout << "FAILED: " << e.what() << std::endl;
             failed_count_++;
-        } catch (...) {
+        }
+        catch (...) {
             std::cout << "FAILED: Unknown exception" << std::endl;
             failed_count_++;
         }
         total_count_++;
     }
 
-    static void printSummary() {
+    static void printSummary()
+    {
         std::cout << "\n=== Test Summary ===" << std::endl;
         std::cout << "Total: " << total_count_ << std::endl;
         std::cout << "Passed: " << passed_count_ << std::endl;
         std::cout << "Failed: " << failed_count_ << std::endl;
-        std::cout << "Success Rate: " << (total_count_ > 0 ? (passed_count_ * 100 / total_count_) : 0) << "%" << std::endl;
+        std::cout << "Success Rate: "
+                  << (total_count_ > 0 ? (passed_count_ * 100 / total_count_) : 0) << "%"
+                  << std::endl;
     }
 
 public:
-    static int getTotalCount() { return total_count_; }
-    static int getPassedCount() { return passed_count_; }
-    static int getFailedCount() { return failed_count_; }
+    static int getTotalCount()
+    {
+        return total_count_;
+    }
+    static int getPassedCount()
+    {
+        return passed_count_;
+    }
+    static int getFailedCount()
+    {
+        return failed_count_;
+    }
 
 private:
     static int total_count_;
@@ -50,31 +65,36 @@ int TestRunner::passed_count_ = 0;
 int TestRunner::failed_count_ = 0;
 
 // Test functions
-void testErrorCreation() {
+void testErrorCreation()
+{
     ContainerError error(ErrorCode::CONTAINER_NOT_FOUND, "Container with ID 'test' not found");
     assert(error.getErrorCode() == ErrorCode::CONTAINER_NOT_FOUND);
     assert(std::string(error.what()).find("Container not found") != std::string::npos);
 }
 
-void testErrorCodeConversion() {
+void testErrorCodeConversion()
+{
     ContainerError error1(ErrorCode::NAMESPACE_CREATION_FAILED, "Test message");
     assert(error1.getErrorCode() == ErrorCode::NAMESPACE_CREATION_FAILED);
 }
 
-void testErrorCopy() {
+void testErrorCopy()
+{
     ContainerError original(ErrorCode::IMAGE_NOT_FOUND, "Image not found");
     ContainerError copied(original);
     assert(copied.getErrorCode() == ErrorCode::IMAGE_NOT_FOUND);
     assert(std::string(copied.what()).find("Image not found") != std::string::npos);
 }
 
-void testErrorMove() {
+void testErrorMove()
+{
     ContainerError original(ErrorCode::IMAGE_NOT_FOUND, "Image not found");
     ContainerError moved(std::move(original));
     assert(moved.getErrorCode() == ErrorCode::IMAGE_NOT_FOUND);
 }
 
-void testErrorCategory() {
+void testErrorCategory()
+{
     const auto& category = getContainerErrorCategory();
     assert(std::string(category.name()) == "docker-cpp");
 
@@ -82,7 +102,8 @@ void testErrorCategory() {
     assert(error.code().category().name() == std::string("docker-cpp"));
 }
 
-void testSystemError() {
+void testSystemError()
+{
     std::system_error sys_error(errno, std::system_category(), "System call failed");
     ContainerError container_error = makeSystemError(ErrorCode::SYSTEM_ERROR, sys_error);
     assert(container_error.getErrorCode() == ErrorCode::SYSTEM_ERROR);
@@ -90,7 +111,8 @@ void testSystemError() {
 }
 
 // Namespace manager tests
-void testNamespaceManagerCreation() {
+void testNamespaceManagerCreation()
+{
     try {
         // Test creating a UTS namespace (usually available)
         {
@@ -107,19 +129,23 @@ void testNamespaceManagerCreation() {
         }
 
         std::cout << "Namespace creation tests passed" << std::endl;
-    } catch (const ContainerError& e) {
-        std::cout << "Namespace creation test failed (expected in some environments): " << e.what() << std::endl;
+    }
+    catch (const ContainerError& e) {
+        std::cout << "Namespace creation test failed (expected in some environments): " << e.what()
+                  << std::endl;
         // In some environments, namespace creation might be restricted
         // This is okay for testing purposes
         assert(true); // Don't fail the test for this
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::string msg = "Unexpected exception: ";
         msg += e.what();
         assert(false && msg.c_str());
     }
 }
 
-void testNamespaceManagerTypes() {
+void testNamespaceManagerTypes()
+{
     try {
         // Test namespace type string conversion
         assert(namespaceTypeToString(NamespaceType::PID) == "PID");
@@ -139,21 +165,24 @@ void testNamespaceManagerTypes() {
                 NamespaceManager ns(type);
                 assert(ns.getType() == type);
                 assert(ns.isValid());
-            } catch (const ContainerError&) {
+            }
+            catch (const ContainerError&) {
                 // Some namespace types might not be available in all environments
                 // This is okay for testing
             }
         }
 
         std::cout << "Namespace types tests passed" << std::endl;
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::string msg = "Unexpected exception in namespace types test: ";
         msg += e.what();
         assert(false && msg.c_str());
     }
 }
 
-void testNamespaceManagerMoveSemantics() {
+void testNamespaceManagerMoveSemantics()
+{
     try {
         // Test move constructor
         {
@@ -179,17 +208,21 @@ void testNamespaceManagerMoveSemantics() {
         }
 
         std::cout << "Namespace move semantics tests passed" << std::endl;
-    } catch (const ContainerError& e) {
-        std::cout << "Namespace move semantics test failed (expected in some environments): " << e.what() << std::endl;
+    }
+    catch (const ContainerError& e) {
+        std::cout << "Namespace move semantics test failed (expected in some environments): "
+                  << e.what() << std::endl;
         assert(true); // Don't fail the test for this
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::string msg = "Unexpected exception in move semantics test: ";
         msg += e.what();
         assert(false && msg.c_str());
     }
 }
 
-void testNamespaceManagerJoin() {
+void testNamespaceManagerJoin()
+{
     try {
         // Test joining current process namespace
         pid_t current_pid = getpid();
@@ -198,17 +231,21 @@ void testNamespaceManagerJoin() {
         NamespaceManager::joinNamespace(current_pid, NamespaceType::UTS);
 
         std::cout << "Namespace join tests passed" << std::endl;
-    } catch (const ContainerError& e) {
-        std::cout << "Namespace join test failed (expected in some environments): " << e.what() << std::endl;
+    }
+    catch (const ContainerError& e) {
+        std::cout << "Namespace join test failed (expected in some environments): " << e.what()
+                  << std::endl;
         assert(true); // Don't fail the test for this
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::string msg = "Unexpected exception in join test: ";
         msg += e.what();
         assert(false && msg.c_str());
     }
 }
 
-int main() {
+int main()
+{
     std::cout << "=== Docker-CPP Unit Tests ===" << std::endl;
 
     // Error handling tests

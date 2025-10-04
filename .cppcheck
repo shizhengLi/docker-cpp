@@ -1,0 +1,62 @@
+# Cppcheck configuration file for Docker-CPP project
+[defines]
+DOCKER_CPP_BUILDING_TESTS=1
+__cplusplus=202002L
+
+[exclude]
+build/
+.git/
+.github/
+docs/
+examples/
+*.pb.h
+*.pb.cc
+
+[suppress]
+missingIncludeSystem
+missingInclude
+unusedFunction
+unmatchedSuppression
+# Known false positives for template code
+unreadVariable
+knownConditionTrueFalse
+# Suppress warnings in third-party code
+*:/usr/include/*
+*:/usr/local/include/*
+*:/opt/homebrew/include/*
+
+[information]
+missingInclude=false
+unusedFunction=false
+
+[checkers]
+enable=all
+--std=c++20
+--platform=unix64
+--xml-version=2
+--suppressions-list=.cppcheck-suppressions
+--inline-suppr
+--max-ctu-depth=3
+--max-configs=100
+--report-progress
+--std=c++20
+
+[quality]
+# Low-level memory safety
+portability=warning
+performance=warning
+style=warning
+information=warning
+unusedFunction=warning
+missingInclude=warning
+# High-level correctness
+warning=error
+error=error
+# Security
+security=error
+
+[templates]
+# Add custom suppression templates
+template suppression: "unreadVariable:*:template*"
+template suppression: "unusedFunction:*:Test*"
+template suppression: "unusedFunction:*:test*"

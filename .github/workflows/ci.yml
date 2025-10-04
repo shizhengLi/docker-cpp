@@ -1,0 +1,331 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CONAN_V2_MODE: 1
+
+jobs:
+  # Build and test on multiple platforms
+  build-and-test:
+    name: Build & Test (${{ matrix.os }}, ${{ matrix.compiler }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux builds
+          - os: ubuntu-22.04
+            compiler: gcc-11
+            arch: x86_64
+            build_type: Release
+            conan_profile: default
+          - os: ubuntu-22.04
+            compiler: clang-14
+            arch: x86_64
+            build_type: Debug
+            conan_profile: default
+          # macOS builds
+          - os: macos-12
+            compiler: apple-clang
+            arch: arm64
+            build_type: Release
+            conan_profile: default
+          - os: macos-13
+            compiler: apple-clang
+            arch: x86_64
+            build_type: Debug
+            conan_profile: default
+          # Windows builds
+          - os: windows-2022
+            compiler: msvc-2022
+            arch: x86_64
+            build_type: Release
+            conan_profile: default
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    # Setup Python for Conan
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    # Install Conan
+    - name: Install Conan
+      run: |
+        python -m pip install --upgrade pip
+        pip install conan==2.0.16
+
+    # Setup compiler based on platform
+    - name: Setup GCC (Linux)
+      if: runner.os == 'Linux' && matrix.compiler == 'gcc-11'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-11 g++-11
+        echo "CC=gcc-11" >> $GITHUB_ENV
+        echo "CXX=g++-11" >> $GITHUB_ENV
+
+    - name: Setup Clang (Linux)
+      if: runner.os == 'Linux' && matrix.compiler == 'clang-14'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-14
+        echo "CC=clang-14" >> $GITHUB_ENV
+        echo "CXX=clang++-14" >> $GITHUB_ENV
+
+    - name: Setup Xcode (macOS)
+      if: runner.os == 'macOS'
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+
+    # Create Conan profile
+    - name: Create Conan profile
+      run: |
+        conan profile detect --force
+
+        # Create custom profile
+        cat > conan_profile << EOF
+        [settings]
+        os=${{ runner.os == 'Linux' && 'Linux' || runner.os == 'macOS' && 'Macos' || 'Windows' }}
+        arch=${{ matrix.arch == 'arm64' && 'armv8' || 'x86_64' }}
+        compiler=${{ matrix.compiler == 'gcc-11' && 'gcc' || matrix.compiler == 'clang-14' && 'clang' || matrix.compiler == 'apple-clang' && 'apple-clang' || 'msvc' }}
+        compiler.version=${{ matrix.compiler == 'gcc-11' && '11' || matrix.compiler == 'clang-14' && '14' || matrix.compiler == 'apple-clang' && '14' || matrix.compiler == 'msvc-2022' && '193' }}
+        compiler.cppstd=20
+        build_type=${{ matrix.build_type }}
+
+        [conf]
+        tools.cmake.cmaketoolchain:generator=Ninja
+        EOF
+
+        conan profile show conan_profile
+
+    # Install dependencies with Conan
+    - name: Install dependencies
+      run: |
+        conan install . --build=missing --profile conan_profile -s:h build_type=${{ matrix.build_type }}
+
+    # Setup CMake
+    - name: Configure CMake
+      run: |
+        cmake --preset conan-default -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+    # Build
+    - name: Build
+      run: |
+        cmake --build build --config ${{ matrix.build_type }} --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu || echo 4)
+
+    # Test
+    - name: Test
+      run: |
+        cd build
+        ctest --output-on-failure --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu || echo 4)
+
+    # Upload artifacts
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      if: matrix.build_type == 'Release'
+      with:
+        name: docker-cpp-${{ runner.os }}-${{ matrix.arch }}
+        path: |
+          build/src/docker-cpp*
+          build/src/*.a
+          build/src/*.so
+          build/src/*.dylib
+          build/src/*.dll
+        retention-days: 30
+
+  # Code quality checks
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format-14 clang-tidy-14 cppcheck
+        python -m pip install --upgrade pip
+        pip install conan==2.0.16
+
+    - name: Check code formatting
+      run: |
+        find . -name '*.cpp' -o -name '*.hpp' | xargs clang-format-14 --dry-run --Werror
+
+    - name: Run static analysis
+      run: |
+        find . -name '*.cpp' -o -name '*.hpp' | xargs clang-tidy-14 --warnings-as-errors='*'
+
+    - name: Run cppcheck
+      run: |
+        cppcheck --enable=all --inconclusive --error-exitcode=1 --suppress=missingIncludeSystem include/ src/
+
+  # Security scan
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # Code coverage
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install conan==2.0.16
+        sudo apt-get update
+        sudo apt-get install -y gcovr
+
+    - name: Create Conan profile
+      run: |
+        conan profile detect --force
+        conan install . --build=missing -s:h build_type=Debug
+
+    - name: Build with coverage
+      run: |
+        cmake --preset conan-default -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+        cmake --build build --parallel
+
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure
+
+    - name: Generate coverage report
+      run: |
+        cd build
+        gcovr --xml --output coverage.xml ..
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./build/coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # Release (only on main branch)
+  release:
+    name: Release
+    runs-on: ubuntu-22.04
+    needs: [build-and-test, code-quality, security-scan, coverage]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install conan==2.0.16
+
+    - name: Create release build
+      run: |
+        conan profile detect --force
+        conan install . --build=missing -s:h build_type=Release
+        cmake --preset conan-default -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --parallel
+
+    - name: Create packages
+      run: |
+        cd build
+        cpack -G DEB
+        cpack -G RPM
+        cpack -G TGZ
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Generate release notes from git history
+        git log --oneline --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD > release_notes.txt
+        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+        cat release_notes.txt >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        body: |
+          ## Docker-CPP Release ${{ github.ref_name }}
+
+          ${{ steps.release_notes.outputs.release_notes }}
+
+          ### Installation
+
+          #### Ubuntu/Debian
+          ```bash
+          wget https://github.com/docker-cpp/docker-cpp/releases/download/${{ github.ref_name }}/docker-cpp_${{ github.ref_name }}-1_amd64.deb
+          sudo dpkg -i docker-cpp_${{ github.ref_name }}-1_amd64.deb
+          ```
+
+          #### CentOS/RHEL
+          ```bash
+          wget https://github.com/docker-cpp/docker-cpp/releases/download/${{ github.ref_name }}/docker-cpp-${{ github.ref_name }}-1.x86_64.rpm
+          sudo rpm -i docker-cpp-${{ github.ref_name }}-1.x86_64.rpm
+          ```
+
+          #### Generic Linux
+          ```bash
+          wget https://github.com/docker-cpp/docker-cpp/releases/download/${{ github.ref_name }}/docker-cpp-${{ github.ref_name }}-Linux.tar.gz
+          tar -xzf docker-cpp-${{ github.ref_name }}-Linux.tar.gz
+          sudo cp -r docker-cpp-${{ github.ref_name }}/* /usr/local/
+          ```
+        files: |
+          build/packages/*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

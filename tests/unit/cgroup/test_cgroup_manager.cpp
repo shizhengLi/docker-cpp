@@ -2,6 +2,7 @@
 
 // Placeholder for cgroup manager tests
 
-TEST(CgroupManagerTest, Placeholder) {
+TEST(CgroupManagerTest, Placeholder)
+{
     EXPECT_TRUE(true);
 }

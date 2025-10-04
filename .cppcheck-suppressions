@@ -1,0 +1,27 @@
+// Cppcheck suppression file for Docker-CPP project
+// Format: <error_id>:<filename>:<line_number>
+
+// Suppress known false positives in template code
+unreadVariable:*/include/docker-cpp/core/error.hpp:*
+unreadVariable:*/include/docker-cpp/namespace/namespace_manager.hpp:*
+
+// Suppress warnings in test files
+unusedFunction:*/test_runner.cpp:*
+missingInclude:*/test_runner.cpp:*
+
+// Suppress platform-specific warnings
+missingIncludeSystem:*/src/namespace/namespace_manager.cpp:*
+
+// Suppress warnings for system calls on macOS
+missingIncludeSystem:*.cpp:unshare
+missingIncludeSystem:*.cpp:setns
+
+// Suppress warnings for mock implementations
+unusedFunction:*/src/namespace/namespace_manager.cpp:mock_unshare
+unusedFunction:*/src/namespace/namespace_manager.cpp:mock_setns
+
+// Suppress known issues in third-party dependencies
+*:*/usr/include/*
+*:*/usr/local/include/*
+*:*/opt/homebrew/include/*
+*:*/vcpkg/installed/*

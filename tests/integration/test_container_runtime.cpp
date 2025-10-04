@@ -2,6 +2,7 @@
 
 // Placeholder for integration tests
 
-TEST(IntegrationTest, Placeholder) {
+TEST(IntegrationTest, Placeholder)
+{
     EXPECT_TRUE(true);
 }
