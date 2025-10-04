@@ -255,6 +255,11 @@ The phased approach ensures steady progress while maintaining quality standards.
 
 Success will be measured not only by functional parity with Docker but also by the educational value provided through the detailed blog series and the advancement of C++ systems programming practices.
 
+
+## appendix
+https://www.reddit.com/r/docker/comments/vvslko/why_does_moby_have_so_many_stars_on_github/
+
+
 ---
 
 **Next Steps**:
