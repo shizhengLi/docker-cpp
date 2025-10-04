@@ -57,6 +57,23 @@ target_include_directories(tests-cgroup
     ${CMAKE_SOURCE_DIR}/include
 )
 
+# Plugin library tests
+add_executable(tests-plugin
+    unit/plugin/test_plugin_system.cpp
+)
+
+target_link_libraries(tests-plugin
+    PRIVATE
+    docker-cpp-lib
+    GTest::gtest
+    GTest::gtest_main
+)
+
+target_include_directories(tests-plugin
+    PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+)
+
 # Integration tests (currently just a placeholder)
 add_executable(tests-integration
     integration/test_container_runtime.cpp
@@ -96,6 +113,7 @@ target_include_directories(tests-integration
 add_test(NAME CoreTests COMMAND tests-core --gtest_output=xml:${CMAKE_BINARY_DIR}/test_results_core.xml)
 add_test(NAME NamespaceTests COMMAND tests-namespace --gtest_output=xml:${CMAKE_BINARY_DIR}/test_results_namespace.xml)
 add_test(NAME CgroupTests COMMAND tests-cgroup --gtest_output=xml:${CMAKE_BINARY_DIR}/test_results_cgroup.xml)
+add_test(NAME PluginTests COMMAND tests-plugin --gtest_output=xml:${CMAKE_BINARY_DIR}/test_results_plugin.xml)
 add_test(NAME IntegrationTests COMMAND tests-integration --gtest_output=xml:${CMAKE_BINARY_DIR}/test_results_integration.xml)
 
 # Set test properties
@@ -103,6 +121,7 @@ set_tests_properties(
     CoreTests
     NamespaceTests
     CgroupTests
+    PluginTests
     IntegrationTests
     PROPERTIES
     TIMEOUT 300
@@ -112,7 +131,7 @@ set_tests_properties(
 # Add custom test target
 add_custom_target(run_tests
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --parallel
-    DEPENDS tests-core tests-namespace tests-cgroup tests-integration
+    DEPENDS tests-core tests-namespace tests-cgroup tests-plugin tests-integration
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Running all unit tests"
 )

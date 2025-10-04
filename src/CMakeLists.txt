@@ -67,6 +67,24 @@ target_link_libraries(docker-cpp-cgroup
     docker-cpp-core
 )
 
+# Plugin library
+add_library(docker-cpp-plugin
+    plugin/plugin_registry.cpp
+)
+
+target_include_directories(docker-cpp-plugin
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(docker-cpp-plugin
+    PUBLIC
+    docker-cpp-core
+)
+
 # Consolidated library
 add_library(docker-cpp-lib STATIC
     core/error.cpp
@@ -77,6 +95,7 @@ add_library(docker-cpp-lib STATIC
     namespace/process_manager.cpp
     cgroup/cgroup_manager.cpp
     cgroup/resource_monitor.cpp
+    plugin/plugin_registry.cpp
 )
 
 target_link_libraries(docker-cpp-lib

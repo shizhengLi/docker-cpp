@@ -66,6 +66,18 @@ enum class ErrorCode {
     CONFIG_INVALID = 9000,
     CONFIG_MISSING = 9001,
 
+    // Plugin errors
+    PLUGIN_NOT_FOUND = 10000,
+    PLUGIN_INITIALIZATION_FAILED = 10001,
+    PLUGIN_ALREADY_EXISTS = 10002,
+    INVALID_PLUGIN = 10003,
+    INVALID_PLUGIN_NAME = 10004,
+    DUPLICATE_PLUGIN = 10005,
+    PLUGIN_LOADER_NOT_SET = 10006,
+    PLUGIN_DEPENDENCY_FAILED = 10007,
+    CIRCULAR_DEPENDENCY = 10008,
+    DIRECTORY_NOT_FOUND = 10009,
+
     // Generic error
     UNKNOWN_ERROR = 9999
 };
@@ -165,6 +177,27 @@ public:
                 return "Invalid configuration";
             case ErrorCode::CONFIG_MISSING:
                 return "Missing configuration";
+
+            case ErrorCode::PLUGIN_NOT_FOUND:
+                return "Plugin not found";
+            case ErrorCode::PLUGIN_INITIALIZATION_FAILED:
+                return "Plugin initialization failed";
+            case ErrorCode::PLUGIN_ALREADY_EXISTS:
+                return "Plugin already exists";
+            case ErrorCode::INVALID_PLUGIN:
+                return "Invalid plugin";
+            case ErrorCode::INVALID_PLUGIN_NAME:
+                return "Invalid plugin name";
+            case ErrorCode::DUPLICATE_PLUGIN:
+                return "Duplicate plugin";
+            case ErrorCode::PLUGIN_LOADER_NOT_SET:
+                return "Plugin loader not set";
+            case ErrorCode::PLUGIN_DEPENDENCY_FAILED:
+                return "Plugin dependency failed";
+            case ErrorCode::CIRCULAR_DEPENDENCY:
+                return "Circular dependency detected";
+            case ErrorCode::DIRECTORY_NOT_FOUND:
+                return "Directory not found";
 
             case ErrorCode::UNKNOWN_ERROR:
             default:
