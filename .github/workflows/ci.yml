@@ -35,7 +35,7 @@ jobs:
             build_type: Debug
             conan_profile: default
           # macOS builds
-          - os: macos-12
+          - os: macos-13
             compiler: apple-clang
             arch: arm64
             build_type: Release
@@ -121,13 +121,23 @@ jobs:
         conan install . --build=missing --profile:build=custom_profile --profile:host=custom_profile
 
         # Copy conan_toolchain to root and remove duplicate presets
-        if [ -d "build/Release/generators" ]; then
-          cp build/Release/generators/conan_toolchain.cmake . 2>/dev/null || true
-          rm -f CMakeUserPresets.json 2>/dev/null || true
-        elif [ -d "build/Debug/generators" ]; then
-          cp build/Debug/generators/conan_toolchain.cmake . 2>/dev/null || true
-          rm -f CMakeUserPresets.json 2>/dev/null || true
-        fi
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          if (Test-Path "build\Release\generators") {
+            Copy-Item "build\Release\generators\conan_toolchain.cmake" . -ErrorAction SilentlyContinue
+            Remove-Item "CMakeUserPresets.json" -ErrorAction SilentlyContinue
+          } elseif (Test-Path "build\Debug\generators") {
+            Copy-Item "build\Debug\generators\conan_toolchain.cmake" . -ErrorAction SilentlyContinue
+            Remove-Item "CMakeUserPresets.json" -ErrorAction SilentlyContinue
+          }
+        } else {
+          if [ -d "build/Release/generators" ]; then
+            cp build/Release/generators/conan_toolchain.cmake . 2>/dev/null || true
+            rm -f CMakeUserPresets.json 2>/dev/null || true
+          elif [ -d "build/Debug/generators" ]; then
+            cp build/Debug/generators/conan_toolchain.cmake . 2>/dev/null || true
+            rm -f CMakeUserPresets.json 2>/dev/null || true
+          fi
+        }
 
     # Setup CMake
     - name: Configure CMake
@@ -140,11 +150,19 @@ jobs:
         fi
 
         # Copy CMakePresets.json to root directory for CMake to find it
-        if [ -d "$build_dir/generators" ]; then
-          cp $build_dir/generators/CMakePresets.json . 2>/dev/null || true
-          cp $build_dir/generators/conan_toolchain.cmake . 2>/dev/null || true
-          rm -f CMakeUserPresets.json 2>/dev/null || true
-        fi
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          if (Test-Path "$build_dir\generators") {
+            Copy-Item "$build_dir\generators\CMakePresets.json" . -ErrorAction SilentlyContinue
+            Copy-Item "$build_dir\generators\conan_toolchain.cmake" . -ErrorAction SilentlyContinue
+            Remove-Item "CMakeUserPresets.json" -ErrorAction SilentlyContinue
+          }
+        } else {
+          if [ -d "$build_dir/generators" ]; then
+            cp $build_dir/generators/CMakePresets.json . 2>/dev/null || true
+            cp $build_dir/generators/conan_toolchain.cmake . 2>/dev/null || true
+            rm -f CMakeUserPresets.json 2>/dev/null || true
+          fi
+        }
 
         # Use CMake preset from root directory
         cmake --preset $preset_name -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
@@ -173,7 +191,11 @@ jobs:
         fi
         # Run tests in the correct directory
         cd $build_dir
-        ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          .\tests\tests-core.exe && .\tests\tests-namespace.exe && .\tests\tests-cgroup.exe && .\tests\tests-integration.exe
+        else
+          ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
+        fi
 
     # Upload artifacts
     - name: Upload build artifacts
@@ -278,11 +300,19 @@ jobs:
     - name: Build with coverage
       run: |
         # Copy CMakePresets and conan_toolchain to root directory
-        if [ -d "build/Debug/generators" ]; then
-          cp build/Debug/generators/CMakePresets.json . 2>/dev/null || true
-          cp build/Debug/generators/conan_toolchain.cmake . 2>/dev/null || true
-          rm -f CMakeUserPresets.json 2>/dev/null || true
-        fi
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          if (Test-Path "build\Debug\generators") {
+            Copy-Item "build\Debug\generators\CMakePresets.json" . -ErrorAction SilentlyContinue
+            Copy-Item "build\Debug\generators\conan_toolchain.cmake" . -ErrorAction SilentlyContinue
+            Remove-Item "CMakeUserPresets.json" -ErrorAction SilentlyContinue
+          }
+        } else {
+          if [ -d "build/Debug/generators" ]; then
+            cp build/Debug/generators/CMakePresets.json . 2>/dev/null || true
+            cp build/Debug/generators/conan_toolchain.cmake . 2>/dev/null || true
+            rm -f CMakeUserPresets.json 2>/dev/null || true
+          fi
+        }
 
         # Configure from root directory
         cmake --preset conan-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
@@ -295,7 +325,11 @@ jobs:
       run: |
         # Already in build/Debug directory from previous step
         # Run tests directly
-        ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          .\tests\tests-core.exe && .\tests\tests-namespace.exe && .\tests\tests-cgroup.exe && .\tests\tests-integration.exe
+        else
+          ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
+        fi
 
     - name: Generate coverage report
       run: |
@@ -338,11 +372,19 @@ jobs:
         conan install . --build=missing -s:h build_type=Release
 
         # Copy CMakePresets and conan_toolchain to root directory
-        if [ -d "build/Release/generators" ]; then
-          cp build/Release/generators/CMakePresets.json . 2>/dev/null || true
-          cp build/Release/generators/conan_toolchain.cmake . 2>/dev/null || true
-          rm -f CMakeUserPresets.json 2>/dev/null || true
-        fi
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          if (Test-Path "build\Release\generators") {
+            Copy-Item "build\Release\generators\CMakePresets.json" . -ErrorAction SilentlyContinue
+            Copy-Item "build\Release\generators\conan_toolchain.cmake" . -ErrorAction SilentlyContinue
+            Remove-Item "CMakeUserPresets.json" -ErrorAction SilentlyContinue
+          }
+        } else {
+          if [ -d "build/Release/generators" ]; then
+            cp build/Release/generators/CMakePresets.json . 2>/dev/null || true
+            cp build/Release/generators/conan_toolchain.cmake . 2>/dev/null || true
+            rm -f CMakeUserPresets.json 2>/dev/null || true
+          fi
+        }
 
         # Configure from root directory
         cmake --preset conan-release -DCMAKE_BUILD_TYPE=Release
