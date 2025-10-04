@@ -41,11 +41,11 @@ public:
     }
 
 public:
-    static int getTotalCount()
+    [[maybe_unused]] static int getTotalCount()
     {
         return total_count_;
     }
-    static int getPassedCount()
+    [[maybe_unused]] static int getPassedCount()
     {
         return passed_count_;
     }
