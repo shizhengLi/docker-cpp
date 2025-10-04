@@ -104,6 +104,12 @@ target_link_libraries(docker-cpp-config
     $<$<BOOL:${nlohmann_json_FOUND}>:nlohmann_json::nlohmann_json>
 )
 
+# Add compile definitions for config library
+target_compile_definitions(docker-cpp-config
+    PRIVATE
+        HAS_NLOHMANN_JSON=$<$<BOOL:${nlohmann_json_FOUND}>:1>$<$<NOT:$<BOOL:${nlohmann_json_FOUND}>>:0>
+)
+
 # Consolidated library
 add_library(docker-cpp-lib STATIC
     core/error.cpp
@@ -132,6 +138,12 @@ target_include_directories(docker-cpp-lib
     $<INSTALL_INTERFACE:include>
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# Add compile definitions for consolidated library
+target_compile_definitions(docker-cpp-lib
+    PRIVATE
+        HAS_NLOHMANN_JSON=$<$<BOOL:${nlohmann_json_FOUND}>:1>$<$<NOT:$<BOOL:${nlohmann_json_FOUND}>>:0>
 )
 
 # Main executable
