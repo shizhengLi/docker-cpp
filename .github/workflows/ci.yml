@@ -120,22 +120,33 @@ jobs:
       run: |
         conan install . --build=missing --profile:build=custom_profile --profile:host=custom_profile
 
-        # Copy CMakePresets to root directory for CMake to find them
+        # Copy conan_toolchain to root and remove duplicate presets
         if [ -d "build/Release/generators" ]; then
-          cp build/Release/generators/CMakePresets.json . 2>/dev/null || true
           cp build/Release/generators/conan_toolchain.cmake . 2>/dev/null || true
+          rm -f CMakeUserPresets.json 2>/dev/null || true
         elif [ -d "build/Debug/generators" ]; then
-          cp build/Debug/generators/CMakePresets.json . 2>/dev/null || true
           cp build/Debug/generators/conan_toolchain.cmake . 2>/dev/null || true
+          rm -f CMakeUserPresets.json 2>/dev/null || true
         fi
 
     # Setup CMake
     - name: Configure CMake
       run: |
         preset_name="conan-release"
+        build_dir="build/Release"
         if [ "${{ matrix.build_type }}" == "Debug" ]; then
           preset_name="conan-debug"
+          build_dir="build/Debug"
         fi
+
+        # Copy CMakePresets.json to root directory for CMake to find it
+        if [ -d "$build_dir/generators" ]; then
+          cp $build_dir/generators/CMakePresets.json . 2>/dev/null || true
+          cp $build_dir/generators/conan_toolchain.cmake . 2>/dev/null || true
+          rm -f CMakeUserPresets.json 2>/dev/null || true
+        fi
+
+        # Use CMake preset from root directory
         cmake --preset $preset_name -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     # Build
@@ -147,6 +158,7 @@ jobs:
           preset_name="conan-debug"
           build_dir="build/Debug"
         fi
+        # Build in the correct directory
         cd $build_dir
         cmake --build . --config ${{ matrix.build_type }} --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu || echo 4)
 
@@ -159,8 +171,8 @@ jobs:
           preset_name="conan-debug"
           build_dir="build/Debug"
         fi
+        # Run tests in the correct directory
         cd $build_dir
-        # Run tests directly since CTest presets might not work in build subdirectories
         ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
 
     # Upload artifacts
@@ -265,25 +277,29 @@ jobs:
 
     - name: Build with coverage
       run: |
-        # Copy CMakePresets to root directory for CMake to find them
+        # Copy CMakePresets and conan_toolchain to root directory
         if [ -d "build/Debug/generators" ]; then
           cp build/Debug/generators/CMakePresets.json . 2>/dev/null || true
           cp build/Debug/generators/conan_toolchain.cmake . 2>/dev/null || true
+          rm -f CMakeUserPresets.json 2>/dev/null || true
         fi
 
+        # Configure from root directory
         cmake --preset conan-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+
+        # Build and test in build directory
         cd build/Debug
         cmake --build . --parallel
 
     - name: Run tests
       run: |
-        cd build/Debug
+        # Already in build/Debug directory from previous step
         # Run tests directly
         ./tests/tests-core && ./tests/tests-namespace && ./tests/tests-cgroup && ./tests/tests-integration
 
     - name: Generate coverage report
       run: |
-        cd build/Debug
+        # Already in build/Debug directory from previous step
         gcovr --xml --output coverage.xml .
 
     - name: Upload coverage to Codecov
@@ -321,19 +337,23 @@ jobs:
         conan profile detect --force
         conan install . --build=missing -s:h build_type=Release
 
-        # Copy CMakePresets to root directory for CMake to find them
+        # Copy CMakePresets and conan_toolchain to root directory
         if [ -d "build/Release/generators" ]; then
           cp build/Release/generators/CMakePresets.json . 2>/dev/null || true
           cp build/Release/generators/conan_toolchain.cmake . 2>/dev/null || true
+          rm -f CMakeUserPresets.json 2>/dev/null || true
         fi
 
+        # Configure from root directory
         cmake --preset conan-release -DCMAKE_BUILD_TYPE=Release
+
+        # Build and package in build directory
         cd build/Release
         cmake --build . --parallel
 
     - name: Create packages
       run: |
-        cd build/Release
+        # Already in build/Release directory from previous step
         cpack -G DEB
         cpack -G RPM
         cpack -G TGZ
