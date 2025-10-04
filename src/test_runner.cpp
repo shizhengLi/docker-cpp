@@ -41,11 +41,13 @@ public:
     }
 
 public:
-    [[maybe_unused]] static int getTotalCount()
+    // cppcheck-suppress unusedFunction
+    static int getTotalCount()
     {
         return total_count_;
     }
-    [[maybe_unused]] static int getPassedCount()
+    // cppcheck-suppress unusedFunction
+    static int getPassedCount()
     {
         return passed_count_;
     }
