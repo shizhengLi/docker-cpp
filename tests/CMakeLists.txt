@@ -9,6 +9,7 @@ enable_testing()
 # Core library tests
 add_executable(tests-core
     unit/core/test_error.cpp
+    unit/core/test_logger.cpp
 )
 
 target_link_libraries(tests-core
