@@ -401,6 +401,12 @@ jobs:
           rm -f CMakeUserPresets.json 2>/dev/null || true
         fi
 
+        # Verify CMakePresets.json was copied
+        if [ ! -f "CMakePresets.json" ]; then
+          echo "ERROR: CMakePresets.json not found in root directory"
+          exit 1
+        fi
+
         # Configure from root directory
         cmake --preset conan-release -DCMAKE_BUILD_TYPE=Release
 
@@ -412,9 +418,20 @@ jobs:
       run: |
         # Go back to root directory to run CPack
         cd ../../
-        cpack -G DEB
-        cpack -G RPM
-        cpack -G TGZ
+
+        # Debug: Check if CMakeCache.txt exists and contains project info
+        echo "Checking for CMakeCache.txt..."
+        ls -la CMakeCache.txt 2>/dev/null || echo "CMakeCache.txt not found in root"
+
+        # Check build directory for CMakeCache.txt
+        echo "Checking build directory for CMakeCache.txt..."
+        ls -la build/Release/CMakeCache.txt 2>/dev/null || echo "CMakeCache.txt not found in build/Release"
+
+        # Try running CPack with verbose output
+        echo "Running CPack with verbose output..."
+        cpack --verbose -G DEB
+        cpack --verbose -G RPM
+        cpack --verbose -G TGZ
 
     - name: Generate release notes
       id: release_notes
