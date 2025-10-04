@@ -410,25 +410,27 @@ jobs:
         # Configure from root directory
         cmake --preset conan-release -DCMAKE_BUILD_TYPE=Release
 
+        # Check what files were created
+        echo "Listing build/Release directory contents:"
+        ls -la build/Release/
+
+        # Verify CMakeCache.txt was created
+        if [ ! -f "build/Release/CMakeCache.txt" ]; then
+          echo "ERROR: CMakeCache.txt not found after configuration"
+          echo "Available files in build/Release:"
+          find build/Release -type f -name "*.txt" -o -name "*.cmake" -o -name "Makefile" | head -10
+          exit 1
+        fi
+
         # Build and package in build directory
         cd build/Release
         cmake --build . --parallel
 
     - name: Create packages
       run: |
-        # Go back to root directory to run CPack
-        cd ../../
-
-        # Debug: Check if CMakeCache.txt exists and contains project info
-        echo "Checking for CMakeCache.txt..."
-        ls -la CMakeCache.txt 2>/dev/null || echo "CMakeCache.txt not found in root"
-
-        # Check build directory for CMakeCache.txt
-        echo "Checking build directory for CMakeCache.txt..."
-        ls -la build/Release/CMakeCache.txt 2>/dev/null || echo "CMakeCache.txt not found in build/Release"
-
-        # Try running CPack with verbose output
-        echo "Running CPack with verbose output..."
+        # We are already in build/Release directory from previous step
+        # Run CPack from the directory containing CMakeCache.txt
+        echo "Running CPack from build/Release directory..."
         cpack --verbose -G DEB
         cpack --verbose -G RPM
         cpack --verbose -G TGZ
