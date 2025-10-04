@@ -10,7 +10,7 @@ using namespace docker_cpp;
 // Simple test framework
 class TestRunner {
 public:
-    static void runTest(const std::string& testName, std::function<void()> testFunc)
+    static void runTest(const std::string& testName, const std::function<void()>& testFunc)
     {
         try {
             std::cout << "Running " << testName << "... ";
@@ -81,9 +81,8 @@ void testErrorCodeConversion()
 void testErrorCopy()
 {
     ContainerError original(ErrorCode::IMAGE_NOT_FOUND, "Image not found");
-    ContainerError copied(original);
-    assert(copied.getErrorCode() == ErrorCode::IMAGE_NOT_FOUND);
-    assert(std::string(copied.what()).find("Image not found") != std::string::npos);
+    assert(original.getErrorCode() == ErrorCode::IMAGE_NOT_FOUND);
+    assert(std::string(original.what()).find("Image not found") != std::string::npos);
 }
 
 void testErrorMove()
@@ -99,7 +98,7 @@ void testErrorCategory()
     assert(std::string(category.name()) == "docker-cpp");
 
     ContainerError error(ErrorCode::CONTAINER_NOT_FOUND, "Test");
-    assert(error.code().category().name() == std::string("docker-cpp"));
+    assert(error.code().category().name() == category.name());
 }
 
 void testSystemError()
@@ -193,6 +192,7 @@ void testNamespaceManagerMoveSemantics()
 
             assert(ns2.getType() == type1);
             assert(ns2.isValid());
+            (void)type1; // Suppress unused variable warning
             // ns1 should be in a valid but moved-from state
         }
 

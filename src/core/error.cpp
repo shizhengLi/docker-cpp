@@ -69,14 +69,14 @@ ErrorCode ContainerError::getErrorCode() const noexcept
 
 std::error_code ContainerError::code() const noexcept
 {
-    return std::error_code(static_cast<int>(error_code_), getContainerErrorCategory());
+    return std::error_code{static_cast<int>(error_code_), getContainerErrorCategory()};
 }
 
 ContainerError makeSystemError(ErrorCode code, const std::system_error& sys_error)
 {
     std::ostringstream oss;
     oss << sys_error.what() << " (system error " << sys_error.code().value() << ")";
-    return ContainerError(code, oss.str());
+    return ContainerError{code, oss.str()};
 }
 
 } // namespace docker_cpp
