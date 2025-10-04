@@ -9,6 +9,11 @@ on:
 env:
   CONAN_V2_MODE: 1
 
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
 jobs:
   # Build and test on multiple platforms
   build-and-test:
@@ -124,13 +129,12 @@ jobs:
     # Build
     - name: Build
       run: |
-        cmake --build build --config ${{ matrix.build_type }} --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu || echo 4)
+        cmake --build . --config ${{ matrix.build_type }} --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu || echo 4)
 
     # Test
     - name: Test
       run: |
-        cd build
-        ctest --output-on-failure --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu || echo 4)
+        ctest --preset conan-release --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu || echo 4)
 
     # Upload artifacts
     - name: Upload build artifacts
@@ -230,23 +234,21 @@ jobs:
 
     - name: Build with coverage
       run: |
-        cmake --preset conan-release -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-        cmake --build build --parallel
+        cmake --preset conan-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+        cmake --build . --parallel
 
     - name: Run tests
       run: |
-        cd build
-        ctest --output-on-failure
+        ctest --preset conan-debug --output-on-failure
 
     - name: Generate coverage report
       run: |
-        cd build
-        gcovr --xml --output coverage.xml ..
+        gcovr --xml --output coverage.xml .
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
-        file: ./build/coverage.xml
+        file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
 
@@ -278,11 +280,10 @@ jobs:
         conan profile detect --force
         conan install . --build=missing -s:h build_type=Release
         cmake --preset conan-release -DCMAKE_BUILD_TYPE=Release
-        cmake --build build --parallel
+        cmake --build . --parallel
 
     - name: Create packages
       run: |
-        cd build
         cpack -G DEB
         cpack -G RPM
         cpack -G TGZ
