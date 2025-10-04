@@ -94,8 +94,7 @@ void testErrorMove()
 
 void testErrorCategory()
 {
-    const auto& category = getContainerErrorCategory();
-    assert(std::string(category.name()) == "docker-cpp");
+    assert(std::string(getContainerErrorCategory().name()) == "docker-cpp");
 
     ContainerError error(ErrorCode::CONTAINER_NOT_FOUND, "Test");
     assert(error.code().category().name() == std::string("docker-cpp"));
