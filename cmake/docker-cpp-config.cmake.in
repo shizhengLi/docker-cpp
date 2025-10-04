@@ -1,0 +1,21 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Find required dependencies
+find_dependency(GTest REQUIRED)
+find_dependency(fmt REQUIRED)
+find_dependency(spdlog REQUIRED)
+find_dependency(nlohmann_json REQUIRED)
+
+# Include the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/docker-cpp-targets.cmake")
+
+# Set variables for users
+set(DOCKER_CPP_FOUND TRUE)
+set(DOCKER_CPP_VERSION @PROJECT_VERSION@)
+set(DOCKER_CPP_LIBRARIES docker-cpp::docker-cpp)
+set(DOCKER_CPP_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/../../../include)
+
+# Check that all required components were found
+check_required_components(docker-cpp)
