@@ -85,6 +85,25 @@ target_link_libraries(docker-cpp-plugin
     docker-cpp-core
 )
 
+# Configuration library
+add_library(docker-cpp-config
+    config/config_manager.cpp
+)
+
+target_include_directories(docker-cpp-config
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(docker-cpp-config
+    PUBLIC
+    docker-cpp-core
+    $<$<BOOL:${nlohmann_json_FOUND}>:nlohmann_json::nlohmann_json>
+)
+
 # Consolidated library
 add_library(docker-cpp-lib STATIC
     core/error.cpp
@@ -96,6 +115,7 @@ add_library(docker-cpp-lib STATIC
     cgroup/cgroup_manager.cpp
     cgroup/resource_monitor.cpp
     plugin/plugin_registry.cpp
+    config/config_manager.cpp
 )
 
 target_link_libraries(docker-cpp-lib
