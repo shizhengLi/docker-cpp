@@ -10,6 +10,7 @@ enable_testing()
 add_executable(tests-core
     unit/core/test_error.cpp
     unit/core/test_logger.cpp
+    unit/core/test_event_simple.cpp
 )
 
 target_link_libraries(tests-core
