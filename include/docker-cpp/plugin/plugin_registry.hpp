@@ -83,7 +83,9 @@ PluginType* PluginRegistry::getPlugin(const std::string& name) const {
         return nullptr;
     }
 
-    return dynamic_cast<PluginType*>(it->second.get());
+    // Note: Using static_cast instead of dynamic_cast due to -fno-rtti flag
+    // Caller must ensure the plugin is of the correct type
+    return static_cast<PluginType*>(it->second.get());
 }
 
 } // namespace docker_cpp

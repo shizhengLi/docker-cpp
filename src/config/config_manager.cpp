@@ -503,6 +503,9 @@ std::string ConfigManager::expandValue(const std::string& value) const {
         size_t position;
         size_t length;
         std::string replacement;
+
+        Replacement(size_t pos, size_t len, std::string repl)
+            : position(pos), length(len), replacement(std::move(repl)) {}
     };
     std::vector<Replacement> replacements;
 
@@ -513,7 +516,7 @@ std::string ConfigManager::expandValue(const std::string& value) const {
         const char* env_value = std::getenv(var_name.c_str());
         std::string replacement = env_value ? env_value : "";
 
-        replacements.emplace_back(match.position(), match.length(), replacement);
+        replacements.emplace_back(match.position(), match.length(), std::move(replacement));
     }
 
     // Apply replacements in reverse order
