@@ -8,8 +8,22 @@ Checks: >
   cert-*,
   clang-analyzer-*,
   concurrency-*,
-  mpi-*,
-  misc-*,
+  # 只选择不会产生大量噪音的 misc 检查
+  misc-misplaced-widening-cast,
+  misc-no-recursion,
+  misc-redundant-expression,
+  misc-static-assert,
+  misc-string-compare,
+  misc-string-literal-with-embedded-nul,
+  misc-bool-pointer-implicit-conversion,
+  misc-dangling-handle,
+  misc-definitions-in-headers,
+  misc-fold-init-type,
+  misc-forward-declaration-namespace,
+  misc-incorrect-roundings,
+  misc-invalid-accessed-scope,
+  misc-inefficient-string-concatenation,
+  misc-multiple-top-level-namespaces,
   modernize-use-trailing-return-type,
   -modernize-use-trailing-return-type,
   -readability-identifier-length,
@@ -42,13 +56,7 @@ Checks: >
   -cppcoreguidelines-explicit-virtual-functions,
   -readability-convert-member-functions-to-static,
   # 禁用产生大量噪音的检查
-  -misc-include-cleaner,
-  -misc-const-correctness,
   -modernize-use-designated-initializers,
-  -readability-qualified-auto,
-  -performance-inefficient-vector-operation,
-  -performance-avoid-endl,
-  -modernize-use-auto,
   -readability-function-cognitive-complexity
 
 WarningsAsErrors: >
@@ -58,11 +66,8 @@ WarningsAsErrors: >
   cert-*,
   clang-analyzer-*,
   concurrency-*,
-  -misc-include-cleaner,
-  -misc-const-correctness,
   -modernize-use-designated-initializers,
-  -readability-qualified-auto,
-  -performance-inefficient-vector-operation,
+  -readability-function-cognitive-complexity,
   -bugprone-lambda-function-name,
   -bugprone-narrowing-conversions,
   -bugprone-signed-char-misuse,
@@ -75,9 +80,7 @@ WarningsAsErrors: >
   -cert-err34-c,
   -cert-err58-cpp,
   -cert-flp30-c,
-  -cert-msc50-cpp,
-  -misc-misplaced-widening-cast,
-  -misc-no-recursion
+  -cert-msc50-cpp
 
 CheckOptions:
   - key: modernize-loop-convert.MinConfidence
