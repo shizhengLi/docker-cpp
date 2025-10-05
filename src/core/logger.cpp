@@ -129,7 +129,7 @@ void Logger::clearSinks()
 void Logger::flush()
 {
     std::lock_guard<std::mutex> file_lock(file_sinks_mutex_);
-    for (auto& [path, stream] : file_sinks_) {
+    for (auto& [unused_path, stream] : file_sinks_) {
         if (stream && stream->is_open()) {
             stream->flush();
         }

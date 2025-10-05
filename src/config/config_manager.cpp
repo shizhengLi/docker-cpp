@@ -5,7 +5,8 @@
 #include <regex>
 #include <sstream>
 
-#ifdef __has_include
+// Try to include nlohmann/json if available
+#if defined(__has_include)
     #if __has_include(<nlohmann/json.hpp>)
         #include <nlohmann/json.hpp>
         #define HAS_NLOHMANN_JSON 1
@@ -13,6 +14,7 @@
         #define HAS_NLOHMANN_JSON 0
     #endif
 #else
+    // Fallback for older compilers without __has_include
     #define HAS_NLOHMANN_JSON 0
 #endif
 
