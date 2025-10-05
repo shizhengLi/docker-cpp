@@ -6,7 +6,10 @@
 #include <sstream>
 
 // Try to include nlohmann/json if available
-#if defined(__has_include)
+// cppcheck workaround: define HAS_NLOHMANN_JSON directly for static analysis
+#ifndef __cplusplus
+    #define HAS_NLOHMANN_JSON 0
+#elif defined(__has_include)
     #if __has_include(<nlohmann/json.hpp>)
         #include <nlohmann/json.hpp>
         #define HAS_NLOHMANN_JSON 1
@@ -14,7 +17,6 @@
         #define HAS_NLOHMANN_JSON 0
     #endif
 #else
-    // Fallback for older compilers without __has_include
     #define HAS_NLOHMANN_JSON 0
 #endif
 
