@@ -9,11 +9,18 @@
 // For static analysis tools like cppcheck, we define it manually
 #ifdef CPPCHECK
     #define HAS_NLOHMANN_JSON 0
-#elif defined(__has_include) && __has_include(<nlohmann/json.hpp>)
-    #include <nlohmann/json.hpp>
-    #define HAS_NLOHMANN_JSON 1
 #else
-    #define HAS_NLOHMANN_JSON 0
+    // Try to detect nlohmann/json availability
+    #if defined(__has_include)
+        #if __has_include(<nlohmann/json.hpp>)
+            #include <nlohmann/json.hpp>
+            #define HAS_NLOHMANN_JSON 1
+        #else
+            #define HAS_NLOHMANN_JSON 0
+        #endif
+    #else
+        #define HAS_NLOHMANN_JSON 0
+    #endif
 #endif
 
 #if !HAS_NLOHMANN_JSON
