@@ -1,39 +1,39 @@
-#include "container.hpp"
 #include <algorithm>
 #include <iostream>
 #include <random>
 #include <sstream>
+#include "container.hpp"
 
 namespace docker_cpp {
 namespace runtime {
 
 // ContainerRegistry implementation
 ContainerRegistry::ContainerRegistry(core::Logger* logger,
-                                    core::EventManager* event_manager,
-                                    plugin::PluginRegistry* plugin_registry)
-    : logger_(logger)
-    , event_manager_(event_manager)
-    , plugin_registry_(plugin_registry) {
+                                     core::EventManager* event_manager,
+                                     plugin::PluginRegistry* plugin_registry)
+    : logger_(logger), event_manager_(event_manager), plugin_registry_(plugin_registry)
+{
     logInfo("ContainerRegistry initialized");
 }
 
-ContainerRegistry::~ContainerRegistry() {
+ContainerRegistry::~ContainerRegistry()
+{
     shutdown();
 }
 
 ContainerRegistry::ContainerRegistry(ContainerRegistry&& other) noexcept
-    : containers_(std::move(other.containers_))
-    , name_to_id_(std::move(other.name_to_id_))
-    , logger_(other.logger_)
-    , event_manager_(other.event_manager_)
-    , plugin_registry_(std::move(other.plugin_registry_))
-    , global_callback_(std::move(other.global_callback_)) {
+    : containers_(std::move(other.containers_)), name_to_id_(std::move(other.name_to_id_)),
+      logger_(other.logger_), event_manager_(other.event_manager_),
+      plugin_registry_(std::move(other.plugin_registry_)),
+      global_callback_(std::move(other.global_callback_))
+{
 
     other.logger_ = nullptr;
     other.event_manager_ = nullptr;
 }
 
-ContainerRegistry& ContainerRegistry::operator=(ContainerRegistry&& other) noexcept {
+ContainerRegistry& ContainerRegistry::operator=(ContainerRegistry&& other) noexcept
+{
     if (this != &other) {
         shutdown();
 
@@ -50,7 +50,8 @@ ContainerRegistry& ContainerRegistry::operator=(ContainerRegistry&& other) noexc
     return *this;
 }
 
-std::shared_ptr<Container> ContainerRegistry::createContainer(const ContainerConfig& config) {
+std::shared_ptr<Container> ContainerRegistry::createContainer(const ContainerConfig& config)
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     validateContainerConfig(config);
@@ -67,7 +68,8 @@ std::shared_ptr<Container> ContainerRegistry::createContainer(const ContainerCon
     std::string container_name = config.name;
     if (container_name.empty()) {
         container_name = generateUniqueName("docker-cpp-");
-    } else {
+    }
+    else {
         // Ensure name is unique
         if (!isNameUnique(container_name)) {
             container_name = generateUniqueName(container_name + "-");
@@ -84,9 +86,10 @@ std::shared_ptr<Container> ContainerRegistry::createContainer(const ContainerCon
         auto container = std::make_shared<Container>(final_config);
 
         // Set up event callback
-        container->setEventCallback([this](const Container& cont, ContainerState old_state, ContainerState new_state) {
-            onContainerEvent(cont.getInfo().id, cont, old_state, new_state);
-        });
+        container->setEventCallback(
+            [this](const Container& cont, ContainerState old_state, ContainerState new_state) {
+                onContainerEvent(cont.getInfo().id, cont, old_state, new_state);
+            });
 
         // Register container
         registerContainer(container);
@@ -94,21 +97,23 @@ std::shared_ptr<Container> ContainerRegistry::createContainer(const ContainerCon
         logInfo("Container created: " + container_id + " (" + container_name + ")");
 
         return container;
-
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         logError("Failed to create container: " + std::string(e.what()));
         throw ContainerConfigurationError("Failed to create container: " + std::string(e.what()));
     }
 }
 
-std::shared_ptr<Container> ContainerRegistry::getContainer(const std::string& id) const {
+std::shared_ptr<Container> ContainerRegistry::getContainer(const std::string& id) const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     auto it = containers_.find(id);
     return it != containers_.end() ? it->second : nullptr;
 }
 
-std::shared_ptr<Container> ContainerRegistry::getContainerByName(const std::string& name) const {
+std::shared_ptr<Container> ContainerRegistry::getContainerByName(const std::string& name) const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     auto it = name_to_id_.find(name);
@@ -119,7 +124,8 @@ std::shared_ptr<Container> ContainerRegistry::getContainerByName(const std::stri
     return nullptr;
 }
 
-void ContainerRegistry::removeContainer(const std::string& id, bool force) {
+void ContainerRegistry::removeContainer(const std::string& id, bool force)
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     auto container = getContainer(id);
@@ -132,14 +138,15 @@ void ContainerRegistry::removeContainer(const std::string& id, bool force) {
         unregisterContainer(id);
 
         logInfo("Container removed: " + id);
-
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         logError("Failed to remove container " + id + ": " + std::string(e.what()));
         throw;
     }
 }
 
-std::vector<std::shared_ptr<Container>> ContainerRegistry::listContainers(bool all) const {
+std::vector<std::shared_ptr<Container>> ContainerRegistry::listContainers(bool all) const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     std::vector<std::shared_ptr<Container>> result;
@@ -153,7 +160,8 @@ std::vector<std::shared_ptr<Container>> ContainerRegistry::listContainers(bool a
     return result;
 }
 
-std::vector<std::string> ContainerRegistry::listContainerIds(bool all) const {
+std::vector<std::string> ContainerRegistry::listContainerIds(bool all) const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     std::vector<std::string> result;
@@ -167,7 +175,8 @@ std::vector<std::string> ContainerRegistry::listContainerIds(bool all) const {
     return result;
 }
 
-void ContainerRegistry::startContainer(const std::string& id) {
+void ContainerRegistry::startContainer(const std::string& id)
+{
     auto container = getContainer(id);
     if (!container) {
         throw ContainerNotFoundError(id);
@@ -176,7 +185,8 @@ void ContainerRegistry::startContainer(const std::string& id) {
     container->start();
 }
 
-void ContainerRegistry::stopContainer(const std::string& id, int timeout) {
+void ContainerRegistry::stopContainer(const std::string& id, int timeout)
+{
     auto container = getContainer(id);
     if (!container) {
         throw ContainerNotFoundError(id);
@@ -185,7 +195,8 @@ void ContainerRegistry::stopContainer(const std::string& id, int timeout) {
     container->stop(timeout);
 }
 
-void ContainerRegistry::pauseContainer(const std::string& id) {
+void ContainerRegistry::pauseContainer(const std::string& id)
+{
     auto container = getContainer(id);
     if (!container) {
         throw ContainerNotFoundError(id);
@@ -194,7 +205,8 @@ void ContainerRegistry::pauseContainer(const std::string& id) {
     container->pause();
 }
 
-void ContainerRegistry::resumeContainer(const std::string& id) {
+void ContainerRegistry::resumeContainer(const std::string& id)
+{
     auto container = getContainer(id);
     if (!container) {
         throw ContainerNotFoundError(id);
@@ -203,7 +215,8 @@ void ContainerRegistry::resumeContainer(const std::string& id) {
     container->resume();
 }
 
-void ContainerRegistry::restartContainer(const std::string& id, int timeout) {
+void ContainerRegistry::restartContainer(const std::string& id, int timeout)
+{
     auto container = getContainer(id);
     if (!container) {
         throw ContainerNotFoundError(id);
@@ -212,7 +225,8 @@ void ContainerRegistry::restartContainer(const std::string& id, int timeout) {
     container->restart(timeout);
 }
 
-void ContainerRegistry::killContainer(const std::string& id, int signal) {
+void ContainerRegistry::killContainer(const std::string& id, int signal)
+{
     auto container = getContainer(id);
     if (!container) {
         throw ContainerNotFoundError(id);
@@ -221,12 +235,14 @@ void ContainerRegistry::killContainer(const std::string& id, int signal) {
     container->kill(signal);
 }
 
-size_t ContainerRegistry::getContainerCount() const {
+size_t ContainerRegistry::getContainerCount() const
+{
     std::lock_guard<std::mutex> lock(mutex_);
     return containers_.size();
 }
 
-size_t ContainerRegistry::getRunningContainerCount() const {
+size_t ContainerRegistry::getRunningContainerCount() const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     size_t count = 0;
@@ -239,7 +255,8 @@ size_t ContainerRegistry::getRunningContainerCount() const {
     return count;
 }
 
-std::vector<ResourceStats> ContainerRegistry::getAllContainerStats() const {
+std::vector<ResourceStats> ContainerRegistry::getAllContainerStats() const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     std::vector<ResourceStats> stats;
@@ -253,7 +270,8 @@ std::vector<ResourceStats> ContainerRegistry::getAllContainerStats() const {
     return stats;
 }
 
-ResourceStats ContainerRegistry::getAggregatedStats() const {
+ResourceStats ContainerRegistry::getAggregatedStats() const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     ResourceStats aggregated;
@@ -276,15 +294,16 @@ ResourceStats ContainerRegistry::getAggregatedStats() const {
     return aggregated;
 }
 
-void ContainerRegistry::cleanupStoppedContainers() {
+void ContainerRegistry::cleanupStoppedContainers()
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     std::vector<std::string> to_remove;
 
     for (const auto& [id, container] : containers_) {
         ContainerState state = container->getState();
-        if (state == ContainerState::STOPPED || state == ContainerState::DEAD ||
-            state == ContainerState::ERROR) {
+        if (state == ContainerState::STOPPED || state == ContainerState::DEAD
+            || state == ContainerState::ERROR) {
             // Check if container has been stopped for more than 5 minutes
             auto info = container->getInfo();
             auto time_since_stop = std::chrono::system_clock::now() - info.finished_at;
@@ -300,7 +319,8 @@ void ContainerRegistry::cleanupStoppedContainers() {
             container->remove(true);
             unregisterContainer(id);
             logInfo("Auto-removed stopped container: " + id);
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e) {
             logError("Failed to auto-remove container " + id + ": " + std::string(e.what()));
         }
     }
@@ -310,7 +330,8 @@ void ContainerRegistry::cleanupStoppedContainers() {
     }
 }
 
-void ContainerRegistry::cleanupRemovedContainers() {
+void ContainerRegistry::cleanupRemovedContainers()
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     std::vector<std::string> to_remove;
@@ -326,21 +347,26 @@ void ContainerRegistry::cleanupRemovedContainers() {
     }
 
     if (!to_remove.empty()) {
-        logInfo("Cleaned up " + std::to_string(to_remove.size()) + " removed containers from registry");
+        logInfo("Cleaned up " + std::to_string(to_remove.size())
+                + " removed containers from registry");
     }
 }
 
-void ContainerRegistry::shutdown() {
+void ContainerRegistry::shutdown()
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     // Stop all running containers
     for (const auto& [id, container] : containers_) {
-        if (container->getState() == ContainerState::RUNNING || container->getState() == ContainerState::PAUSED) {
+        if (container->getState() == ContainerState::RUNNING
+            || container->getState() == ContainerState::PAUSED) {
             try {
                 container->stop(5);
                 logInfo("Stopped container during shutdown: " + id);
-            } catch (const std::exception& e) {
-                logError("Failed to stop container " + id + " during shutdown: " + std::string(e.what()));
+            }
+            catch (const std::exception& e) {
+                logError("Failed to stop container " + id
+                         + " during shutdown: " + std::string(e.what()));
             }
         }
     }
@@ -358,18 +384,21 @@ void ContainerRegistry::shutdown() {
     logInfo("ContainerRegistry shutdown completed");
 }
 
-void ContainerRegistry::setGlobalEventCallback(ContainerEventCallback callback) {
+void ContainerRegistry::setGlobalEventCallback(ContainerEventCallback callback)
+{
     std::lock_guard<std::mutex> lock(callback_mutex_);
     global_callback_ = callback;
 }
 
-void ContainerRegistry::removeGlobalEventCallback() {
+void ContainerRegistry::removeGlobalEventCallback()
+{
     std::lock_guard<std::mutex> lock(callback_mutex_);
     global_callback_ = nullptr;
 }
 
 // Private methods
-std::string ContainerRegistry::generateUniqueId() const {
+std::string ContainerRegistry::generateUniqueId() const
+{
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, 15);
@@ -382,7 +411,8 @@ std::string ContainerRegistry::generateUniqueId() const {
     return ss.str();
 }
 
-std::string ContainerRegistry::generateUniqueName(const std::string& base_name) const {
+std::string ContainerRegistry::generateUniqueName(const std::string& base_name) const
+{
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, 35);
@@ -394,7 +424,8 @@ std::string ContainerRegistry::generateUniqueName(const std::string& base_name) 
         int num = dis(gen);
         if (num < 10) {
             name += std::to_string(num);
-        } else {
+        }
+        else {
             name += static_cast<char>('a' + (num - 10));
         }
     }
@@ -409,11 +440,13 @@ std::string ContainerRegistry::generateUniqueName(const std::string& base_name) 
     return unique_name;
 }
 
-bool ContainerRegistry::isNameUnique(const std::string& name) const {
+bool ContainerRegistry::isNameUnique(const std::string& name) const
+{
     return name_to_id_.find(name) == name_to_id_.end();
 }
 
-void ContainerRegistry::registerContainer(std::shared_ptr<Container> container) {
+void ContainerRegistry::registerContainer(std::shared_ptr<Container> container)
+{
     const std::string& id = container->getInfo().id;
     const std::string& name = container->getConfig().name;
 
@@ -423,7 +456,8 @@ void ContainerRegistry::registerContainer(std::shared_ptr<Container> container) 
     logInfo("Container registered: " + id + " (" + name + ")");
 }
 
-void ContainerRegistry::unregisterContainer(const std::string& id) {
+void ContainerRegistry::unregisterContainer(const std::string& id)
+{
     auto it = containers_.find(id);
     if (it != containers_.end()) {
         const std::string& name = it->second->getConfig().name;
@@ -435,27 +469,30 @@ void ContainerRegistry::unregisterContainer(const std::string& id) {
 }
 
 void ContainerRegistry::onContainerEvent(const std::string& container_id,
-                                       const Container& container,
-                                       ContainerState old_state,
-                                       ContainerState new_state) {
+                                         const Container& container,
+                                         ContainerState old_state,
+                                         ContainerState new_state)
+{
     // Call global callback if set
     {
         std::lock_guard<std::mutex> lock(callback_mutex_);
         if (global_callback_) {
             try {
                 global_callback_(container_id, container, old_state, new_state);
-            } catch (const std::exception& e) {
+            }
+            catch (const std::exception& e) {
                 logError("Global event callback failed: " + std::string(e.what()));
             }
         }
     }
 
     // Log state transition
-    logInfo("Container " + container_id + " transitioned from " +
-            containerStateToString(old_state) + " to " + containerStateToString(new_state));
+    logInfo("Container " + container_id + " transitioned from " + containerStateToString(old_state)
+            + " to " + containerStateToString(new_state));
 }
 
-void ContainerRegistry::validateContainerConfig(const ContainerConfig& config) const {
+void ContainerRegistry::validateContainerConfig(const ContainerConfig& config) const
+{
     auto errors = config.validate();
     if (!errors.empty()) {
         std::string error_msg = "Invalid container configuration: ";
@@ -466,12 +503,14 @@ void ContainerRegistry::validateContainerConfig(const ContainerConfig& config) c
     }
 }
 
-void ContainerRegistry::logInfo(const std::string& message) const {
+void ContainerRegistry::logInfo(const std::string& message) const
+{
     // TODO: Implement logging when Logger integration is complete
     std::cout << "[ContainerRegistry] " << message << std::endl;
 }
 
-void ContainerRegistry::logError(const std::string& message) const {
+void ContainerRegistry::logError(const std::string& message) const
+{
     // TODO: Implement logging when Logger integration is complete
     std::cerr << "[ContainerRegistry] ERROR: " << message << std::endl;
 }

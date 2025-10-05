@@ -13,7 +13,11 @@ namespace runtime {
 class ContainerRuntimeError : public std::exception {
 public:
     explicit ContainerRuntimeError(const std::string& message) : message_(message) {}
-    const char* what() const noexcept override { return message_.c_str(); }
+    const char* what() const noexcept override
+    {
+        return message_.c_str();
+    }
+
 private:
     std::string message_;
 };
@@ -21,15 +25,16 @@ private:
 class ContainerNotFoundError : public ContainerRuntimeError {
 public:
     explicit ContainerNotFoundError(const std::string& id)
-        : ContainerRuntimeError("Container not found: " + id) {}
+        : ContainerRuntimeError("Container not found: " + id)
+    {}
 };
 
 class ContainerConfigurationError : public ContainerRuntimeError {
 public:
     explicit ContainerConfigurationError(const std::string& message)
-        : ContainerRuntimeError("Container configuration error: " + message) {}
+        : ContainerRuntimeError("Container configuration error: " + message)
+    {}
 };
-
 
 // Container state enumeration
 enum class ContainerState {
@@ -52,10 +57,13 @@ ContainerState stringToContainerState(const std::string& state_str);
 
 class InvalidContainerStateError : public ContainerRuntimeError {
 public:
-    InvalidContainerStateError(const std::string& container_id, ContainerState current, ContainerState target)
-        : ContainerRuntimeError("Invalid state transition for container " + container_id +
-                               " from " + containerStateToString(current) +
-                               " to " + containerStateToString(target)) {}
+    InvalidContainerStateError(const std::string& container_id,
+                               ContainerState current,
+                               ContainerState target)
+        : ContainerRuntimeError("Invalid state transition for container " + container_id + " from "
+                                + containerStateToString(current) + " to "
+                                + containerStateToString(target))
+    {}
 };
 
 // Block I/O device limit

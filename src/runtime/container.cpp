@@ -1,39 +1,31 @@
 #include "container.hpp"
-#include <docker-cpp/core/logger.hpp>
-#include <docker-cpp/core/event.hpp>
-#include <docker-cpp/plugin/plugin_registry.hpp>
-#include <docker-cpp/namespace/namespace_manager.hpp>
 #include <docker-cpp/cgroup/cgroup_manager.hpp>
+#include <docker-cpp/core/event.hpp>
+#include <docker-cpp/core/logger.hpp>
+#include <docker-cpp/namespace/namespace_manager.hpp>
 #include <docker-cpp/namespace/process_manager.hpp>
+#include <docker-cpp/plugin/plugin_registry.hpp>
 
-#include <algorithm>
-#include <iostream>
-#include <thread>
+#include <errno.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <algorithm>
 #include <cstring>
-#include <errno.h>
+#include <iostream>
+#include <thread>
 
 namespace docker_cpp {
 namespace runtime {
 
 // Container implementation
 Container::Container(const ContainerConfig& config)
-    : id_(config.id.empty() ? generateContainerId() : config.id)
-    , config_(config)
-    , state_(ContainerState::CREATED)
-    , removed_(false)
-    , main_pid_(0)
-    , exit_code_(0)
-    , created_at_(std::chrono::system_clock::now())
-    , monitoring_active_(false)
-    , healthcheck_active_(false)
-    , healthy_(true)
-    , health_status_("healthy")
-    , logger_(nullptr)
-    , event_manager_(nullptr)
-    , plugin_registry_(nullptr) {
+    : id_(config.id.empty() ? generateContainerId() : config.id), config_(config),
+      state_(ContainerState::CREATED), removed_(false), main_pid_(0), exit_code_(0),
+      created_at_(std::chrono::system_clock::now()), monitoring_active_(false),
+      healthcheck_active_(false), healthy_(true), health_status_("healthy"), logger_(nullptr),
+      event_manager_(nullptr), plugin_registry_(nullptr)
+{
 
     // Update config with our generated ID
     config_.id = id_;
@@ -43,42 +35,33 @@ Container::Container(const ContainerConfig& config)
     finished_at_ = created_at_;
 
     logInfo("Container created: " + id_);
-    emitEvent("container.created", {
-        {"container_id", id_},
-        {"image", config_.image},
-        {"name", config_.name}
-    });
+    emitEvent("container.created",
+              {{"container_id", id_}, {"image", config_.image}, {"name", config_.name}});
 }
 
-Container::~Container() {
+Container::~Container()
+{
     cleanup();
 }
 
 Container::Container(Container&& other) noexcept
-    : id_(std::move(other.id_))
-    , config_(std::move(other.config_))
-    , state_(other.state_.load())
-    , removed_(other.removed_.load())
-    , main_pid_(other.main_pid_.load())
-    , exit_code_(other.exit_code_.load())
-    , exit_reason_(std::move(other.exit_reason_))
-    , created_at_(other.created_at_)
-    , started_at_(other.started_at_)
-    , finished_at_(other.finished_at_)
-    , monitoring_active_(other.monitoring_active_.load())
-    , healthy_(other.healthy_.load())
-    , health_status_(std::move(other.health_status_))
-    , last_healthcheck_(other.last_healthcheck_)
-    , logger_(other.logger_)
-    , event_manager_(other.event_manager_)
-    , plugin_registry_(other.plugin_registry_) {
+    : id_(std::move(other.id_)), config_(std::move(other.config_)), state_(other.state_.load()),
+      removed_(other.removed_.load()), main_pid_(other.main_pid_.load()),
+      exit_code_(other.exit_code_.load()), exit_reason_(std::move(other.exit_reason_)),
+      created_at_(other.created_at_), started_at_(other.started_at_),
+      finished_at_(other.finished_at_), monitoring_active_(other.monitoring_active_.load()),
+      healthy_(other.healthy_.load()), health_status_(std::move(other.health_status_)),
+      last_healthcheck_(other.last_healthcheck_), logger_(other.logger_),
+      event_manager_(other.event_manager_), plugin_registry_(other.plugin_registry_)
+{
 
     // Don't move mutex - it can't be moved
     other.monitoring_active_ = false;
     other.healthcheck_active_ = false;
 }
 
-Container& Container::operator=(Container&& other) noexcept {
+Container& Container::operator=(Container&& other) noexcept
+{
     if (this != &other) {
         std::lock_guard<std::mutex> lock(mutex_);
         std::lock_guard<std::mutex> other_lock(other.mutex_);
@@ -107,7 +90,8 @@ Container& Container::operator=(Container&& other) noexcept {
     return *this;
 }
 
-void Container::start() {
+void Container::start()
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     if (!canTransitionTo(ContainerState::STARTING)) {
@@ -124,20 +108,20 @@ void Container::start() {
 
         transitionState(ContainerState::RUNNING);
 
-        emitEvent("container.started", {
-            {"container_id", id_},
-            {"pid", std::to_string(main_pid_.load())}
-        });
+        emitEvent("container.started",
+                  {{"container_id", id_}, {"pid", std::to_string(main_pid_.load())}});
 
         logInfo("Container started successfully: " + id_);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         transitionState(ContainerState::ERROR);
         logError("Failed to start container: " + std::string(e.what()));
         throw;
     }
 }
 
-void Container::stop(int timeout) {
+void Container::stop(int timeout)
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     if (!canTransitionTo(ContainerState::STOPPING)) {
@@ -169,20 +153,20 @@ void Container::stop(int timeout) {
 
         transitionState(ContainerState::STOPPED);
 
-        emitEvent("container.stopped", {
-            {"container_id", id_},
-            {"exit_code", std::to_string(exit_code_.load())}
-        });
+        emitEvent("container.stopped",
+                  {{"container_id", id_}, {"exit_code", std::to_string(exit_code_.load())}});
 
         logInfo("Container stopped successfully: " + id_);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         transitionState(ContainerState::ERROR);
         logError("Failed to stop container: " + std::string(e.what()));
         throw;
     }
 }
 
-void Container::pause() {
+void Container::pause()
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     if (!canTransitionTo(ContainerState::PAUSED)) {
@@ -195,7 +179,8 @@ void Container::pause() {
     emitEvent("container.paused", {{"container_id", id_}});
 }
 
-void Container::resume() {
+void Container::resume()
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     if (!canTransitionTo(ContainerState::RUNNING)) {
@@ -208,7 +193,8 @@ void Container::resume() {
     emitEvent("container.resumed", {{"container_id", id_}});
 }
 
-void Container::restart(int timeout) {
+void Container::restart(int timeout)
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     if (!canTransitionTo(ContainerState::RESTARTING)) {
@@ -225,7 +211,8 @@ void Container::restart(int timeout) {
             lock.~lock_guard();
             try {
                 stop(timeout);
-            } catch (...) {
+            }
+            catch (...) {
                 // Re-acquire lock before re-throwing
                 new (&lock) std::lock_guard<std::mutex>(mutex_);
                 throw;
@@ -240,7 +227,8 @@ void Container::restart(int timeout) {
             lock.~lock_guard();
             try {
                 start();
-            } catch (...) {
+            }
+            catch (...) {
                 // Re-acquire lock before re-throwing
                 new (&lock) std::lock_guard<std::mutex>(mutex_);
                 throw;
@@ -250,14 +238,16 @@ void Container::restart(int timeout) {
         }
 
         logInfo("Container restarted successfully: " + id_);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         transitionState(ContainerState::ERROR);
         logError("Failed to restart container: " + std::string(e.what()));
         throw;
     }
 }
 
-void Container::remove(bool force) {
+void Container::remove(bool force)
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     if (state_.load() == ContainerState::RUNNING && !force) {
@@ -279,14 +269,16 @@ void Container::remove(bool force) {
 
         emitEvent("container.removed", {{"container_id", id_}});
         logInfo("Container removed successfully: " + id_);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         transitionState(ContainerState::ERROR);
         logError("Failed to remove container: " + std::string(e.what()));
         throw;
     }
 }
 
-void Container::kill(int signal) {
+void Container::kill(int signal)
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     if (main_pid_.load() > 0) {
@@ -295,11 +287,13 @@ void Container::kill(int signal) {
     }
 }
 
-ContainerState Container::getState() const {
+ContainerState Container::getState() const
+{
     return state_.load();
 }
 
-ContainerInfo Container::getInfo() const {
+ContainerInfo Container::getInfo() const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     ContainerInfo info;
@@ -316,41 +310,50 @@ ContainerInfo Container::getInfo() const {
     return info;
 }
 
-std::chrono::system_clock::time_point Container::getStartTime() const {
+std::chrono::system_clock::time_point Container::getStartTime() const
+{
     return started_at_;
 }
 
-std::chrono::system_clock::time_point Container::getFinishedTime() const {
+std::chrono::system_clock::time_point Container::getFinishedTime() const
+{
     return finished_at_;
 }
 
-int Container::getExitCode() const {
+int Container::getExitCode() const
+{
     return exit_code_.load();
 }
 
-std::string Container::getExitReason() const {
+std::string Container::getExitReason() const
+{
     return exit_reason_;
 }
 
-pid_t Container::getMainProcessPID() const {
+pid_t Container::getMainProcessPID() const
+{
     return main_pid_.load();
 }
 
-std::vector<pid_t> Container::getAllProcesses() const {
+std::vector<pid_t> Container::getAllProcesses() const
+{
     if (main_pid_.load() > 0) {
         return {main_pid_.load()};
     }
     return {};
 }
 
-bool Container::isProcessRunning() const {
+bool Container::isProcessRunning() const
+{
     pid_t pid = main_pid_.load();
-    if (pid <= 0) return false;
+    if (pid <= 0)
+        return false;
 
     return ::kill(pid, 0) == 0;
 }
 
-void Container::updateResources(const ResourceLimits& limits) {
+void Container::updateResources(const ResourceLimits& limits)
+{
     (void)limits; // Suppress unused parameter warning
     std::lock_guard<std::mutex> lock(mutex_);
 
@@ -362,7 +365,8 @@ void Container::updateResources(const ResourceLimits& limits) {
     logInfo("Resource limits updated for container: " + id_);
 }
 
-ResourceStats Container::getStats() const {
+ResourceStats Container::getStats() const
+{
     // TODO: Implement actual resource statistics collection
     ResourceStats stats;
     stats.memory_usage_bytes = 0;
@@ -376,69 +380,84 @@ ResourceStats Container::getStats() const {
     return stats;
 }
 
-void Container::resetStats() {
+void Container::resetStats()
+{
     // TODO: Implement statistics reset
     logInfo("Statistics reset for container: " + id_);
 }
 
-void Container::setEventCallback(ContainerEventCallback callback) {
+void Container::setEventCallback(ContainerEventCallback callback)
+{
     std::lock_guard<std::mutex> lock(callback_mutex_);
     event_callback_ = callback;
 }
 
-void Container::removeEventCallback() {
+void Container::removeEventCallback()
+{
     std::lock_guard<std::mutex> lock(callback_mutex_);
     event_callback_ = nullptr;
 }
 
-const ContainerConfig& Container::getConfig() const {
+const ContainerConfig& Container::getConfig() const
+{
     return config_;
 }
 
-void Container::updateConfig(const ContainerConfig& config) {
+void Container::updateConfig(const ContainerConfig& config)
+{
     std::lock_guard<std::mutex> lock(mutex_);
     config_ = config;
 }
 
-void Container::startMonitoring() {
-    if (monitoring_active_.load()) return;
+void Container::startMonitoring()
+{
+    if (monitoring_active_.load())
+        return;
 
     monitoring_active_ = true;
     startMonitoringThread();
 }
 
-void Container::stopMonitoring() {
+void Container::stopMonitoring()
+{
     monitoring_active_ = false;
     stopMonitoringThread();
 }
 
-bool Container::isMonitoring() const {
+bool Container::isMonitoring() const
+{
     return monitoring_active_.load();
 }
 
-bool Container::isHealthy() const {
+bool Container::isHealthy() const
+{
     return healthy_.load();
 }
 
-std::string Container::getHealthStatus() const {
+std::string Container::getHealthStatus() const
+{
     return health_status_;
 }
 
-void Container::cleanup() {
-    if (removed_.load()) return;
+void Container::cleanup()
+{
+    if (removed_.load())
+        return;
 
     try {
         stopMonitoring();
         stopHealthcheckThread();
         cleanupResources();
         removed_ = true;
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         logError("Error during cleanup: " + std::string(e.what()));
     }
 }
 
 // Private methods
-void Container::transitionState(ContainerState new_state) {
+void Container::transitionState(ContainerState new_state)
+{
     ContainerState old_state = state_.load();
 
     if (!isStateTransitionValid(old_state, new_state)) {
@@ -463,30 +482,35 @@ void Container::transitionState(ContainerState new_state) {
         if (event_callback_) {
             try {
                 event_callback_(*this, old_state, new_state);
-            } catch (const std::exception& e) {
+            }
+            catch (const std::exception& e) {
                 logError("Event callback failed: " + std::string(e.what()));
             }
         }
     }
 }
 
-void Container::setupNamespaces() {
+void Container::setupNamespaces()
+{
     // TODO: Implement namespace setup using Phase 1 components
     logInfo("Setting up namespaces for container: " + id_);
 }
 
-void Container::setupCgroups() {
+void Container::setupCgroups()
+{
     // TODO: Implement cgroup setup using Phase 1 components
     logInfo("Setting up cgroups for container: " + id_);
 }
 
-void Container::startProcess() {
+void Container::startProcess()
+{
     // For now, create a simple sleep process as placeholder
     pid_t pid = fork();
 
     if (pid == -1) {
         throw ContainerRuntimeError("Failed to fork process: " + std::string(strerror(errno)));
-    } else if (pid == 0) {
+    }
+    else if (pid == 0) {
         // Child process
         try {
             // Set up environment
@@ -506,10 +530,12 @@ void Container::startProcess() {
 
             // If we get here, exec failed
             _exit(127);
-        } catch (...) {
+        }
+        catch (...) {
             _exit(127);
         }
-    } else {
+    }
+    else {
         // Parent process
         main_pid_ = pid;
         logInfo("Started process with PID " + std::to_string(pid) + " for container: " + id_);
@@ -523,49 +549,60 @@ void Container::startProcess() {
             waitpid(pid, &status, WNOHANG);
             if (WIFEXITED(status)) {
                 exit_code_ = WEXITSTATUS(status);
-                throw ContainerRuntimeError("Process exited immediately with code " + std::to_string(exit_code_.load()));
-            } else if (WIFSIGNALED(status)) {
-                throw ContainerRuntimeError("Process killed by signal " + std::to_string(WTERMSIG(status)));
+                throw ContainerRuntimeError("Process exited immediately with code "
+                                            + std::to_string(exit_code_.load()));
+            }
+            else if (WIFSIGNALED(status)) {
+                throw ContainerRuntimeError("Process killed by signal "
+                                            + std::to_string(WTERMSIG(status)));
             }
             throw ContainerRuntimeError("Process failed to start");
         }
     }
 }
 
-void Container::monitorProcess() {
+void Container::monitorProcess()
+{
     // TODO: Implement process monitoring
     logInfo("Monitoring process for container: " + id_);
 }
 
-void Container::startMonitoringThread() {
+void Container::startMonitoringThread()
+{
     // TODO: Implement monitoring thread
     logInfo("Starting monitoring thread for container: " + id_);
 }
 
-void Container::stopMonitoringThread() {
+void Container::stopMonitoringThread()
+{
     // TODO: Implement monitoring thread cleanup
     logInfo("Stopping monitoring thread for container: " + id_);
 }
 
-void Container::startHealthcheckThread() {
+void Container::startHealthcheckThread()
+{
     // TODO: Implement health check thread
     logInfo("Starting health check thread for container: " + id_);
 }
 
-void Container::stopHealthcheckThread() {
+void Container::stopHealthcheckThread()
+{
     // TODO: Implement health check thread cleanup
     logInfo("Stopping health check thread for container: " + id_);
 }
 
-void Container::executeHealthcheck() {
+void Container::executeHealthcheck()
+{
     // TODO: Implement health check execution
     healthy_ = true;
     health_status_ = "healthy";
     last_healthcheck_ = std::chrono::system_clock::now();
 }
 
-void Container::waitForProcessExit(int timeout) {
-    if (main_pid_.load() <= 0) return;
+void Container::waitForProcessExit(int timeout)
+{
+    if (main_pid_.load() <= 0)
+        return;
 
     int status;
     pid_t result = waitpid(main_pid_.load(), &status, WNOHANG);
@@ -583,37 +620,43 @@ void Container::waitForProcessExit(int timeout) {
     if (result > 0) {
         if (WIFEXITED(status)) {
             exit_code_ = WEXITSTATUS(status);
-        } else if (WIFSIGNALED(status)) {
+        }
+        else if (WIFSIGNALED(status)) {
             exit_code_ = 128 + WTERMSIG(status);
             exit_reason_ = "Killed by signal " + std::to_string(WTERMSIG(status));
         }
     }
 }
 
-void Container::killProcess(int signal) {
+void Container::killProcess(int signal)
+{
     if (main_pid_.load() > 0) {
         ::kill(main_pid_.load(), signal);
     }
 }
 
-void Container::cleanupResources() {
+void Container::cleanupResources()
+{
     // TODO: Implement resource cleanup
     logInfo("Cleaning up resources for container: " + id_);
 }
 
 void Container::emitEvent(const std::string& event_type,
-                         const std::map<std::string, std::string>& event_data) {
+                          const std::map<std::string, std::string>& event_data)
+{
     (void)event_data; // Suppress unused parameter warning
     // TODO: Implement event emission when EventManager integration is complete
     logInfo("Event: " + event_type);
 }
 
-void Container::initializeStateMachine() {
+void Container::initializeStateMachine()
+{
     // Initialize any state machine specific resources
     logInfo("State machine initialized for container: " + id_);
 }
 
-void Container::executeStateTransition(ContainerState new_state) {
+void Container::executeStateTransition(ContainerState new_state)
+{
     // Execute actions specific to the transition
     switch (new_state) {
         case ContainerState::STARTING:
@@ -644,7 +687,8 @@ void Container::executeStateTransition(ContainerState new_state) {
     }
 }
 
-void Container::onStateEntered(ContainerState new_state) {
+void Container::onStateEntered(ContainerState new_state)
+{
     switch (new_state) {
         case ContainerState::CREATED:
             handleCreatedState();
@@ -682,7 +726,8 @@ void Container::onStateEntered(ContainerState new_state) {
     }
 }
 
-void Container::onStateExited(ContainerState old_state) {
+void Container::onStateExited(ContainerState old_state)
+{
     switch (old_state) {
         case ContainerState::RUNNING:
             // Stop monitoring when leaving running state
@@ -703,50 +748,59 @@ void Container::onStateExited(ContainerState old_state) {
     }
 }
 
-void Container::handleCreatedState() {
+void Container::handleCreatedState()
+{
     logInfo("Container created");
     created_at_ = std::chrono::system_clock::now();
 }
 
-void Container::handleStartingState() {
+void Container::handleStartingState()
+{
     logInfo("Container starting");
     // Process should already be started in executeStateTransition
 }
 
-void Container::handleRunningState() {
+void Container::handleRunningState()
+{
     logInfo("Container running");
     started_at_ = std::chrono::system_clock::now();
     startMonitoring();
     startHealthcheckThread();
 }
 
-void Container::handlePausedState() {
+void Container::handlePausedState()
+{
     logInfo("Container paused");
     // TODO: Implement actual pause functionality
 }
 
-void Container::handleStoppingState() {
+void Container::handleStoppingState()
+{
     logInfo("Container stopping");
     // Process termination handled in executeStateTransition
 }
 
-void Container::handleStoppedState() {
+void Container::handleStoppedState()
+{
     logInfo("Container stopped");
     finished_at_ = std::chrono::system_clock::now();
     stopHealthcheckThread();
 }
 
-void Container::handleRemovingState() {
+void Container::handleRemovingState()
+{
     logInfo("Container removing");
     // Cleanup handled in executeStateTransition
 }
 
-void Container::handleRemovedState() {
+void Container::handleRemovedState()
+{
     logInfo("Container removed");
     removed_.store(true);
 }
 
-void Container::handleDeadState() {
+void Container::handleDeadState()
+{
     logInfo("Container dead - unexpected termination");
     finished_at_ = std::chrono::system_clock::now();
     setExitReason("Container died unexpectedly");
@@ -754,19 +808,22 @@ void Container::handleDeadState() {
     stopHealthcheckThread();
 }
 
-void Container::handleRestartingState() {
+void Container::handleRestartingState()
+{
     logInfo("Container restarting");
     // Will transition to STARTING after restart actions complete
 }
 
-void Container::handleErrorState() {
+void Container::handleErrorState()
+{
     logError("Container entered error state");
     finished_at_ = std::chrono::system_clock::now();
     stopMonitoring();
     stopHealthcheckThread();
 }
 
-bool Container::isStateTransitionValid(ContainerState from, ContainerState to) const {
+bool Container::isStateTransitionValid(ContainerState from, ContainerState to) const
+{
     auto transitions = getStateTransitionTable();
     for (const auto& transition : transitions) {
         if (transition.from == from && transition.to == to) {
@@ -779,25 +836,38 @@ bool Container::isStateTransitionValid(ContainerState from, ContainerState to) c
     return false;
 }
 
-std::vector<Container::StateTransition> Container::getStateTransitionTable() const {
+std::vector<Container::StateTransition> Container::getStateTransitionTable() const
+{
     return {
         // FROM -> TO transitions with conditions
-        {ContainerState::CREATED, ContainerState::STARTING, true, [this]() { return !removed_.load(); }},
+        {ContainerState::CREATED,
+         ContainerState::STARTING,
+         true,
+         [this]() { return !removed_.load(); }},
         {ContainerState::CREATED, ContainerState::REMOVING, true, []() { return true; }},
         {ContainerState::CREATED, ContainerState::ERROR, true, []() { return true; }},
 
-        {ContainerState::STARTING, ContainerState::RUNNING, true, [this]() { return main_pid_.load() > 0; }},
+        {ContainerState::STARTING,
+         ContainerState::RUNNING,
+         true,
+         [this]() { return main_pid_.load() > 0; }},
         {ContainerState::STARTING, ContainerState::STOPPING, true, []() { return true; }},
         {ContainerState::STARTING, ContainerState::ERROR, true, []() { return true; }},
         {ContainerState::STARTING, ContainerState::REMOVING, true, []() { return true; }},
 
-        {ContainerState::RUNNING, ContainerState::PAUSED, true, [this]() { return main_pid_.load() > 0; }},
+        {ContainerState::RUNNING,
+         ContainerState::PAUSED,
+         true,
+         [this]() { return main_pid_.load() > 0; }},
         {ContainerState::RUNNING, ContainerState::STOPPING, true, []() { return true; }},
         {ContainerState::RUNNING, ContainerState::RESTARTING, true, []() { return true; }},
         {ContainerState::RUNNING, ContainerState::ERROR, true, []() { return true; }},
         {ContainerState::RUNNING, ContainerState::REMOVING, true, []() { return true; }},
 
-        {ContainerState::PAUSED, ContainerState::RUNNING, true, [this]() { return main_pid_.load() > 0; }},
+        {ContainerState::PAUSED,
+         ContainerState::RUNNING,
+         true,
+         [this]() { return main_pid_.load() > 0; }},
         {ContainerState::PAUSED, ContainerState::STOPPING, true, []() { return true; }},
         {ContainerState::PAUSED, ContainerState::REMOVING, true, []() { return true; }},
 
@@ -806,11 +876,20 @@ std::vector<Container::StateTransition> Container::getStateTransitionTable() con
         {ContainerState::STOPPING, ContainerState::ERROR, true, []() { return true; }},
         {ContainerState::STOPPING, ContainerState::REMOVING, true, []() { return true; }},
 
-        {ContainerState::STOPPED, ContainerState::STARTING, true, [this]() { return !removed_.load(); }},
+        {ContainerState::STOPPED,
+         ContainerState::STARTING,
+         true,
+         [this]() { return !removed_.load(); }},
         {ContainerState::STOPPED, ContainerState::REMOVING, true, []() { return true; }},
-        {ContainerState::STOPPED, ContainerState::RESTARTING, true, [this]() { return !removed_.load(); }},
+        {ContainerState::STOPPED,
+         ContainerState::RESTARTING,
+         true,
+         [this]() { return !removed_.load(); }},
 
-        {ContainerState::RESTARTING, ContainerState::STARTING, true, [this]() { return !removed_.load(); }},
+        {ContainerState::RESTARTING,
+         ContainerState::STARTING,
+         true,
+         [this]() { return !removed_.load(); }},
         {ContainerState::RESTARTING, ContainerState::STOPPING, true, []() { return true; }},
         {ContainerState::RESTARTING, ContainerState::ERROR, true, []() { return true; }},
         {ContainerState::RESTARTING, ContainerState::REMOVING, true, []() { return true; }},
@@ -825,12 +904,14 @@ std::vector<Container::StateTransition> Container::getStateTransitionTable() con
     };
 }
 
-bool Container::canTransitionTo(ContainerState new_state) const {
+bool Container::canTransitionTo(ContainerState new_state) const
+{
     ContainerState current = state_.load();
     return isStateTransitionValid(current, new_state);
 }
 
-std::vector<ContainerState> Container::getValidTransitions(ContainerState from_state) const {
+std::vector<ContainerState> Container::getValidTransitions(ContainerState from_state) const
+{
     std::vector<ContainerState> valid_transitions;
     auto transitions = getStateTransitionTable();
 
@@ -840,7 +921,8 @@ std::vector<ContainerState> Container::getValidTransitions(ContainerState from_s
                 if (transition.condition()) {
                     valid_transitions.push_back(transition.to);
                 }
-            } else if (transition.allowed) {
+            }
+            else if (transition.allowed) {
                 valid_transitions.push_back(transition.to);
             }
         }
@@ -849,53 +931,60 @@ std::vector<ContainerState> Container::getValidTransitions(ContainerState from_s
     return valid_transitions;
 }
 
-void Container::handleError(const std::string& error_msg) {
+void Container::handleError(const std::string& error_msg)
+{
     transitionState(ContainerState::ERROR);
     logError(error_msg);
 
-    emitEvent("container.error", {
-        {"container_id", id_},
-        {"error", error_msg}
-    });
+    emitEvent("container.error", {{"container_id", id_}, {"error", error_msg}});
 }
 
-void Container::setExitReason(const std::string& reason) {
+void Container::setExitReason(const std::string& reason)
+{
     exit_reason_ = reason;
 }
 
-std::string Container::generateCgroupName() const {
+std::string Container::generateCgroupName() const
+{
     return "docker-cpp-" + id_;
 }
 
-std::string Container::generateLogPrefix() const {
+std::string Container::generateLogPrefix() const
+{
     return "[" + id_ + "] ";
 }
 
-void Container::logInfo(const std::string& message) const {
+void Container::logInfo(const std::string& message) const
+{
     // TODO: Implement logging when Logger integration is complete
     std::cout << generateLogPrefix() << message << std::endl;
 }
 
-void Container::logError(const std::string& message) const {
+void Container::logError(const std::string& message) const
+{
     // TODO: Implement logging when Logger integration is complete
     std::cerr << generateLogPrefix() << "ERROR: " << message << std::endl;
 }
 
-void Container::logWarning(const std::string& message) const {
+void Container::logWarning(const std::string& message) const
+{
     // TODO: Implement logging when Logger integration is complete
     std::cout << generateLogPrefix() << "WARNING: " << message << std::endl;
 }
 
-void Container::logDebug(const std::string& message) const {
+void Container::logDebug(const std::string& message) const
+{
     // TODO: Implement debug logging when Logger integration is complete
     std::cout << generateLogPrefix() << "DEBUG: " << message << std::endl;
 }
 
-void Container::logStateTransition(ContainerState from, ContainerState to) const {
+void Container::logStateTransition(ContainerState from, ContainerState to) const
+{
     logInfo("State transition: " + getStateDescription(from) + " -> " + getStateDescription(to));
 }
 
-std::string Container::getStateDescription(ContainerState state) const {
+std::string Container::getStateDescription(ContainerState state) const
+{
     switch (state) {
         case ContainerState::CREATED:
             return "CREATED";
