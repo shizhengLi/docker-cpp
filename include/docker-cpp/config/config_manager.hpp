@@ -44,6 +44,7 @@ public:
 
     std::string toString() const;
 
+private:
     VariantType value_;
 };
 

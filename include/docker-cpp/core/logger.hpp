@@ -71,14 +71,14 @@ public:
     void flush();
     std::string getName() const;
 
-private:
-    Logger(const std::string& name);
-
     // Non-copyable, non-movable
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
     Logger(Logger&&) = delete;
     Logger& operator=(Logger&&) = delete;
+
+private:
+    Logger(const std::string& name);
 
     void log(LogLevel level, const std::string& message);
     void logToFile(const std::filesystem::path& file_path, const LogMessage& message);

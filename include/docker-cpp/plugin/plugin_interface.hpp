@@ -15,18 +15,23 @@ using PluginConfig = std::unordered_map<std::string, std::string>;
 enum class PluginType { CORE, NETWORK, STORAGE, SECURITY, MONITORING, LOGGING, CUSTOM };
 
 // Plugin information structure
+// Helper struct to avoid swappable parameters
+struct PluginInfoParams {
+    std::string name;
+    std::string version;
+    std::string description;
+    PluginType type;
+    std::string author = "";
+    std::string license = "";
+};
+
 class PluginInfo {
 public:
     PluginInfo() = default;
 
-    PluginInfo(const std::string& name,
-               const std::string& version,
-               const std::string& description,
-               PluginType type,
-               const std::string& author = "",
-               const std::string& license = "")
-        : name_(name), version_(version), description_(description), type_(type), author_(author),
-          license_(license)
+    explicit PluginInfo(const PluginInfoParams& params)
+        : name_(params.name), version_(params.version), description_(params.description),
+          type_(params.type), author_(params.author), license_(params.license)
     {}
 
     // Getters

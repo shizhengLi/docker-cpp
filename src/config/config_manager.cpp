@@ -51,6 +51,43 @@ std::string simpleJsonEscape(const std::string& str)
 
 namespace docker_cpp {
 
+#if HAS_NLOHMANN_JSON
+namespace {
+// Helper function to process JSON arrays efficiently
+std::string processJsonArray(const nlohmann::json& j)
+{
+    std::string array_str;
+    size_t total_size = 0;
+    std::vector<std::string> items;
+
+    // First pass: collect items and calculate total size
+    for (const auto& item : j) {
+        std::string item_str;
+        if (item.is_string()) {
+            item_str = item.get<std::string>();
+        }
+        else {
+            item_str = item.dump();
+        }
+        items.push_back(std::move(item_str));
+        total_size += items.back().length();
+    }
+
+    // Reserve space and concatenate efficiently
+    if (!items.empty()) {
+        array_str.reserve(total_size + items.size() - 1); // + commas
+        for (size_t i = 0; i < items.size(); ++i) {
+            if (i > 0) {
+                array_str += ",";
+            }
+            array_str += items[i];
+        }
+    }
+    return array_str;
+}
+} // namespace
+#endif
+
 std::string ConfigValue::toString() const
 {
     switch (getType()) {
@@ -242,7 +279,15 @@ void ConfigManager::mergeFromJsonString(const std::string& json_string)
             [&](const nlohmann::json& j, const std::string& prefix) {
                 if (j.is_object()) {
                     for (auto& [key, value] : j.items()) {
-                        std::string full_key = prefix.empty() ? key : prefix + "." + key;
+                        std::string full_key;
+                        if (prefix.empty()) {
+                            full_key = key;
+                        } else {
+                            full_key.reserve(prefix.length() + 1 + key.length());
+                            full_key = prefix;
+                            full_key += ".";
+                            full_key += key;
+                        }
                         process_json(value, full_key);
                     }
                 }
@@ -259,19 +304,7 @@ void ConfigManager::mergeFromJsonString(const std::string& json_string)
                     set(prefix, j.get<bool>());
                 }
                 else if (j.is_array()) {
-                    // Convert arrays to comma-separated strings
-                    std::string array_str;
-                    for (const auto& item : j) {
-                        if (!array_str.empty())
-                            array_str += ",";
-                        if (item.is_string()) {
-                            array_str += item.get<std::string>();
-                        }
-                        else {
-                            array_str += item.dump();
-                        }
-                    }
-                    set(prefix, array_str);
+                    set(prefix, processJsonArray(j));
                 }
             };
 
@@ -571,6 +604,8 @@ std::string ConfigManager::expandValue(const std::string& value) const
         std::smatch match = *iter;
         std::string var_name = match[1].str();
 
+        // Note: std::getenv is not thread-safe, but this is acceptable for config loading
+        // which typically happens during single-threaded initialization
         const char* env_value = std::getenv(var_name.c_str());
         std::string replacement = env_value ? env_value : "";
 
