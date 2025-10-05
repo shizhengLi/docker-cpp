@@ -148,7 +148,7 @@ TEST_F(Phase1BasicIntegrationTest, EventIntegration)
     std::string received_data;
 
     // Subscribe to events
-    auto subscription_id = event_manager_->subscribe("test.integration", [&](const Event& event) {
+    event_manager_->subscribe("test.integration", [&](const Event& event) {
         event_received = true;
         received_type = event.getType();
         received_data = event.getData();
@@ -232,8 +232,7 @@ TEST_F(Phase1BasicIntegrationTest, CompleteWorkflow)
 
     // Set up event subscription
     int event_count = 0;
-    auto subscription_id =
-        event_manager_->subscribe("workflow.test", [&](const Event& event) { event_count++; });
+    event_manager_->subscribe("workflow.test", [&](const Event& /* event */) { event_count++; });
 
     // Run workflow
     for (int i = 0; i < config_manager_->get<int>("workflow.iterations"); ++i) {

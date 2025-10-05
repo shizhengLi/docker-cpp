@@ -164,8 +164,8 @@ TEST_F(Phase1PerformanceBenchmarks, EventSystemPerformance)
 
     // Set up event subscription
     int events_received = 0;
-    auto subscription_id = event_manager_->subscribe(
-        "benchmark.event", [&](const Event& event) { events_received++; });
+    event_manager_->subscribe("benchmark.event",
+                              [&](const Event& /* event */) { events_received++; });
 
     auto benchmark = [&]() {
         events_received = 0;
