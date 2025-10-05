@@ -7,7 +7,7 @@
 #include <vector>
 #include "container.hpp"
 
-namespace dockercpp {
+namespace docker_cpp {
 namespace core {
 class Logger;
 class ConfigManager;
@@ -239,52 +239,7 @@ std::chrono::milliseconds measureOperation(std::function<void()> operation);
 ResourceStats calculateResourceDelta(const ResourceStats& before, const ResourceStats& after);
 } // namespace runtime_utils
 
-// Exception classes
-// class ContainerRuntimeError : public std::exception { // Commented out - defined in container_config.hpp
-public:
-    ContainerRuntimeError(const std::string& message) : message_(message) {}
-    const char* what() const noexcept override
-    {
-        return message_.c_str();
-    }
-
-private:
-    std::string message_;
-};
-
-class ContainerNotFoundError : public ContainerRuntimeError {
-public:
-    ContainerNotFoundError(const std::string& id)
-        : ContainerRuntimeError("Container not found: " + id)
-    {}
-};
-
-class InvalidContainerStateError : public ContainerRuntimeError {
-public:
-    InvalidContainerStateError(const std::string& id,
-                               ContainerState current,
-                               ContainerState expected)
-        : ContainerRuntimeError("Invalid container state for " + id + ": expected "
-                                + containerStateToString(expected) + ", got "
-                                + containerStateToString(current))
-    {}
-};
-
-class ContainerConfigurationError : public ContainerRuntimeError {
-public:
-    ContainerConfigurationError(const std::string& message)
-        : ContainerRuntimeError("Container configuration error: " + message)
-    {}
-};
-
-class ResourceLimitError : public ContainerRuntimeError {
-public:
-    ResourceLimitError(const std::string& message)
-        : ContainerRuntimeError("Resource limit error: " + message)
-    {}
-};
-
 // Exception classes are defined in container_config.hpp to avoid duplicates
 
 } // namespace runtime
-} // namespace dockercpp
+} // namespace docker_cpp

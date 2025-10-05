@@ -6,16 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace dockercpp {
-namespace core {
-class Logger;
-class EventManager;
-} // namespace core
-
-namespace plugin {
-class PluginRegistry;
-} // namespace plugin
-
+namespace docker_cpp {
 namespace runtime {
 
 // Exception types for container operations
@@ -321,4 +312,4 @@ bool isValidContainerName(const std::string& name);
 bool isValidContainerId(const std::string& id);
 
 } // namespace runtime
-} // namespace dockercpp
+} // namespace docker_cpp

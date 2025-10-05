@@ -1,8 +1,9 @@
 #include "container.hpp"
 #include <algorithm>
+#include <iostream>
 #include <random>
 
-namespace dockercpp {
+namespace docker_cpp {
 namespace runtime {
 
 // ContainerRegistry implementation
@@ -20,14 +21,12 @@ ContainerRegistry::~ContainerRegistry() {
 }
 
 ContainerRegistry::ContainerRegistry(ContainerRegistry&& other) noexcept
-    : mutex_(std::move(other.mutex_))
-    , containers_(std::move(other.containers_))
+    : containers_(std::move(other.containers_))
     , name_to_id_(std::move(other.name_to_id_))
     , logger_(other.logger_)
     , event_manager_(other.event_manager_)
     , plugin_registry_(std::move(other.plugin_registry_))
-    , global_callback_(std::move(other.global_callback_))
-    , callback_mutex_(std::move(other.callback_mutex_)) {
+    , global_callback_(std::move(other.global_callback_)) {
 
     other.logger_ = nullptr;
     other.event_manager_ = nullptr;
@@ -37,14 +36,12 @@ ContainerRegistry& ContainerRegistry::operator=(ContainerRegistry&& other) noexc
     if (this != &other) {
         shutdown();
 
-        mutex_ = std::move(other.mutex_);
         containers_ = std::move(other.containers_);
         name_to_id_ = std::move(other.name_to_id_);
         logger_ = other.logger_;
         event_manager_ = other.event_manager_;
         plugin_registry_ = std::move(other.plugin_registry_);
         global_callback_ = std::move(other.global_callback_);
-        callback_mutex_ = std::move(other.callback_mutex_);
 
         other.logger_ = nullptr;
         other.event_manager_ = nullptr;
@@ -87,7 +84,7 @@ std::shared_ptr<Container> ContainerRegistry::createContainer(const ContainerCon
 
         // Set up event callback
         container->setEventCallback([this](const Container& cont, ContainerState old_state, ContainerState new_state) {
-            onContainerEvent(cont.getId(), cont, old_state, new_state);
+            onContainerEvent(cont.getInfo().id, cont, old_state, new_state);
         });
 
         // Register container
@@ -285,8 +282,8 @@ void ContainerRegistry::cleanupStoppedContainers() {
 
     for (const auto& [id, container] : containers_) {
         ContainerState state = container->getState();
-        if (state == ContainerState::STOPPED || state == ContainerState::EXITED ||
-            state == ContainerState::DEAD || state == ContainerState::ERROR) {
+        if (state == ContainerState::STOPPED || state == ContainerState::DEAD ||
+            state == ContainerState::ERROR) {
             // Check if container has been stopped for more than 5 minutes
             auto info = container->getInfo();
             auto time_since_stop = std::chrono::system_clock::now() - info.finished_at;
@@ -303,7 +300,7 @@ void ContainerRegistry::cleanupStoppedContainers() {
             unregisterContainer(id);
             logInfo("Auto-removed stopped container: " + id);
         } catch (const std::exception& e) {
-            logWarning("Failed to auto-remove container " + id + ": " + std::string(e.what()));
+            logError("Failed to auto-remove container " + id + ": " + std::string(e.what()));
         }
     }
 
@@ -342,7 +339,7 @@ void ContainerRegistry::shutdown() {
                 container->stop(5);
                 logInfo("Stopped container during shutdown: " + id);
             } catch (const std::exception& e) {
-                logWarning("Failed to stop container " + id + " during shutdown: " + std::string(e.what()));
+                logError("Failed to stop container " + id + " during shutdown: " + std::string(e.what()));
             }
         }
     }
@@ -416,7 +413,7 @@ bool ContainerRegistry::isNameUnique(const std::string& name) const {
 }
 
 void ContainerRegistry::registerContainer(std::shared_ptr<Container> container) {
-    const std::string& id = container->getId();
+    const std::string& id = container->getInfo().id;
     const std::string& name = container->getConfig().name;
 
     containers_[id] = container;
@@ -447,7 +444,7 @@ void ContainerRegistry::onContainerEvent(const std::string& container_id,
             try {
                 global_callback_(container_id, container, old_state, new_state);
             } catch (const std::exception& e) {
-                logWarning("Global event callback failed: " + std::string(e.what()));
+                logError("Global event callback failed: " + std::string(e.what()));
             }
         }
     }
@@ -469,22 +466,19 @@ void ContainerRegistry::validateContainerConfig(const ContainerConfig& config) c
 }
 
 void ContainerRegistry::logInfo(const std::string& message) const {
-    if (logger_) {
-        logger_->info("ContainerRegistry", message);
-    }
+    // TODO: Implement logging when Logger integration is complete
+    std::cout << "[ContainerRegistry] " << message << std::endl;
 }
 
 void ContainerRegistry::logError(const std::string& message) const {
-    if (logger_) {
-        logger_->error("ContainerRegistry", message);
-    }
+    // TODO: Implement logging when Logger integration is complete
+    std::cerr << "[ContainerRegistry] ERROR: " << message << std::endl;
 }
 
-void ContainerRegistry::logWarning(const std::string& message) const {
-    if (logger_) {
-        logger_->warning("ContainerRegistry", message);
-    }
-}
+// void ContainerRegistry::logWarning(const std::string& message) const {
+//     // TODO: Implement logging when Logger integration is complete
+//     std::cout << "[ContainerRegistry] WARNING: " << message << std::endl;
+// }
 
 } // namespace runtime
-} // namespace dockercpp
+} // namespace docker_cpp

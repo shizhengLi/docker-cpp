@@ -8,7 +8,7 @@
 #include <thread>
 #include "container_config.hpp"
 
-namespace dockercpp {
+namespace docker_cpp {
 namespace core {
 class Logger;
 class EventManager;
@@ -102,14 +102,14 @@ private:
     std::atomic<bool> removed_;
 
     // Process management
-    std::unique_ptr<process::ProcessManager> process_manager_;
+    // std::unique_ptr<process::ProcessManager> process_manager_;  // TODO: Replace with actual type
     std::atomic<pid_t> main_pid_;
     std::atomic<int> exit_code_;
     std::string exit_reason_;
 
     // Resource management (placeholders for future integration)
-    std::unique_ptr<void> cgroup_manager_;  // TODO: Replace with actual type
-    std::unique_ptr<void> namespace_managers_;  // TODO: Replace with actual type
+    // std::unique_ptr<void> cgroup_manager_;  // TODO: Replace with actual type
+    // std::unique_ptr<void> namespace_managers_;  // TODO: Replace with actual type
 
     // Timing
     std::chrono::system_clock::time_point created_at_;
@@ -257,4 +257,4 @@ std::string generateContainerId();
 std::string generateContainerName(const std::string& prefix = "docker-cpp-");
 
 } // namespace runtime
-} // namespace dockercpp
+} // namespace docker_cpp

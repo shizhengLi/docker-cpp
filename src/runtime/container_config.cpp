@@ -6,68 +6,68 @@
 #include <regex>
 #include <sstream>
 
-namespace dockercpp {
+namespace docker_cpp {
 namespace runtime {
 
-std::string containerStateToString(ContainerState state)
+std::string containerStateToString(runtime::ContainerState state)
 {
     switch (state) {
-        case ContainerState::CREATED:
+        case runtime::ContainerState::CREATED:
             return "created";
-        case ContainerState::STARTING:
+        case runtime::ContainerState::STARTING:
             return "starting";
-        case ContainerState::RUNNING:
+        case runtime::ContainerState::RUNNING:
             return "running";
-        case ContainerState::PAUSED:
+        case runtime::ContainerState::PAUSED:
             return "paused";
-        case ContainerState::STOPPING:
+        case runtime::ContainerState::STOPPING:
             return "stopping";
-        case ContainerState::STOPPED:
+        case runtime::ContainerState::STOPPED:
             return "stopped";
-        case ContainerState::REMOVING:
+        case runtime::ContainerState::REMOVING:
             return "removing";
-        case ContainerState::REMOVED:
+        case runtime::ContainerState::REMOVED:
             return "removed";
-        case ContainerState::DEAD:
+        case runtime::ContainerState::DEAD:
             return "dead";
-        case ContainerState::RESTARTING:
+        case runtime::ContainerState::RESTARTING:
             return "restarting";
-        case ContainerState::ERROR:
+        case runtime::ContainerState::ERROR:
             return "error";
         default:
             return "unknown";
     }
 }
 
-ContainerState stringToContainerState(const std::string& state_str)
+runtime::ContainerState stringToContainerState(const std::string& state_str)
 {
     std::string lower_state = state_str;
     std::transform(lower_state.begin(), lower_state.end(), lower_state.begin(), ::tolower);
 
     if (lower_state == "created")
-        return ContainerState::CREATED;
+        return runtime::ContainerState::CREATED;
     if (lower_state == "starting")
-        return ContainerState::STARTING;
+        return runtime::ContainerState::STARTING;
     if (lower_state == "running")
-        return ContainerState::RUNNING;
+        return runtime::ContainerState::RUNNING;
     if (lower_state == "paused")
-        return ContainerState::PAUSED;
+        return runtime::ContainerState::PAUSED;
     if (lower_state == "stopping")
-        return ContainerState::STOPPING;
+        return runtime::ContainerState::STOPPING;
     if (lower_state == "stopped")
-        return ContainerState::STOPPED;
+        return runtime::ContainerState::STOPPED;
     if (lower_state == "removing")
-        return ContainerState::REMOVING;
+        return runtime::ContainerState::REMOVING;
     if (lower_state == "removed")
-        return ContainerState::REMOVED;
+        return runtime::ContainerState::REMOVED;
     if (lower_state == "dead")
-        return ContainerState::DEAD;
+        return runtime::ContainerState::DEAD;
     if (lower_state == "restarting")
-        return ContainerState::RESTARTING;
+        return runtime::ContainerState::RESTARTING;
     if (lower_state == "error")
-        return ContainerState::ERROR;
+        return runtime::ContainerState::ERROR;
 
-    return ContainerState::ERROR; // Default to error for unknown states
+    return runtime::ContainerState::ERROR; // Default to error for unknown states
 }
 
 bool ContainerConfig::isValid() const
@@ -251,4 +251,4 @@ bool isValidContainerId(const std::string& id)
 }
 
 } // namespace runtime
-} // namespace dockercpp
+} // namespace docker_cpp
