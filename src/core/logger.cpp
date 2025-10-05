@@ -1,7 +1,7 @@
+#include <algorithm>
+#include <cstdio>
 #include <docker-cpp/core/logger.hpp>
 #include <iomanip>
-#include <cstdio>
-#include <algorithm>
 
 namespace docker_cpp {
 
@@ -9,7 +9,8 @@ namespace docker_cpp {
 std::unordered_map<std::string, std::unique_ptr<Logger>> Logger::instances_;
 std::mutex Logger::instances_mutex_;
 
-Logger* Logger::getInstance(const std::string& name) {
+Logger* Logger::getInstance(const std::string& name)
+{
     std::lock_guard<std::mutex> lock(instances_mutex_);
 
     auto it = instances_.find(name);
@@ -21,19 +22,21 @@ Logger* Logger::getInstance(const std::string& name) {
     return it->second.get();
 }
 
-void Logger::resetInstance(const std::string& name) {
+void Logger::resetInstance(const std::string& name)
+{
     std::lock_guard<std::mutex> lock(instances_mutex_);
     instances_.erase(name);
 }
 
 Logger::Logger(const std::string& name)
-    : name_(name)
-    , level_(LogLevel::INFO)
-    , pattern_("[%l] %n: %v")  // Default pattern: [level] name: message
-    , console_sink_enabled_(true) {
-}
+    : name_(name), level_(LogLevel::INFO),
+      pattern_("[%l] %n: %v") // Default pattern: [level] name: message
+      ,
+      console_sink_enabled_(true)
+{}
 
-Logger::~Logger() {
+Logger::~Logger()
+{
     flush();
 
     // Close all file sinks
@@ -41,32 +44,39 @@ Logger::~Logger() {
     file_sinks_.clear();
 }
 
-void Logger::setLevel(LogLevel level) {
+void Logger::setLevel(LogLevel level)
+{
     level_ = level;
 }
 
-LogLevel Logger::getLevel() const {
+LogLevel Logger::getLevel() const
+{
     return level_;
 }
 
-bool Logger::isLevelEnabled(LogLevel level) const {
+bool Logger::isLevelEnabled(LogLevel level) const
+{
     return level >= level_;
 }
 
-void Logger::setPattern(const std::string& pattern) {
+void Logger::setPattern(const std::string& pattern)
+{
     pattern_ = pattern;
 }
 
-void Logger::setConsoleSinkEnabled(bool enabled) {
+void Logger::setConsoleSinkEnabled(bool enabled)
+{
     console_sink_enabled_ = enabled;
 }
 
-void Logger::addSink(LogSink sink, LogLevel level) {
+void Logger::addSink(LogSink sink, LogLevel level)
+{
     std::lock_guard<std::mutex> lock(sinks_mutex_);
     sinks_.push_back({std::move(sink), level});
 }
 
-void Logger::addFileSink(const std::filesystem::path& file_path, LogLevel level) {
+void Logger::addFileSink(const std::filesystem::path& file_path, LogLevel level)
+{
     std::lock_guard<std::mutex> lock(file_sinks_mutex_);
 
     // Create directory if it doesn't exist
@@ -92,10 +102,12 @@ void Logger::addFileSink(const std::filesystem::path& file_path, LogLevel level)
     addSink(std::move(file_sink), level);
 }
 
-void Logger::removeFileSink(const std::filesystem::path& file_path) {
+void Logger::removeFileSink(const std::filesystem::path& file_path)
+{
     std::lock_guard<std::mutex> lock(sinks_mutex_);
 
-    // Remove from sinks vector (simplified - we clear all sinks since we can't easily identify file sinks)
+    // Remove from sinks vector (simplified - we clear all sinks since we can't easily identify file
+    // sinks)
     sinks_.clear();
 
     // Close file stream
@@ -105,7 +117,8 @@ void Logger::removeFileSink(const std::filesystem::path& file_path) {
     }
 }
 
-void Logger::clearSinks() {
+void Logger::clearSinks()
+{
     std::lock_guard<std::mutex> lock(sinks_mutex_);
     sinks_.clear();
 
@@ -113,7 +126,8 @@ void Logger::clearSinks() {
     file_sinks_.clear();
 }
 
-void Logger::flush() {
+void Logger::flush()
+{
     std::lock_guard<std::mutex> file_lock(file_sinks_mutex_);
     for (auto& [path, stream] : file_sinks_) {
         if (stream && stream->is_open()) {
@@ -123,11 +137,13 @@ void Logger::flush() {
     std::cout.flush();
 }
 
-std::string Logger::getName() const {
+std::string Logger::getName() const
+{
     return name_;
 }
 
-void Logger::log(LogLevel level, const std::string& message) {
+void Logger::log(LogLevel level, const std::string& message)
+{
     if (!isLevelEnabled(level)) {
         return;
     }
@@ -155,7 +171,8 @@ void Logger::log(LogLevel level, const std::string& message) {
     }
 }
 
-void Logger::logToFile(const std::filesystem::path& file_path, const LogMessage& message) {
+void Logger::logToFile(const std::filesystem::path& file_path, const LogMessage& message)
+{
     std::lock_guard<std::mutex> lock(file_sinks_mutex_);
 
     auto it = file_sinks_.find(file_path);
@@ -164,7 +181,8 @@ void Logger::logToFile(const std::filesystem::path& file_path, const LogMessage&
     }
 }
 
-std::string Logger::formatMessage(const LogMessage& message) const {
+std::string Logger::formatMessage(const LogMessage& message) const
+{
     std::string result = pattern_;
 
     // Replace format tokens
@@ -210,33 +228,49 @@ std::string Logger::formatMessage(const LogMessage& message) const {
     return result;
 }
 
-std::string Logger::formatString(const std::string& format) const {
+std::string Logger::formatString(const std::string& format) const
+{
     return format;
 }
 
 // Utility functions
-std::string toString(LogLevel level) {
+std::string toString(LogLevel level)
+{
     switch (level) {
-        case LogLevel::TRACE:    return "TRACE";
-        case LogLevel::DEBUG:    return "DEBUG";
-        case LogLevel::INFO:     return "INFO";
-        case LogLevel::WARNING:  return "WARNING";
-        case LogLevel::ERROR:    return "ERROR";
-        case LogLevel::CRITICAL: return "CRITICAL";
-        default:                 return "UNKNOWN";
+        case LogLevel::TRACE:
+            return "TRACE";
+        case LogLevel::DEBUG:
+            return "DEBUG";
+        case LogLevel::INFO:
+            return "INFO";
+        case LogLevel::WARNING:
+            return "WARNING";
+        case LogLevel::ERROR:
+            return "ERROR";
+        case LogLevel::CRITICAL:
+            return "CRITICAL";
+        default:
+            return "UNKNOWN";
     }
 }
 
-LogLevel fromString(const std::string& level_str) {
+LogLevel fromString(const std::string& level_str)
+{
     std::string upper_str = level_str;
     std::transform(upper_str.begin(), upper_str.end(), upper_str.begin(), ::toupper);
 
-    if (upper_str == "TRACE")    return LogLevel::TRACE;
-    if (upper_str == "DEBUG")    return LogLevel::DEBUG;
-    if (upper_str == "INFO")     return LogLevel::INFO;
-    if (upper_str == "WARNING")  return LogLevel::WARNING;
-    if (upper_str == "ERROR")    return LogLevel::ERROR;
-    if (upper_str == "CRITICAL") return LogLevel::CRITICAL;
+    if (upper_str == "TRACE")
+        return LogLevel::TRACE;
+    if (upper_str == "DEBUG")
+        return LogLevel::DEBUG;
+    if (upper_str == "INFO")
+        return LogLevel::INFO;
+    if (upper_str == "WARNING")
+        return LogLevel::WARNING;
+    if (upper_str == "ERROR")
+        return LogLevel::ERROR;
+    if (upper_str == "CRITICAL")
+        return LogLevel::CRITICAL;
 
     // Default to INFO for invalid strings
     return LogLevel::INFO;

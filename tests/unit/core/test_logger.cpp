@@ -1,19 +1,20 @@
 #include <gtest/gtest.h>
-#include <memory>
-#include <string>
-#include <vector>
-#include <sstream>
-#include <fstream>
-#include <thread>
 #include <chrono>
-#include <filesystem>
 #include <docker-cpp/core/logger.hpp>
+#include <filesystem>
+#include <fstream>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <vector>
 
 using namespace docker_cpp;
 
 class LoggerTest : public ::testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         test_dir = std::filesystem::temp_directory_path() / "docker_cpp_logger_test";
         std::filesystem::create_directories(test_dir);
 
@@ -21,7 +22,8 @@ protected:
         Logger::resetInstance();
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         Logger::resetInstance();
         std::filesystem::remove_all(test_dir);
     }
@@ -29,7 +31,8 @@ protected:
     std::filesystem::path test_dir;
 };
 
-TEST_F(LoggerTest, DefaultConstructorCreatesDefaultLogger) {
+TEST_F(LoggerTest, DefaultConstructorCreatesDefaultLogger)
+{
     auto logger = Logger::getInstance();
 
     EXPECT_NE(logger, nullptr);
@@ -38,7 +41,8 @@ TEST_F(LoggerTest, DefaultConstructorCreatesDefaultLogger) {
     EXPECT_FALSE(logger->isLevelEnabled(LogLevel::DEBUG));
 }
 
-TEST_F(LoggerTest, SetAndGetLogLevel) {
+TEST_F(LoggerTest, SetAndGetLogLevel)
+{
     auto logger = Logger::getInstance();
 
     logger->setLevel(LogLevel::DEBUG);
@@ -58,7 +62,8 @@ TEST_F(LoggerTest, SetAndGetLogLevel) {
     EXPECT_TRUE(logger->isLevelEnabled(LogLevel::CRITICAL));
 }
 
-TEST_F(LoggerTest, BasicLoggingOperations) {
+TEST_F(LoggerTest, BasicLoggingOperations)
+{
     auto logger = Logger::getInstance();
     logger->setLevel(LogLevel::DEBUG);
 
@@ -80,7 +85,8 @@ TEST_F(LoggerTest, BasicLoggingOperations) {
     EXPECT_NE(output.find("Critical message"), std::string::npos);
 }
 
-TEST_F(LoggerTest, LoggingWithParameters) {
+TEST_F(LoggerTest, LoggingWithParameters)
+{
     auto logger = Logger::getInstance();
     logger->setLevel(LogLevel::DEBUG);
 
@@ -97,7 +103,8 @@ TEST_F(LoggerTest, LoggingWithParameters) {
     EXPECT_NE(output.find("Memory usage: 85.5%"), std::string::npos);
 }
 
-TEST_F(LoggerTest, FileLogging) {
+TEST_F(LoggerTest, FileLogging)
+{
     auto logger = Logger::getInstance();
     std::filesystem::path log_file = test_dir / "test.log";
 
@@ -117,8 +124,7 @@ TEST_F(LoggerTest, FileLogging) {
     EXPECT_TRUE(std::filesystem::exists(log_file));
 
     std::ifstream file(log_file);
-    std::string content((std::istreambuf_iterator<char>(file)),
-                       std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
     // Debug message should not appear (file sink level is INFO)
     EXPECT_EQ(content.find("Debug message"), std::string::npos);
@@ -126,7 +132,8 @@ TEST_F(LoggerTest, FileLogging) {
     EXPECT_NE(content.find("Error message"), std::string::npos);
 }
 
-TEST_F(LoggerTest, MultipleFileSinks) {
+TEST_F(LoggerTest, MultipleFileSinks)
+{
     auto logger = Logger::getInstance();
     std::filesystem::path info_file = test_dir / "info.log";
     std::filesystem::path error_file = test_dir / "error.log";
@@ -147,7 +154,7 @@ TEST_F(LoggerTest, MultipleFileSinks) {
     // Check info file
     std::ifstream info_fh(info_file);
     std::string info_content((std::istreambuf_iterator<char>(info_fh)),
-                            std::istreambuf_iterator<char>());
+                             std::istreambuf_iterator<char>());
 
     EXPECT_NE(info_content.find("Info message"), std::string::npos);
     EXPECT_NE(info_content.find("Warning message"), std::string::npos);
@@ -157,7 +164,7 @@ TEST_F(LoggerTest, MultipleFileSinks) {
     // Check error file
     std::ifstream error_fh(error_file);
     std::string error_content((std::istreambuf_iterator<char>(error_fh)),
-                             std::istreambuf_iterator<char>());
+                              std::istreambuf_iterator<char>());
 
     EXPECT_EQ(error_content.find("Debug message"), std::string::npos);
     EXPECT_EQ(error_content.find("Info message"), std::string::npos);
@@ -166,7 +173,8 @@ TEST_F(LoggerTest, MultipleFileSinks) {
     EXPECT_NE(error_content.find("Critical message"), std::string::npos);
 }
 
-TEST_F(LoggerTest, CustomSink) {
+TEST_F(LoggerTest, CustomSink)
+{
     auto logger = Logger::getInstance();
     std::vector<std::string> captured_messages;
 
@@ -191,7 +199,8 @@ TEST_F(LoggerTest, CustomSink) {
     EXPECT_NE(captured_messages[1].find("[ERROR] Error message"), std::string::npos);
 }
 
-TEST_F(LoggerTest, LogMessageFormatting) {
+TEST_F(LoggerTest, LogMessageFormatting)
+{
     auto logger = Logger::getInstance();
     (void)logger; // Suppress unused variable warning
 
@@ -209,7 +218,8 @@ TEST_F(LoggerTest, LogMessageFormatting) {
     EXPECT_FALSE(msg.timestamp.time_since_epoch().count() == 0);
 }
 
-TEST_F(LoggerTest, LoggerNaming) {
+TEST_F(LoggerTest, LoggerNaming)
+{
     auto default_logger = Logger::getInstance("default");
     auto custom_logger = Logger::getInstance("custom");
 
@@ -223,7 +233,8 @@ TEST_F(LoggerTest, LoggerNaming) {
     EXPECT_EQ(default_logger, same_logger);
 }
 
-TEST_F(LoggerTest, RemoveFileSink) {
+TEST_F(LoggerTest, RemoveFileSink)
+{
     auto logger = Logger::getInstance();
     std::filesystem::path log_file = test_dir / "test.log";
 
@@ -237,14 +248,14 @@ TEST_F(LoggerTest, RemoveFileSink) {
     logger->flush();
 
     std::ifstream file(log_file);
-    std::string content((std::istreambuf_iterator<char>(file)),
-                       std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
     EXPECT_NE(content.find("Message before removal"), std::string::npos);
     EXPECT_EQ(content.find("Message after removal"), std::string::npos);
 }
 
-TEST_F(LoggerTest, ThreadSafety) {
+TEST_F(LoggerTest, ThreadSafety)
+{
     auto logger = Logger::getInstance();
     logger->setLevel(LogLevel::INFO);
 
@@ -271,8 +282,7 @@ TEST_F(LoggerTest, ThreadSafety) {
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     std::ifstream file(log_file);
-    std::string content((std::istreambuf_iterator<char>(file)),
-                       std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
     // Count occurrences of "Thread" to verify all messages were logged
     size_t thread_count = 0;
@@ -285,7 +295,8 @@ TEST_F(LoggerTest, ThreadSafety) {
     EXPECT_EQ(thread_count, num_threads * messages_per_thread);
 }
 
-TEST_F(LoggerTest, LogLevelToString) {
+TEST_F(LoggerTest, LogLevelToString)
+{
     EXPECT_EQ(toString(LogLevel::TRACE), "TRACE");
     EXPECT_EQ(toString(LogLevel::DEBUG), "DEBUG");
     EXPECT_EQ(toString(LogLevel::INFO), "INFO");
@@ -294,7 +305,8 @@ TEST_F(LoggerTest, LogLevelToString) {
     EXPECT_EQ(toString(LogLevel::CRITICAL), "CRITICAL");
 }
 
-TEST_F(LoggerTest, StringToLogLevel) {
+TEST_F(LoggerTest, StringToLogLevel)
+{
     EXPECT_EQ(fromString("TRACE"), LogLevel::TRACE);
     EXPECT_EQ(fromString("DEBUG"), LogLevel::DEBUG);
     EXPECT_EQ(fromString("INFO"), LogLevel::INFO);
@@ -304,7 +316,8 @@ TEST_F(LoggerTest, StringToLogLevel) {
     EXPECT_EQ(fromString("invalid"), LogLevel::INFO); // Default
 }
 
-TEST_F(LoggerTest, ConsoleSinkToggle) {
+TEST_F(LoggerTest, ConsoleSinkToggle)
+{
     auto logger = Logger::getInstance();
 
     testing::internal::CaptureStdout();
@@ -326,7 +339,8 @@ TEST_F(LoggerTest, ConsoleSinkToggle) {
     EXPECT_NE(output3.find("Message with console re-enabled"), std::string::npos);
 }
 
-TEST_F(LoggerTest, LogPatternFormatting) {
+TEST_F(LoggerTest, LogPatternFormatting)
+{
     auto logger = Logger::getInstance();
     logger->setPattern("[%l] %n: %v"); // [level] name: message
 
@@ -338,7 +352,8 @@ TEST_F(LoggerTest, LogPatternFormatting) {
     EXPECT_NE(output.find("Test message"), std::string::npos);
 }
 
-TEST_F(LoggerTest, LoggerReset) {
+TEST_F(LoggerTest, LoggerReset)
+{
     auto logger1 = Logger::getInstance("test");
     logger1->setLevel(LogLevel::ERROR);
 

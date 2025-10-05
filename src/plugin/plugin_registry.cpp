@@ -1,17 +1,19 @@
-#include <docker-cpp/plugin/plugin_registry.hpp>
 #include <algorithm>
+#include <docker-cpp/plugin/plugin_registry.hpp>
 #include <filesystem>
 #include <iostream>
 
 namespace docker_cpp {
 
-PluginRegistry::PluginRegistry(PluginRegistry&& other) noexcept {
+PluginRegistry::PluginRegistry(PluginRegistry&& other) noexcept
+{
     std::lock_guard<std::mutex> lock(other.mutex_);
     plugins_ = std::move(other.plugins_);
     plugin_loader_ = std::move(other.plugin_loader_);
 }
 
-PluginRegistry& PluginRegistry::operator=(PluginRegistry&& other) noexcept {
+PluginRegistry& PluginRegistry::operator=(PluginRegistry&& other) noexcept
+{
     if (this != &other) {
         std::lock(mutex_, other.mutex_);
         std::lock_guard<std::mutex> lock1(mutex_, std::adopt_lock);
@@ -23,21 +25,22 @@ PluginRegistry& PluginRegistry::operator=(PluginRegistry&& other) noexcept {
     return *this;
 }
 
-void PluginRegistry::registerPlugin(const std::string& name, std::unique_ptr<IPlugin> plugin) {
+void PluginRegistry::registerPlugin(const std::string& name, std::unique_ptr<IPlugin> plugin)
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     validatePluginName(name);
     validatePluginUniqueness(name);
 
     if (!plugin) {
-        throw ContainerError(ErrorCode::INVALID_PLUGIN,
-                           "Cannot register null plugin: " + name);
+        throw ContainerError(ErrorCode::INVALID_PLUGIN, "Cannot register null plugin: " + name);
     }
 
     plugins_[name] = std::move(plugin);
 }
 
-void PluginRegistry::unregisterPlugin(const std::string& name) {
+void PluginRegistry::unregisterPlugin(const std::string& name)
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     checkPluginExists(name);
@@ -51,7 +54,8 @@ void PluginRegistry::unregisterPlugin(const std::string& name) {
     plugins_.erase(it);
 }
 
-std::vector<std::string> PluginRegistry::getPluginNames() const {
+std::vector<std::string> PluginRegistry::getPluginNames() const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     std::vector<std::string> names;
@@ -64,12 +68,14 @@ std::vector<std::string> PluginRegistry::getPluginNames() const {
     return names;
 }
 
-bool PluginRegistry::hasPlugin(const std::string& name) const {
+bool PluginRegistry::hasPlugin(const std::string& name) const
+{
     std::lock_guard<std::mutex> lock(mutex_);
     return plugins_.find(name) != plugins_.end();
 }
 
-bool PluginRegistry::initializePlugin(const std::string& name, const PluginConfig& config) {
+bool PluginRegistry::initializePlugin(const std::string& name, const PluginConfig& config)
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     auto it = plugins_.find(name);
@@ -89,14 +95,16 @@ bool PluginRegistry::initializePlugin(const std::string& name, const PluginConfi
 
     try {
         return it->second->initialize(config);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         // Log error and return false
         std::cerr << "Failed to initialize plugin '" << name << "': " << e.what() << std::endl;
         return false;
     }
 }
 
-bool PluginRegistry::shutdownPlugin(const std::string& name) {
+bool PluginRegistry::shutdownPlugin(const std::string& name)
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     auto it = plugins_.find(name);
@@ -111,13 +119,16 @@ bool PluginRegistry::shutdownPlugin(const std::string& name) {
     try {
         it->second->shutdown();
         return true;
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::cerr << "Failed to shutdown plugin '" << name << "': " << e.what() << std::endl;
         return false;
     }
 }
 
-std::unordered_map<std::string, bool> PluginRegistry::initializeAllPlugins(const PluginConfig& config) {
+std::unordered_map<std::string, bool>
+PluginRegistry::initializeAllPlugins(const PluginConfig& config)
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     std::unordered_map<std::string, bool> results;
@@ -130,7 +141,8 @@ std::unordered_map<std::string, bool> PluginRegistry::initializeAllPlugins(const
     return results;
 }
 
-void PluginRegistry::shutdownAllPlugins() {
+void PluginRegistry::shutdownAllPlugins()
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     // Shutdown in reverse order of initialization
@@ -142,7 +154,8 @@ void PluginRegistry::shutdownAllPlugins() {
     }
 }
 
-PluginInfo PluginRegistry::getPluginInfo(const std::string& name) const {
+PluginInfo PluginRegistry::getPluginInfo(const std::string& name) const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     checkPluginExists(name);
@@ -151,7 +164,8 @@ PluginInfo PluginRegistry::getPluginInfo(const std::string& name) const {
     return it->second->getPluginInfo();
 }
 
-std::vector<PluginInfo> PluginRegistry::getAllPluginInfo() const {
+std::vector<PluginInfo> PluginRegistry::getAllPluginInfo() const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     std::vector<PluginInfo> infos;
@@ -164,7 +178,8 @@ std::vector<PluginInfo> PluginRegistry::getAllPluginInfo() const {
     return infos;
 }
 
-std::vector<std::string> PluginRegistry::getLoadOrder() const {
+std::vector<std::string> PluginRegistry::getLoadOrder() const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     std::vector<std::string> result;
@@ -175,7 +190,7 @@ std::vector<std::string> PluginRegistry::getLoadOrder() const {
     std::function<void(const std::string&)> visit = [&](const std::string& name) {
         if (visiting[name]) {
             throw ContainerError(ErrorCode::CIRCULAR_DEPENDENCY,
-                               "Circular dependency detected involving plugin: " + name);
+                                 "Circular dependency detected involving plugin: " + name);
         }
 
         if (visited[name]) {
@@ -207,7 +222,8 @@ std::vector<std::string> PluginRegistry::getLoadOrder() const {
     return result;
 }
 
-bool PluginRegistry::validateDependencies(const std::string& plugin_name) const {
+bool PluginRegistry::validateDependencies(const std::string& plugin_name) const
+{
     auto it = plugins_.find(plugin_name);
     if (it == plugins_.end()) {
         return false;
@@ -222,7 +238,8 @@ bool PluginRegistry::validateDependencies(const std::string& plugin_name) const 
     return true;
 }
 
-std::unordered_map<std::string, std::vector<std::string>> PluginRegistry::getDependencyGraph() const {
+std::unordered_map<std::string, std::vector<std::string>> PluginRegistry::getDependencyGraph() const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     std::unordered_map<std::string, std::vector<std::string>> graph;
@@ -234,15 +251,16 @@ std::unordered_map<std::string, std::vector<std::string>> PluginRegistry::getDep
     return graph;
 }
 
-void PluginRegistry::loadPluginsFromDirectory(const std::string& plugin_dir) {
+void PluginRegistry::loadPluginsFromDirectory(const std::string& plugin_dir)
+{
     if (!std::filesystem::exists(plugin_dir)) {
         throw ContainerError(ErrorCode::DIRECTORY_NOT_FOUND,
-                           "Plugin directory does not exist: " + plugin_dir);
+                             "Plugin directory does not exist: " + plugin_dir);
     }
 
     if (!plugin_loader_) {
         throw ContainerError(ErrorCode::PLUGIN_LOADER_NOT_SET,
-                           "Plugin loader not set. Use setPluginLoader() first.");
+                             "Plugin loader not set. Use setPluginLoader() first.");
     }
 
     for (const auto& entry : std::filesystem::directory_iterator(plugin_dir)) {
@@ -252,23 +270,29 @@ void PluginRegistry::loadPluginsFromDirectory(const std::string& plugin_dir) {
                 if (plugin) {
                     registerPlugin(plugin->getName(), std::move(plugin));
                 }
-            } catch (const std::exception& e) {
-                std::cerr << "Failed to load plugin from '" << entry.path() << "': " << e.what() << std::endl;
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Failed to load plugin from '" << entry.path() << "': " << e.what()
+                          << std::endl;
             }
         }
     }
 }
 
-void PluginRegistry::setPluginLoader(std::function<std::unique_ptr<IPlugin>(const std::string&)> loader) {
+void PluginRegistry::setPluginLoader(
+    std::function<std::unique_ptr<IPlugin>(const std::string&)> loader)
+{
     plugin_loader_ = std::move(loader);
 }
 
-size_t PluginRegistry::getPluginCount() const {
+size_t PluginRegistry::getPluginCount() const
+{
     std::lock_guard<std::mutex> lock(mutex_);
     return plugins_.size();
 }
 
-size_t PluginRegistry::getInitializedPluginCount() const {
+size_t PluginRegistry::getInitializedPluginCount() const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     size_t count = 0;
@@ -282,40 +306,43 @@ size_t PluginRegistry::getInitializedPluginCount() const {
 }
 
 // Private helper methods
-void PluginRegistry::validatePluginName(const std::string& name) const {
+void PluginRegistry::validatePluginName(const std::string& name) const
+{
     if (name.empty()) {
-        throw ContainerError(ErrorCode::INVALID_PLUGIN_NAME,
-                           "Plugin name cannot be empty");
+        throw ContainerError(ErrorCode::INVALID_PLUGIN_NAME, "Plugin name cannot be empty");
     }
 
     // Check for invalid characters
     if (name.find_first_of(" \t\n\r/") != std::string::npos) {
         throw ContainerError(ErrorCode::INVALID_PLUGIN_NAME,
-                           "Plugin name contains invalid characters: " + name);
+                             "Plugin name contains invalid characters: " + name);
     }
 }
 
-void PluginRegistry::validatePluginUniqueness(const std::string& name) const {
+void PluginRegistry::validatePluginUniqueness(const std::string& name) const
+{
     if (plugins_.find(name) != plugins_.end()) {
         throw ContainerError(ErrorCode::DUPLICATE_PLUGIN,
-                           "Plugin with name '" + name + "' is already registered");
+                             "Plugin with name '" + name + "' is already registered");
     }
 }
 
-void PluginRegistry::checkPluginExists(const std::string& name) const {
+void PluginRegistry::checkPluginExists(const std::string& name) const
+{
     if (plugins_.find(name) == plugins_.end()) {
-        throw ContainerError(ErrorCode::PLUGIN_NOT_FOUND,
-                           "Plugin not found: " + name);
+        throw ContainerError(ErrorCode::PLUGIN_NOT_FOUND, "Plugin not found: " + name);
     }
 }
 
-bool PluginRegistry::isDependencySatisfied(const std::string& dependency) const {
+bool PluginRegistry::isDependencySatisfied(const std::string& dependency) const
+{
     auto it = plugins_.find(dependency);
     return it != plugins_.end() && it->second->isInitialized();
 }
 
 // Private unsafe methods (assume mutex is already locked)
-std::vector<std::string> PluginRegistry::getLoadOrderUnsafe() const {
+std::vector<std::string> PluginRegistry::getLoadOrderUnsafe() const
+{
     std::vector<std::string> result;
     std::unordered_map<std::string, bool> visited;
     std::unordered_map<std::string, bool> visiting;
@@ -324,7 +351,7 @@ std::vector<std::string> PluginRegistry::getLoadOrderUnsafe() const {
     std::function<void(const std::string&)> visit = [&](const std::string& name) {
         if (visiting[name]) {
             throw ContainerError(ErrorCode::CIRCULAR_DEPENDENCY,
-                               "Circular dependency detected involving plugin: " + name);
+                                 "Circular dependency detected involving plugin: " + name);
         }
 
         if (visited[name]) {
@@ -356,7 +383,8 @@ std::vector<std::string> PluginRegistry::getLoadOrderUnsafe() const {
     return result;
 }
 
-bool PluginRegistry::initializePluginUnsafe(const std::string& name, const PluginConfig& config) {
+bool PluginRegistry::initializePluginUnsafe(const std::string& name, const PluginConfig& config)
+{
     auto it = plugins_.find(name);
     if (it == plugins_.end()) {
         return false;
@@ -374,14 +402,16 @@ bool PluginRegistry::initializePluginUnsafe(const std::string& name, const Plugi
 
     try {
         return it->second->initialize(config);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         // Log error and return false
         std::cerr << "Failed to initialize plugin '" << name << "': " << e.what() << std::endl;
         return false;
     }
 }
 
-bool PluginRegistry::shutdownPluginUnsafe(const std::string& name) {
+bool PluginRegistry::shutdownPluginUnsafe(const std::string& name)
+{
     auto it = plugins_.find(name);
     if (it == plugins_.end()) {
         return false;
@@ -394,13 +424,15 @@ bool PluginRegistry::shutdownPluginUnsafe(const std::string& name) {
     try {
         it->second->shutdown();
         return true;
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::cerr << "Failed to shutdown plugin '" << name << "': " << e.what() << std::endl;
         return false;
     }
 }
 
-bool PluginRegistry::validateDependenciesUnsafe(const std::string& plugin_name) const {
+bool PluginRegistry::validateDependenciesUnsafe(const std::string& plugin_name) const
+{
     auto it = plugins_.find(plugin_name);
     if (it == plugins_.end()) {
         return false;

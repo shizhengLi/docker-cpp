@@ -1,7 +1,7 @@
-#include <docker-cpp/core/event.hpp>
-#include <stdexcept>
 #include <algorithm>
+#include <docker-cpp/core/event.hpp>
 #include <iostream>
+#include <stdexcept>
 
 namespace docker_cpp {
 
@@ -12,26 +12,26 @@ std::unique_ptr<EventManager> EventManager::instance_;
 std::mutex EventManager::instance_mutex_;
 
 // Event implementation
-Event::Event(const std::string& type, const std::string& data,
+Event::Event(const std::string& type,
+             const std::string& data,
              const std::chrono::system_clock::time_point& timestamp,
              EventPriority priority)
-    : type_(type)
-    , data_(data)
-    , timestamp_(timestamp)
-    , id_(next_id_++)
-    , priority_(priority) {
-}
+    : type_(type), data_(data), timestamp_(timestamp), id_(next_id_++), priority_(priority)
+{}
 
-bool Event::hasMetadata(const std::string& key) const {
+bool Event::hasMetadata(const std::string& key) const
+{
     return metadata_.find(key) != metadata_.end();
 }
 
-void Event::removeMetadata(const std::string& key) {
+void Event::removeMetadata(const std::string& key)
+{
     metadata_.erase(key);
 }
 
 // EventManager implementation
-EventManager* EventManager::getInstance() {
+EventManager* EventManager::getInstance()
+{
     std::lock_guard<std::mutex> lock(instance_mutex_);
 
     if (!instance_) {
@@ -42,7 +42,8 @@ EventManager* EventManager::getInstance() {
     return instance_.get();
 }
 
-void EventManager::resetInstance() {
+void EventManager::resetInstance()
+{
     std::lock_guard<std::mutex> lock(instance_mutex_);
 
     if (instance_) {
@@ -55,7 +56,8 @@ void EventManager::resetInstance() {
     }
 }
 
-EventManager::~EventManager() {
+EventManager::~EventManager()
+{
     should_stop_ = true;
     queue_condition_.notify_all();
     if (processing_thread_.joinable()) {
@@ -64,8 +66,9 @@ EventManager::~EventManager() {
 }
 
 SubscriptionId EventManager::subscribe(const std::string& event_type_pattern,
-                                      EventListener listener,
-                                      EventPriority priority) {
+                                       EventListener listener,
+                                       EventPriority priority)
+{
     std::lock_guard<std::mutex> lock(subscriptions_mutex_);
 
     Subscription subscription;
@@ -86,13 +89,14 @@ SubscriptionId EventManager::subscribe(const std::string& event_type_pattern,
     return subscription.id;
 }
 
-void EventManager::unsubscribe(SubscriptionId subscription_id) {
+void EventManager::unsubscribe(SubscriptionId subscription_id)
+{
     std::lock_guard<std::mutex> lock(subscriptions_mutex_);
 
-    auto it = std::find_if(subscriptions_.begin(), subscriptions_.end(),
-                          [subscription_id](const Subscription& sub) {
-                              return sub.id == subscription_id;
-                          });
+    auto it = std::find_if(
+        subscriptions_.begin(), subscriptions_.end(), [subscription_id](const Subscription& sub) {
+            return sub.id == subscription_id;
+        });
 
     if (it != subscriptions_.end()) {
         it->active = false;
@@ -104,7 +108,8 @@ void EventManager::unsubscribe(SubscriptionId subscription_id) {
     }
 }
 
-void EventManager::publish(const Event& event) {
+void EventManager::publish(const Event& event)
+{
     {
         std::lock_guard<std::mutex> lock(event_queue_mutex_);
 
@@ -128,8 +133,9 @@ void EventManager::publish(const Event& event) {
 }
 
 void EventManager::enableBatching(const std::string& event_type,
-                                 std::chrono::milliseconds batch_interval,
-                                 size_t max_batch_size) {
+                                  std::chrono::milliseconds batch_interval,
+                                  size_t max_batch_size)
+{
     std::lock_guard<std::mutex> lock(batches_mutex_);
 
     BatchConfig config;
@@ -141,7 +147,8 @@ void EventManager::enableBatching(const std::string& event_type,
     batch_configs_[event_type] = std::move(config);
 }
 
-void EventManager::disableBatching(const std::string& event_type) {
+void EventManager::disableBatching(const std::string& event_type)
+{
     std::lock_guard<std::mutex> lock(batches_mutex_);
 
     auto it = batch_configs_.find(event_type);
@@ -154,12 +161,14 @@ void EventManager::disableBatching(const std::string& event_type) {
     }
 }
 
-EventStatistics EventManager::getStatistics() const {
+EventStatistics EventManager::getStatistics() const
+{
     std::lock_guard<std::mutex> lock(stats_mutex_);
     return stats_;
 }
 
-void EventManager::flush() {
+void EventManager::flush()
+{
     // Process all pending events
     while (true) {
         {
@@ -184,23 +193,24 @@ void EventManager::flush() {
     }
 }
 
-void EventManager::setMaxQueueSize(size_t max_size) {
+void EventManager::setMaxQueueSize(size_t max_size)
+{
     max_queue_size_ = max_size;
 }
 
-void EventManager::setProcessingThreads(size_t num_threads) {
+void EventManager::setProcessingThreads(size_t num_threads)
+{
     // For simplicity, we currently use one processing thread
     // This could be extended to use a thread pool
     (void)num_threads;
 }
 
-void EventManager::processEventQueue() {
+void EventManager::processEventQueue()
+{
     while (!should_stop_) {
         std::unique_lock<std::mutex> lock(event_queue_mutex_);
 
-        queue_condition_.wait(lock, [this] {
-            return !event_queue_.empty() || should_stop_;
-        });
+        queue_condition_.wait(lock, [this] { return !event_queue_.empty() || should_stop_; });
 
         if (should_stop_) {
             break;
@@ -224,7 +234,8 @@ void EventManager::processEventQueue() {
     }
 }
 
-void EventManager::processEvent(const Event& event) {
+void EventManager::processEvent(const Event& event)
+{
     // Check if batching is enabled for this event type
     {
         std::lock_guard<std::mutex> batches_lock(batches_mutex_);
@@ -239,7 +250,8 @@ void EventManager::processEvent(const Event& event) {
 
             if (it->second.pending_events.size() >= it->second.max_batch_size) {
                 should_flush = true;
-            } else if (now - it->second.last_flush >= it->second.interval) {
+            }
+            else if (now - it->second.last_flush >= it->second.interval) {
                 should_flush = true;
             }
 
@@ -257,7 +269,8 @@ void EventManager::processEvent(const Event& event) {
         std::lock_guard<std::mutex> lock(subscriptions_mutex_);
 
         for (const auto& subscription : subscriptions_) {
-            if (subscription.active && matchesPattern(event.getType(), subscription.event_type_pattern)) {
+            if (subscription.active
+                && matchesPattern(event.getType(), subscription.event_type_pattern)) {
                 active_subscriptions.push_back(subscription);
             }
         }
@@ -267,17 +280,20 @@ void EventManager::processEvent(const Event& event) {
     for (const auto& subscription : active_subscriptions) {
         try {
             subscription.listener(event);
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e) {
             std::cerr << "Exception in event listener: " << e.what() << std::endl;
             // Continue processing other listeners
-        } catch (...) {
+        }
+        catch (...) {
             std::cerr << "Unknown exception in event listener" << std::endl;
             // Continue processing other listeners
         }
     }
 }
 
-void EventManager::processBatch(const std::string& event_type) {
+void EventManager::processBatch(const std::string& event_type)
+{
     std::vector<Event> events_to_process;
 
     {
@@ -296,7 +312,8 @@ void EventManager::processBatch(const std::string& event_type) {
             std::lock_guard<std::mutex> lock(subscriptions_mutex_);
 
             for (const auto& subscription : subscriptions_) {
-                if (subscription.active && matchesPattern(event.getType(), subscription.event_type_pattern)) {
+                if (subscription.active
+                    && matchesPattern(event.getType(), subscription.event_type_pattern)) {
                     active_subscriptions.push_back(subscription);
                 }
             }
@@ -306,16 +323,19 @@ void EventManager::processBatch(const std::string& event_type) {
         for (const auto& subscription : active_subscriptions) {
             try {
                 subscription.listener(event);
-            } catch (const std::exception& e) {
+            }
+            catch (const std::exception& e) {
                 std::cerr << "Exception in event listener: " << e.what() << std::endl;
-            } catch (...) {
+            }
+            catch (...) {
                 std::cerr << "Unknown exception in event listener" << std::endl;
             }
         }
     }
 }
 
-bool EventManager::matchesPattern(const std::string& event_type, const std::string& pattern) const {
+bool EventManager::matchesPattern(const std::string& event_type, const std::string& pattern) const
+{
     if (pattern == "*") {
         return true; // Match all events
     }
@@ -337,21 +357,22 @@ bool EventManager::matchesPattern(const std::string& event_type, const std::stri
     try {
         std::regex re(regex_pattern);
         return std::regex_match(event_type, re);
-    } catch (const std::regex_error&) {
+    }
+    catch (const std::regex_error&) {
         // If regex is invalid, fall back to exact match
         return event_type == pattern;
     }
 }
 
-void EventManager::startProcessingThread() {
+void EventManager::startProcessingThread()
+{
     // Initialize the priority queue with custom comparator
-    event_queue_ = std::priority_queue<Event, std::vector<Event>,
-        std::function<bool(const Event&, const Event&)>>(
+    event_queue_ = std::
+        priority_queue<Event, std::vector<Event>, std::function<bool(const Event&, const Event&)>>(
             [](const Event& a, const Event& b) {
                 // Higher priority events should be processed first
                 return static_cast<int>(a.getPriority()) < static_cast<int>(b.getPriority());
-            }
-        );
+            });
 
     // Initialize statistics
     stats_ = {0, 0, 0, 0};

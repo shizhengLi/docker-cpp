@@ -1,29 +1,32 @@
 #include <gtest/gtest.h>
+#include <atomic>
+#include <chrono>
+#include <docker-cpp/core/event.hpp>
+#include <functional>
 #include <memory>
 #include <string>
-#include <vector>
-#include <functional>
 #include <thread>
-#include <chrono>
-#include <atomic>
-#include <docker-cpp/core/event.hpp>
+#include <vector>
 
 using namespace docker_cpp;
 
 class EventSimpleTest : public ::testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         // Reset event system before each test
         EventManager::resetInstance();
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         EventManager::resetInstance();
     }
 };
 
 // Test basic event creation and properties
-TEST_F(EventSimpleTest, BasicEventCreation) {
+TEST_F(EventSimpleTest, BasicEventCreation)
+{
     Event event("test.event", "Test event data");
 
     EXPECT_EQ(event.getType(), "test.event");
@@ -32,7 +35,8 @@ TEST_F(EventSimpleTest, BasicEventCreation) {
     EXPECT_GT(event.getId(), 0);
 }
 
-TEST_F(EventSimpleTest, EventMetadata) {
+TEST_F(EventSimpleTest, EventMetadata)
+{
     Event event("test.event", "Test data");
 
     // Test metadata operations
@@ -51,14 +55,16 @@ TEST_F(EventSimpleTest, EventMetadata) {
     EXPECT_FALSE(event.hasMetadata("key1"));
 }
 
-TEST_F(EventSimpleTest, EventManagerSingleton) {
+TEST_F(EventSimpleTest, EventManagerSingleton)
+{
     auto manager1 = EventManager::getInstance();
     auto manager2 = EventManager::getInstance();
 
     EXPECT_EQ(manager1, manager2);
 }
 
-TEST_F(EventSimpleTest, BasicEventPublishing) {
+TEST_F(EventSimpleTest, BasicEventPublishing)
+{
     auto manager = EventManager::getInstance();
 
     std::atomic<int> received_count{0};
@@ -79,7 +85,8 @@ TEST_F(EventSimpleTest, BasicEventPublishing) {
     EXPECT_EQ(received_count, 1);
 }
 
-TEST_F(EventSimpleTest, MultipleSubscribers) {
+TEST_F(EventSimpleTest, MultipleSubscribers)
+{
     auto manager = EventManager::getInstance();
 
     std::atomic<int> received1_count{0};
@@ -108,7 +115,8 @@ TEST_F(EventSimpleTest, MultipleSubscribers) {
     EXPECT_EQ(received2_count, 1);
 }
 
-TEST_F(EventSimpleTest, EventFiltering) {
+TEST_F(EventSimpleTest, EventFiltering)
+{
     auto manager = EventManager::getInstance();
 
     std::atomic<int> received_count{0};
@@ -135,7 +143,8 @@ TEST_F(EventSimpleTest, EventFiltering) {
     EXPECT_EQ(received_count, 2);
 }
 
-TEST_F(EventSimpleTest, UnsubscribeEvents) {
+TEST_F(EventSimpleTest, UnsubscribeEvents)
+{
     auto manager = EventManager::getInstance();
 
     std::atomic<int> received_count{0};
@@ -164,7 +173,8 @@ TEST_F(EventSimpleTest, UnsubscribeEvents) {
     EXPECT_EQ(received_count, 1);
 }
 
-TEST_F(EventSimpleTest, EventStatistics) {
+TEST_F(EventSimpleTest, EventStatistics)
+{
     auto manager = EventManager::getInstance();
 
     std::atomic<int> received_count{0};

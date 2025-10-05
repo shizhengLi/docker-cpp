@@ -1,31 +1,34 @@
 #include <gtest/gtest.h>
-#include <memory>
-#include <string>
-#include <vector>
-#include <functional>
-#include <thread>
-#include <chrono>
-#include <mutex>
 #include <atomic>
-#include <unordered_map>
+#include <chrono>
 #include <docker-cpp/core/event.hpp>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <vector>
 
 using namespace docker_cpp;
 
 class EventTest : public ::testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         // Reset event system before each test
         EventManager::resetInstance();
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         EventManager::resetInstance();
     }
 };
 
 // Test basic event creation and properties
-TEST_F(EventTest, BasicEventCreation) {
+TEST_F(EventTest, BasicEventCreation)
+{
     Event event("test.event", "Test event data");
 
     EXPECT_EQ(event.getType(), "test.event");
@@ -34,14 +37,16 @@ TEST_F(EventTest, BasicEventCreation) {
     EXPECT_GT(event.getId(), 0);
 }
 
-TEST_F(EventTest, EventWithCustomTimestamp) {
+TEST_F(EventTest, EventWithCustomTimestamp)
+{
     auto custom_time = std::chrono::system_clock::now() - std::chrono::hours(1);
     Event event("test.event", "Test data", custom_time);
 
     EXPECT_EQ(event.getTimestamp(), custom_time);
 }
 
-TEST_F(EventTest, EventCopyAndMove) {
+TEST_F(EventTest, EventCopyAndMove)
+{
     Event original("test.event", "Original data");
     EventId original_id = original.getId();
 
@@ -61,20 +66,20 @@ TEST_F(EventTest, EventCopyAndMove) {
 }
 
 // Test event manager basic functionality
-TEST_F(EventTest, EventManagerSingleton) {
+TEST_F(EventTest, EventManagerSingleton)
+{
     auto manager1 = EventManager::getInstance();
     auto manager2 = EventManager::getInstance();
 
     EXPECT_EQ(manager1, manager2);
 }
 
-TEST_F(EventTest, BasicEventPublishing) {
+TEST_F(EventTest, BasicEventPublishing)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
-    EventListener listener = [&](const Event& event) {
-        received_events.push_back(event);
-    };
+    EventListener listener = [&](const Event& event) { received_events.push_back(event); };
 
     manager->subscribe("test.event", listener);
 
@@ -89,7 +94,8 @@ TEST_F(EventTest, BasicEventPublishing) {
     EXPECT_EQ(received_events[0].getData(), "Test data");
 }
 
-TEST_F(EventTest, MultipleSubscribers) {
+TEST_F(EventTest, MultipleSubscribers)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received1, received2;
@@ -108,13 +114,12 @@ TEST_F(EventTest, MultipleSubscribers) {
     EXPECT_EQ(received2[0].getData(), "Test data");
 }
 
-TEST_F(EventTest, EventFiltering) {
+TEST_F(EventTest, EventFiltering)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
-    EventListener listener = [&](const Event& event) {
-        received_events.push_back(event);
-    };
+    EventListener listener = [&](const Event& event) { received_events.push_back(event); };
 
     manager->subscribe("test.event", listener);
 
@@ -132,13 +137,12 @@ TEST_F(EventTest, EventFiltering) {
     EXPECT_EQ(received_events[1].getData(), "Should also receive");
 }
 
-TEST_F(EventTest, UnsubscribeEvents) {
+TEST_F(EventTest, UnsubscribeEvents)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
-    EventListener listener = [&](const Event& event) {
-        received_events.push_back(event);
-    };
+    EventListener listener = [&](const Event& event) { received_events.push_back(event); };
 
     SubscriptionId subscription = manager->subscribe("test.event", listener);
 
@@ -154,13 +158,12 @@ TEST_F(EventTest, UnsubscribeEvents) {
     EXPECT_EQ(received_events[0].getData(), "Before unsubscribe");
 }
 
-TEST_F(EventTest, WildcardSubscriptions) {
+TEST_F(EventTest, WildcardSubscriptions)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
-    EventListener listener = [&](const Event& event) {
-        received_events.push_back(event);
-    };
+    EventListener listener = [&](const Event& event) { received_events.push_back(event); };
 
     manager->subscribe("test.*", listener);
 
@@ -177,7 +180,8 @@ TEST_F(EventTest, WildcardSubscriptions) {
     EXPECT_EQ(received_events[1].getType(), "test.event2");
 }
 
-TEST_F(EventTest, ThreadSafety) {
+TEST_F(EventTest, ThreadSafety)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
@@ -197,7 +201,8 @@ TEST_F(EventTest, ThreadSafety) {
     for (int i = 0; i < num_threads; ++i) {
         threads.emplace_back([&, i]() {
             for (int j = 0; j < events_per_thread; ++j) {
-                Event event("test.event", "Thread " + std::to_string(i) + " Event " + std::to_string(j));
+                Event event("test.event",
+                            "Thread " + std::to_string(i) + " Event " + std::to_string(j));
                 manager->publish(event);
             }
         });
@@ -214,13 +219,12 @@ TEST_F(EventTest, ThreadSafety) {
     EXPECT_EQ(received_events.size(), num_threads * events_per_thread);
 }
 
-TEST_F(EventTest, EventQueueing) {
+TEST_F(EventTest, EventQueueing)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
-    EventListener listener = [&](const Event& event) {
-        received_events.push_back(event);
-    };
+    EventListener listener = [&](const Event& event) { received_events.push_back(event); };
 
     manager->subscribe("test.event", listener);
 
@@ -241,7 +245,8 @@ TEST_F(EventTest, EventQueueing) {
     }
 }
 
-TEST_F(EventTest, EventMetadata) {
+TEST_F(EventTest, EventMetadata)
+{
     Event event("test.event", "Test data");
 
     // Test metadata operations
@@ -260,20 +265,22 @@ TEST_F(EventTest, EventMetadata) {
     EXPECT_FALSE(event.hasMetadata("key1"));
 }
 
-TEST_F(EventTest, EventPriority) {
+TEST_F(EventTest, EventPriority)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
-    EventListener listener = [&](const Event& event) {
-        received_events.push_back(event);
-    };
+    EventListener listener = [&](const Event& event) { received_events.push_back(event); };
 
     manager->subscribe("test.event", listener);
 
     // Publish events with different priorities
-    Event low_priority("test.event", "Low priority", std::chrono::system_clock::now(), EventPriority::LOW);
-    Event normal_priority("test.event", "Normal priority", std::chrono::system_clock::now(), EventPriority::NORMAL);
-    Event high_priority("test.event", "High priority", std::chrono::system_clock::now(), EventPriority::HIGH);
+    Event low_priority(
+        "test.event", "Low priority", std::chrono::system_clock::now(), EventPriority::LOW);
+    Event normal_priority(
+        "test.event", "Normal priority", std::chrono::system_clock::now(), EventPriority::NORMAL);
+    Event high_priority(
+        "test.event", "High priority", std::chrono::system_clock::now(), EventPriority::HIGH);
 
     manager->publish(low_priority);
     manager->publish(normal_priority);
@@ -288,7 +295,8 @@ TEST_F(EventTest, EventPriority) {
     EXPECT_EQ(received_events[2].getData(), "Low priority");
 }
 
-TEST_F(EventTest, EventStatistics) {
+TEST_F(EventTest, EventStatistics)
+{
     auto manager = EventManager::getInstance();
 
     EventListener listener = [](const Event& /*event*/) { /* Do nothing */ };
@@ -309,13 +317,12 @@ TEST_F(EventTest, EventStatistics) {
     EXPECT_EQ(stats.pending_events, 0);
 }
 
-TEST_F(EventTest, EventBatching) {
+TEST_F(EventTest, EventBatching)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
-    EventListener listener = [&](const Event& event) {
-        received_events.push_back(event);
-    };
+    EventListener listener = [&](const Event& event) { received_events.push_back(event); };
 
     manager->subscribe("test.event", listener);
 
@@ -335,7 +342,8 @@ TEST_F(EventTest, EventBatching) {
     EXPECT_EQ(received_events.size(), 25);
 }
 
-TEST_F(EventTest, AsyncEventProcessing) {
+TEST_F(EventTest, AsyncEventProcessing)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
@@ -365,7 +373,8 @@ TEST_F(EventTest, AsyncEventProcessing) {
     EXPECT_EQ(processing_count, 5);
 }
 
-TEST_F(EventTest, ErrorHandlingInListeners) {
+TEST_F(EventTest, ErrorHandlingInListeners)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
@@ -379,9 +388,7 @@ TEST_F(EventTest, ErrorHandlingInListeners) {
     };
 
     // Normal listener
-    EventListener normal_listener = [&](const Event& event) {
-        received_events.push_back(event);
-    };
+    EventListener normal_listener = [&](const Event& event) { received_events.push_back(event); };
 
     manager->subscribe("test.event", faulty_listener);
     manager->subscribe("test.event", normal_listener);
@@ -398,13 +405,12 @@ TEST_F(EventTest, ErrorHandlingInListeners) {
     EXPECT_GE(received_events.size(), 2); // At least the events from normal listener
 }
 
-TEST_F(EventTest, EventManagerReset) {
+TEST_F(EventTest, EventManagerReset)
+{
     auto manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
-    EventListener listener = [&](const Event& event) {
-        received_events.push_back(event);
-    };
+    EventListener listener = [&](const Event& event) { received_events.push_back(event); };
 
     manager->subscribe("test.event", listener);
 

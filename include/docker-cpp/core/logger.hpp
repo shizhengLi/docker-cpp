@@ -1,29 +1,22 @@
 #pragma once
 
-#include <string>
-#include <memory>
-#include <functional>
-#include <vector>
-#include <thread>
-#include <mutex>
-#include <filesystem>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <unordered_map>
 #include <atomic>
 #include <chrono>
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <vector>
 
 namespace docker_cpp {
 
-enum class LogLevel {
-    TRACE = 0,
-    DEBUG = 1,
-    INFO = 2,
-    WARNING = 3,
-    ERROR = 4,
-    CRITICAL = 5
-};
+enum class LogLevel { TRACE = 0, DEBUG = 1, INFO = 2, WARNING = 3, ERROR = 4, CRITICAL = 5 };
 
 struct LogMessage {
     LogLevel level;
@@ -50,22 +43,22 @@ public:
     void setConsoleSinkEnabled(bool enabled);
 
     // Logging methods
-    template<typename... Args>
+    template <typename... Args>
     void trace(const std::string& format, Args&&... args);
 
-    template<typename... Args>
+    template <typename... Args>
     void debug(const std::string& format, Args&&... args);
 
-    template<typename... Args>
+    template <typename... Args>
     void info(const std::string& format, Args&&... args);
 
-    template<typename... Args>
+    template <typename... Args>
     void warning(const std::string& format, Args&&... args);
 
-    template<typename... Args>
+    template <typename... Args>
     void error(const std::string& format, Args&&... args);
 
-    template<typename... Args>
+    template <typename... Args>
     void critical(const std::string& format, Args&&... args);
 
     // Sink management
@@ -92,7 +85,7 @@ private:
     std::string formatMessage(const LogMessage& message) const;
     std::string formatString(const std::string& format) const;
 
-    template<typename... Args>
+    template <typename... Args>
     std::string formatString(const std::string& format, Args&&... args) const;
 
     static std::unordered_map<std::string, std::unique_ptr<Logger>> instances_;
@@ -109,8 +102,9 @@ private:
     };
 
     std::vector<SinkInfo> sinks_;
-    std::unordered_map<std::filesystem::path, std::unique_ptr<std::ofstream>,
-                       std::hash<std::string>> file_sinks_;
+    std::
+        unordered_map<std::filesystem::path, std::unique_ptr<std::ofstream>, std::hash<std::string>>
+            file_sinks_;
     std::mutex sinks_mutex_;
     std::mutex file_sinks_mutex_;
 };
@@ -120,50 +114,57 @@ std::string toString(LogLevel level);
 LogLevel fromString(const std::string& level_str);
 
 // Template implementations
-template<typename... Args>
-void Logger::trace(const std::string& format, Args&&... args) {
+template <typename... Args>
+void Logger::trace(const std::string& format, Args&&... args)
+{
     if (isLevelEnabled(LogLevel::TRACE)) {
         log(LogLevel::TRACE, formatString(format, std::forward<Args>(args)...));
     }
 }
 
-template<typename... Args>
-void Logger::debug(const std::string& format, Args&&... args) {
+template <typename... Args>
+void Logger::debug(const std::string& format, Args&&... args)
+{
     if (isLevelEnabled(LogLevel::DEBUG)) {
         log(LogLevel::DEBUG, formatString(format, std::forward<Args>(args)...));
     }
 }
 
-template<typename... Args>
-void Logger::info(const std::string& format, Args&&... args) {
+template <typename... Args>
+void Logger::info(const std::string& format, Args&&... args)
+{
     if (isLevelEnabled(LogLevel::INFO)) {
         log(LogLevel::INFO, formatString(format, std::forward<Args>(args)...));
     }
 }
 
-template<typename... Args>
-void Logger::warning(const std::string& format, Args&&... args) {
+template <typename... Args>
+void Logger::warning(const std::string& format, Args&&... args)
+{
     if (isLevelEnabled(LogLevel::WARNING)) {
         log(LogLevel::WARNING, formatString(format, std::forward<Args>(args)...));
     }
 }
 
-template<typename... Args>
-void Logger::error(const std::string& format, Args&&... args) {
+template <typename... Args>
+void Logger::error(const std::string& format, Args&&... args)
+{
     if (isLevelEnabled(LogLevel::ERROR)) {
         log(LogLevel::ERROR, formatString(format, std::forward<Args>(args)...));
     }
 }
 
-template<typename... Args>
-void Logger::critical(const std::string& format, Args&&... args) {
+template <typename... Args>
+void Logger::critical(const std::string& format, Args&&... args)
+{
     if (isLevelEnabled(LogLevel::CRITICAL)) {
         log(LogLevel::CRITICAL, formatString(format, std::forward<Args>(args)...));
     }
 }
 
-template<typename... Args>
-std::string Logger::formatString(const std::string& format, Args&&... args) const {
+template <typename... Args>
+std::string Logger::formatString(const std::string& format, Args&&... args) const
+{
     // Handle printf-style format strings with {} placeholders
     std::string result = format;
 

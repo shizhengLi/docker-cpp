@@ -1,25 +1,18 @@
 #pragma once
 
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include <variant>
+#include <docker-cpp/core/error.hpp>
 #include <filesystem>
 #include <functional>
 #include <memory>
-#include <docker-cpp/core/error.hpp>
+#include <string>
+#include <unordered_map>
+#include <variant>
+#include <vector>
 
 namespace docker_cpp {
 
 // Configuration value type enumeration
-enum class ConfigValueType {
-    STRING,
-    INTEGER,
-    BOOLEAN,
-    DOUBLE,
-    ARRAY,
-    OBJECT
-};
+enum class ConfigValueType { STRING, INTEGER, BOOLEAN, DOUBLE, ARRAY, OBJECT };
 
 // Configuration value wrapper
 class ConfigValue {
@@ -28,20 +21,24 @@ public:
 
     ConfigValue() = default;
 
-    template<typename T>
-    ConfigValue(T value) : value_(std::move(value)) {}
+    template <typename T>
+    ConfigValue(T value) : value_(std::move(value))
+    {}
 
-    template<typename T>
-    T get() const {
+    template <typename T>
+    T get() const
+    {
         try {
             return std::get<T>(value_);
-        } catch (const std::bad_variant_access&) {
+        }
+        catch (const std::bad_variant_access&) {
             throw ContainerError(ErrorCode::CONFIG_INVALID,
-                               "Type mismatch in configuration value access");
+                                 "Type mismatch in configuration value access");
         }
     }
 
-    ConfigValueType getType() const {
+    ConfigValueType getType() const
+    {
         return static_cast<ConfigValueType>(value_.index());
     }
 
@@ -54,7 +51,8 @@ public:
 using ConfigSchema = std::unordered_map<std::string, ConfigValueType>;
 
 // Configuration change callback
-using ConfigChangeCallback = std::function<void(const std::string& key, const ConfigValue& old_value, const ConfigValue& new_value)>;
+using ConfigChangeCallback = std::function<
+    void(const std::string& key, const ConfigValue& old_value, const ConfigValue& new_value)>;
 
 class ConfigManager {
 public:
@@ -70,13 +68,13 @@ public:
     ConfigManager& operator=(ConfigManager&& other) noexcept = default;
 
     // Value access methods
-    template<typename T>
+    template <typename T>
     void set(const std::string& key, T value);
 
-    template<typename T>
+    template <typename T>
     T get(const std::string& key) const;
 
-    template<typename T>
+    template <typename T>
     T get(const std::string& key, T default_value) const;
 
     bool has(const std::string& key) const;
@@ -133,7 +131,9 @@ private:
     // Helper methods
     std::vector<std::string> splitKey(const std::string& key) const;
     std::string joinKey(const std::vector<std::string>& parts) const;
-    void notifyChange(const std::string& key, const ConfigValue& old_value, const ConfigValue& new_value);
+    void notifyChange(const std::string& key,
+                      const ConfigValue& old_value,
+                      const ConfigValue& new_value);
     ConfigValue getEffectiveValue(const std::string& key) const;
     void parseJsonValue(const std::string& key, const std::string& json_value);
     std::string serializeToJson() const;
@@ -142,8 +142,9 @@ private:
 };
 
 // Template implementations
-template<typename T>
-void ConfigManager::set(const std::string& key, T value) {
+template <typename T>
+void ConfigManager::set(const std::string& key, T value)
+{
     ConfigValue old_value;
     bool had_old_value = false;
 
@@ -159,17 +160,18 @@ void ConfigManager::set(const std::string& key, T value) {
     }
 }
 
-template<typename T>
-T ConfigManager::get(const std::string& key) const {
+template <typename T>
+T ConfigManager::get(const std::string& key) const
+{
     if (!has(key)) {
-        throw ContainerError(ErrorCode::CONFIG_MISSING,
-                           "Configuration key not found: " + key);
+        throw ContainerError(ErrorCode::CONFIG_MISSING, "Configuration key not found: " + key);
     }
     return getEffectiveValue(key).get<T>();
 }
 
-template<typename T>
-T ConfigManager::get(const std::string& key, T default_value) const {
+template <typename T>
+T ConfigManager::get(const std::string& key, T default_value) const
+{
     if (!has(key)) {
         return default_value;
     }

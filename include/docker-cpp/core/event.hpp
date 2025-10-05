@@ -1,34 +1,30 @@
 #pragma once
 
-#include <string>
+#include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <functional>
 #include <memory>
-#include <vector>
-#include <unordered_map>
 #include <mutex>
-#include <thread>
 #include <queue>
-#include <atomic>
-#include <condition_variable>
-#include <variant>
 #include <regex>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <variant>
+#include <vector>
 
 namespace docker_cpp {
 
 using EventId = uint64_t;
 using SubscriptionId = uint64_t;
 
-enum class EventPriority {
-    LOW = 0,
-    NORMAL = 1,
-    HIGH = 2,
-    CRITICAL = 3
-};
+enum class EventPriority { LOW = 0, NORMAL = 1, HIGH = 2, CRITICAL = 3 };
 
 class Event {
 public:
-    Event(const std::string& type, const std::string& data,
+    Event(const std::string& type,
+          const std::string& data,
           const std::chrono::system_clock::time_point& timestamp = std::chrono::system_clock::now(),
           EventPriority priority = EventPriority::NORMAL);
 
@@ -39,17 +35,32 @@ public:
     Event& operator=(Event&& other) noexcept = default;
 
     // Accessors
-    const std::string& getType() const { return type_; }
-    const std::string& getData() const { return data_; }
-    std::chrono::system_clock::time_point getTimestamp() const { return timestamp_; }
-    EventId getId() const { return id_; }
-    EventPriority getPriority() const { return priority_; }
+    const std::string& getType() const
+    {
+        return type_;
+    }
+    const std::string& getData() const
+    {
+        return data_;
+    }
+    std::chrono::system_clock::time_point getTimestamp() const
+    {
+        return timestamp_;
+    }
+    EventId getId() const
+    {
+        return id_;
+    }
+    EventPriority getPriority() const
+    {
+        return priority_;
+    }
 
     // Metadata operations
-    template<typename T>
+    template <typename T>
     void setMetadata(const std::string& key, const T& value);
 
-    template<typename T>
+    template <typename T>
     T getMetadata(const std::string& key) const;
 
     bool hasMetadata(const std::string& key) const;
@@ -84,15 +95,16 @@ public:
     ~EventManager();
 
     // Event publishing and subscription
-    SubscriptionId subscribe(const std::string& event_type, EventListener listener,
-                           EventPriority priority = EventPriority::NORMAL);
+    SubscriptionId subscribe(const std::string& event_type,
+                             EventListener listener,
+                             EventPriority priority = EventPriority::NORMAL);
     void unsubscribe(SubscriptionId subscription_id);
     void publish(const Event& event);
 
     // Batch processing
     void enableBatching(const std::string& event_type,
-                       std::chrono::milliseconds batch_interval,
-                       size_t max_batch_size = 100);
+                        std::chrono::milliseconds batch_interval,
+                        size_t max_batch_size = 100);
     void disableBatching(const std::string& event_type);
 
     // Statistics and monitoring
@@ -143,8 +155,8 @@ private:
     mutable std::mutex batches_mutex_;
 
     std::vector<Subscription> subscriptions_;
-    std::priority_queue<Event, std::vector<Event>,
-                       std::function<bool(const Event&, const Event&)>> event_queue_;
+    std::priority_queue<Event, std::vector<Event>, std::function<bool(const Event&, const Event&)>>
+        event_queue_;
     std::unordered_map<std::string, BatchConfig> batch_configs_;
 
     std::thread processing_thread_;
@@ -159,13 +171,15 @@ private:
 };
 
 // Template implementations
-template<typename T>
-void Event::setMetadata(const std::string& key, const T& value) {
+template <typename T>
+void Event::setMetadata(const std::string& key, const T& value)
+{
     metadata_[key] = value;
 }
 
-template<typename T>
-T Event::getMetadata(const std::string& key) const {
+template <typename T>
+T Event::getMetadata(const std::string& key) const
+{
     auto it = metadata_.find(key);
     if (it == metadata_.end()) {
         throw std::runtime_error("Metadata key not found: " + key);
@@ -173,7 +187,8 @@ T Event::getMetadata(const std::string& key) const {
 
     try {
         return std::get<T>(it->second);
-    } catch (const std::bad_variant_access&) {
+    }
+    catch (const std::bad_variant_access&) {
         throw std::runtime_error("Invalid type for metadata key: " + key);
     }
 }

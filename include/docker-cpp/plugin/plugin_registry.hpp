@@ -1,12 +1,12 @@
 #pragma once
 
-#include <docker-cpp/plugin/plugin_interface.hpp>
 #include <docker-cpp/core/error.hpp>
-#include <unordered_map>
-#include <memory>
-#include <vector>
-#include <mutex>
+#include <docker-cpp/plugin/plugin_interface.hpp>
 #include <functional>
+#include <memory>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
 
 namespace docker_cpp {
 
@@ -25,7 +25,7 @@ public:
     void registerPlugin(const std::string& name, std::unique_ptr<IPlugin> plugin);
     void unregisterPlugin(const std::string& name);
 
-    template<typename PluginType = IPlugin>
+    template <typename PluginType = IPlugin>
     PluginType* getPlugin(const std::string& name) const;
 
     std::vector<std::string> getPluginNames() const;
@@ -74,8 +74,9 @@ private:
 };
 
 // Template implementation
-template<typename PluginType>
-PluginType* PluginRegistry::getPlugin(const std::string& name) const {
+template <typename PluginType>
+PluginType* PluginRegistry::getPlugin(const std::string& name) const
+{
     std::lock_guard<std::mutex> lock(mutex_);
 
     auto it = plugins_.find(name);

@@ -1,28 +1,31 @@
 #include <gtest/gtest.h>
+#include <docker-cpp/config/config_manager.hpp>
+#include <docker-cpp/core/error.hpp>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <filesystem>
-#include <fstream>
-#include <docker-cpp/config/config_manager.hpp>
-#include <docker-cpp/core/error.hpp>
 
 using namespace docker_cpp;
 
 class ConfigManagerTest : public ::testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         config_manager = std::make_unique<ConfigManager>();
         test_dir = std::filesystem::temp_directory_path() / "docker_cpp_config_test";
         std::filesystem::create_directories(test_dir);
     }
 
-    void TearDown() override {
+    void TearDown() override
+    {
         std::filesystem::remove_all(test_dir);
     }
 
-    void createTestConfigFile(const std::string& filename, const std::string& content) {
+    void createTestConfigFile(const std::string& filename, const std::string& content)
+    {
         std::ofstream file(test_dir / filename);
         file << content;
         file.close();
@@ -32,12 +35,14 @@ protected:
     std::filesystem::path test_dir;
 };
 
-TEST_F(ConfigManagerTest, DefaultConstructorCreatesEmptyConfig) {
+TEST_F(ConfigManagerTest, DefaultConstructorCreatesEmptyConfig)
+{
     EXPECT_TRUE(config_manager->isEmpty());
     EXPECT_EQ(config_manager->size(), 0);
 }
 
-TEST_F(ConfigManagerTest, SetAndGetStringValue) {
+TEST_F(ConfigManagerTest, SetAndGetStringValue)
+{
     config_manager->set("server.host", "localhost");
     config_manager->set("server.port", "8080");
 
@@ -47,7 +52,8 @@ TEST_F(ConfigManagerTest, SetAndGetStringValue) {
     EXPECT_EQ(config_manager->size(), 2);
 }
 
-TEST_F(ConfigManagerTest, SetAndGetIntValue) {
+TEST_F(ConfigManagerTest, SetAndGetIntValue)
+{
     config_manager->set("server.port", 8080);
     config_manager->set("max_connections", 100);
 
@@ -55,7 +61,8 @@ TEST_F(ConfigManagerTest, SetAndGetIntValue) {
     EXPECT_EQ(config_manager->get<int>("max_connections"), 100);
 }
 
-TEST_F(ConfigManagerTest, SetAndGetBoolValue) {
+TEST_F(ConfigManagerTest, SetAndGetBoolValue)
+{
     config_manager->set("debug.enabled", true);
     config_manager->set("production.mode", false);
 
@@ -63,7 +70,8 @@ TEST_F(ConfigManagerTest, SetAndGetBoolValue) {
     EXPECT_FALSE(config_manager->get<bool>("production.mode"));
 }
 
-TEST_F(ConfigManagerTest, SetAndGetDoubleValue) {
+TEST_F(ConfigManagerTest, SetAndGetDoubleValue)
+{
     config_manager->set("cpu.limit", 2.5);
     config_manager->set("memory.threshold", 0.85);
 
@@ -71,7 +79,8 @@ TEST_F(ConfigManagerTest, SetAndGetDoubleValue) {
     EXPECT_DOUBLE_EQ(config_manager->get<double>("memory.threshold"), 0.85);
 }
 
-TEST_F(ConfigManagerTest, GetWithDefaultValue) {
+TEST_F(ConfigManagerTest, GetWithDefaultValue)
+{
     config_manager->set("existing.key", "value");
 
     EXPECT_EQ(config_manager->get<std::string>("existing.key", "default"), "value");
@@ -80,14 +89,16 @@ TEST_F(ConfigManagerTest, GetWithDefaultValue) {
     EXPECT_TRUE(config_manager->get<bool>("missing.bool", true));
 }
 
-TEST_F(ConfigManagerTest, HasKeyMethod) {
+TEST_F(ConfigManagerTest, HasKeyMethod)
+{
     config_manager->set("existing.key", "value");
 
     EXPECT_TRUE(config_manager->has("existing.key"));
     EXPECT_FALSE(config_manager->has("missing.key"));
 }
 
-TEST_F(ConfigManagerTest, RemoveKey) {
+TEST_F(ConfigManagerTest, RemoveKey)
+{
     config_manager->set("key1", "value1");
     config_manager->set("key2", "value2");
 
@@ -100,7 +111,8 @@ TEST_F(ConfigManagerTest, RemoveKey) {
     EXPECT_TRUE(config_manager->has("key2"));
 }
 
-TEST_F(ConfigManagerTest, ClearAll) {
+TEST_F(ConfigManagerTest, ClearAll)
+{
     config_manager->set("key1", "value1");
     config_manager->set("key2", "value2");
 
@@ -112,7 +124,8 @@ TEST_F(ConfigManagerTest, ClearAll) {
     EXPECT_EQ(config_manager->size(), 0);
 }
 
-TEST_F(ConfigManagerTest, GetKeysWithPrefix) {
+TEST_F(ConfigManagerTest, GetKeysWithPrefix)
+{
     config_manager->set("server.host", "localhost");
     config_manager->set("server.port", "8080");
     config_manager->set("server.ssl.enabled", true);
@@ -122,15 +135,19 @@ TEST_F(ConfigManagerTest, GetKeysWithPrefix) {
     auto db_keys = config_manager->getKeysWithPrefix("database.");
 
     EXPECT_EQ(server_keys.size(), 3);
-    EXPECT_TRUE(std::find(server_keys.begin(), server_keys.end(), "server.host") != server_keys.end());
-    EXPECT_TRUE(std::find(server_keys.begin(), server_keys.end(), "server.port") != server_keys.end());
-    EXPECT_TRUE(std::find(server_keys.begin(), server_keys.end(), "server.ssl.enabled") != server_keys.end());
+    EXPECT_TRUE(std::find(server_keys.begin(), server_keys.end(), "server.host")
+                != server_keys.end());
+    EXPECT_TRUE(std::find(server_keys.begin(), server_keys.end(), "server.port")
+                != server_keys.end());
+    EXPECT_TRUE(std::find(server_keys.begin(), server_keys.end(), "server.ssl.enabled")
+                != server_keys.end());
 
     EXPECT_EQ(db_keys.size(), 1);
     EXPECT_EQ(db_keys[0], "database.host");
 }
 
-TEST_F(ConfigManagerTest, LoadFromJsonString) {
+TEST_F(ConfigManagerTest, LoadFromJsonString)
+{
     // Use flat JSON that simple parser can handle
     std::string json = R"({
         "server.host": "localhost",
@@ -151,7 +168,8 @@ TEST_F(ConfigManagerTest, LoadFromJsonString) {
     EXPECT_EQ(config_manager->get<int>("max_connections"), 100);
 }
 
-TEST_F(ConfigManagerTest, LoadFromJsonFile) {
+TEST_F(ConfigManagerTest, LoadFromJsonFile)
+{
     // Use flat JSON that simple parser can handle
     std::string json = R"({
         "app.name": "docker-cpp",
@@ -170,12 +188,13 @@ TEST_F(ConfigManagerTest, LoadFromJsonFile) {
     EXPECT_EQ(config_manager->get<std::string>("logging.file"), "/var/log/docker-cpp.log");
 }
 
-TEST_F(ConfigManagerTest, LoadFromNonExistentFileThrows) {
-    EXPECT_THROW(config_manager->loadFromJsonFile(test_dir / "nonexistent.json"),
-                 ContainerError);
+TEST_F(ConfigManagerTest, LoadFromNonExistentFileThrows)
+{
+    EXPECT_THROW(config_manager->loadFromJsonFile(test_dir / "nonexistent.json"), ContainerError);
 }
 
-TEST_F(ConfigManagerTest, LoadFromInvalidJsonThrows) {
+TEST_F(ConfigManagerTest, LoadFromInvalidJsonThrows)
+{
     std::string invalid_json = R"({
         "key": "value",
         "invalid":
@@ -183,11 +202,11 @@ TEST_F(ConfigManagerTest, LoadFromInvalidJsonThrows) {
 
     createTestConfigFile("invalid.json", invalid_json);
 
-    EXPECT_THROW(config_manager->loadFromJsonFile(test_dir / "invalid.json"),
-                 ContainerError);
+    EXPECT_THROW(config_manager->loadFromJsonFile(test_dir / "invalid.json"), ContainerError);
 }
 
-TEST_F(ConfigManagerTest, SaveToJsonFile) {
+TEST_F(ConfigManagerTest, SaveToJsonFile)
+{
     config_manager->set("app.name", "docker-cpp");
     config_manager->set("app.version", "1.0.0");
     config_manager->set("debug.enabled", true);
@@ -208,7 +227,8 @@ TEST_F(ConfigManagerTest, SaveToJsonFile) {
     EXPECT_EQ(new_manager->get<int>("server.port"), 8080);
 }
 
-TEST_F(ConfigManagerTest, MergeConfigs) {
+TEST_F(ConfigManagerTest, MergeConfigs)
+{
     // Set initial config
     config_manager->set("server.host", "localhost");
     config_manager->set("server.port", 8080);
@@ -216,20 +236,21 @@ TEST_F(ConfigManagerTest, MergeConfigs) {
 
     // Create config to merge
     ConfigManager other_config;
-    other_config.set("server.port", 9090);  // Override
-    other_config.set("server.ssl.enabled", true);  // New
-    other_config.set("logging.level", "info");  // New
+    other_config.set("server.port", 9090);        // Override
+    other_config.set("server.ssl.enabled", true); // New
+    other_config.set("logging.level", "info");    // New
 
     config_manager->merge(other_config);
 
-    EXPECT_EQ(config_manager->get<std::string>("server.host"), "localhost");  // Unchanged
-    EXPECT_EQ(config_manager->get<int>("server.port"), 9090);  // Overridden
-    EXPECT_TRUE(config_manager->get<bool>("debug"));  // Unchanged
-    EXPECT_TRUE(config_manager->get<bool>("server.ssl.enabled"));  // New
-    EXPECT_EQ(config_manager->get<std::string>("logging.level"), "info");  // New
+    EXPECT_EQ(config_manager->get<std::string>("server.host"), "localhost"); // Unchanged
+    EXPECT_EQ(config_manager->get<int>("server.port"), 9090);                // Overridden
+    EXPECT_TRUE(config_manager->get<bool>("debug"));                         // Unchanged
+    EXPECT_TRUE(config_manager->get<bool>("server.ssl.enabled"));            // New
+    EXPECT_EQ(config_manager->get<std::string>("logging.level"), "info");    // New
 }
 
-TEST_F(ConfigManagerTest, CopyConstructor) {
+TEST_F(ConfigManagerTest, CopyConstructor)
+{
     config_manager->set("key1", "value1");
     config_manager->set("key2", 42);
 
@@ -246,7 +267,8 @@ TEST_F(ConfigManagerTest, CopyConstructor) {
     EXPECT_TRUE(copy.has("new_key"));
 }
 
-TEST_F(ConfigManagerTest, MoveConstructor) {
+TEST_F(ConfigManagerTest, MoveConstructor)
+{
     config_manager->set("key1", "value1");
     config_manager->set("key2", 42);
 
@@ -260,7 +282,8 @@ TEST_F(ConfigManagerTest, MoveConstructor) {
     EXPECT_TRUE(config_manager->isEmpty());
 }
 
-TEST_F(ConfigManagerTest, AssignmentOperator) {
+TEST_F(ConfigManagerTest, AssignmentOperator)
+{
     config_manager->set("key1", "value1");
 
     ConfigManager other;
@@ -274,14 +297,15 @@ TEST_F(ConfigManagerTest, AssignmentOperator) {
     EXPECT_EQ(other.size(), 1);
 }
 
-TEST_F(ConfigManagerTest, EnvironmentVariableExpansion) {
+TEST_F(ConfigManagerTest, EnvironmentVariableExpansion)
+{
     // Set environment variable
     std::string home_path = std::filesystem::temp_directory_path();
-    #ifdef _WIN32
-        _putenv(("HOME=" + home_path).c_str());
-    #else
-        setenv("HOME", home_path.c_str(), 1);
-    #endif
+#ifdef _WIN32
+    _putenv(("HOME=" + home_path).c_str());
+#else
+    setenv("HOME", home_path.c_str(), 1);
+#endif
 
     config_manager->set("log.file", "${HOME}/logs/app.log");
     config_manager->set("data.dir", "${HOME}/data");
@@ -292,7 +316,8 @@ TEST_F(ConfigManagerTest, EnvironmentVariableExpansion) {
     EXPECT_EQ(expanded.get<std::string>("data.dir"), home_path + "/data");
 }
 
-TEST_F(ConfigManagerTest, ConfigValidation) {
+TEST_F(ConfigManagerTest, ConfigValidation)
+{
     config_manager->set("server.port", 8080);
     config_manager->set("database.url", "postgresql://localhost:5432/db");
 
@@ -300,8 +325,7 @@ TEST_F(ConfigManagerTest, ConfigValidation) {
     std::unordered_map<std::string, ConfigValueType> schema = {
         {"server.port", ConfigValueType::INTEGER},
         {"database.url", ConfigValueType::STRING},
-        {"debug.enabled", ConfigValueType::BOOLEAN}
-    };
+        {"debug.enabled", ConfigValueType::BOOLEAN}};
 
     // Should pass - all existing keys match their types
     EXPECT_NO_THROW(config_manager->validate(schema));
@@ -312,7 +336,8 @@ TEST_F(ConfigManagerTest, ConfigValidation) {
     EXPECT_THROW(config_manager->validate(schema), ContainerError);
 }
 
-TEST_F(ConfigManagerTest, NestedConfigAccess) {
+TEST_F(ConfigManagerTest, NestedConfigAccess)
+{
     config_manager->set("server.host", "localhost");
     config_manager->set("server.port", 8080);
     config_manager->set("server.ssl.enabled", true);
