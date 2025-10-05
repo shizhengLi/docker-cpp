@@ -108,7 +108,10 @@ protected:
         plugin = std::make_unique<MockPlugin>(MockPluginParams{"test-plugin", "1.0.0"});
     }
 
-    MockPlugin* getPlugin() const { return plugin.get(); }
+    MockPlugin* getPlugin() const
+    {
+        return plugin.get();
+    }
 
 private:
     std::unique_ptr<MockPlugin> plugin;
@@ -136,7 +139,8 @@ TEST_F(PluginInterfaceTest, InitializeSucceedsWithValidConfig)
 
 TEST_F(PluginInterfaceTest, InitializeFailsWhenConfigured)
 {
-    auto failing_plugin = std::make_unique<MockPlugin>(MockPluginParams{"failing-plugin", "1.0.0", false});
+    auto failing_plugin =
+        std::make_unique<MockPlugin>(MockPluginParams{"failing-plugin", "1.0.0", false});
 
     PluginConfig config;
     EXPECT_FALSE(failing_plugin->initialize(config));
@@ -145,7 +149,8 @@ TEST_F(PluginInterfaceTest, InitializeFailsWhenConfigured)
 
 TEST_F(PluginInterfaceTest, InitializeThrowsWhenConfigured)
 {
-    auto throwing_plugin = std::make_unique<MockPlugin>(MockPluginParams{"throwing-plugin", "1.0.0", true, true});
+    auto throwing_plugin =
+        std::make_unique<MockPlugin>(MockPluginParams{"throwing-plugin", "1.0.0", true, true});
 
     PluginConfig config;
     EXPECT_THROW(throwing_plugin->initialize(config), ContainerError);
@@ -169,7 +174,10 @@ protected:
         registry = std::make_unique<PluginRegistry>();
     }
 
-    PluginRegistry* getRegistry() const { return registry.get(); }
+    PluginRegistry* getRegistry() const
+    {
+        return registry.get();
+    }
 
 private:
     std::unique_ptr<PluginRegistry> registry;
@@ -192,7 +200,8 @@ TEST_F(PluginRegistryTest, RegisterDuplicatePluginThrows)
     getRegistry()->registerPlugin("plugin1", std::move(plugin1));
 
     auto duplicate_plugin = std::make_unique<MockPlugin>(MockPluginParams{"plugin1", "1.0.1"});
-    EXPECT_THROW(getRegistry()->registerPlugin("plugin1", std::move(duplicate_plugin)), ContainerError);
+    EXPECT_THROW(getRegistry()->registerPlugin("plugin1", std::move(duplicate_plugin)),
+                 ContainerError);
 }
 
 TEST_F(PluginRegistryTest, GetNonExistentPluginReturnsNull)
@@ -313,7 +322,8 @@ TEST_F(PluginRegistryTest, InitializeNonExistentPluginFails)
 
 TEST_F(PluginRegistryTest, InitializePluginWithExceptionFails)
 {
-    auto throwing_plugin = std::make_unique<MockPlugin>(MockPluginParams{"throwing", "1.0.0", true, true});
+    auto throwing_plugin =
+        std::make_unique<MockPlugin>(MockPluginParams{"throwing", "1.0.0", true, true});
     getRegistry()->registerPlugin("throwing", std::move(throwing_plugin));
 
     PluginConfig config;
@@ -393,8 +403,14 @@ protected:
                                            "MIT"});
     }
 
-    PluginInfo& getInfo() { return info; }
-    const PluginInfo& getInfo() const { return info; }
+    PluginInfo& getInfo()
+    {
+        return info;
+    }
+    const PluginInfo& getInfo() const
+    {
+        return info;
+    }
 
 private:
     PluginInfo info{}; // Default construct first

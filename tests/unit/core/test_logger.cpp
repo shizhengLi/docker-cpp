@@ -29,7 +29,10 @@ protected:
     }
 
 protected:
-    const std::filesystem::path& getTestDir() const { return test_dir; }
+    const std::filesystem::path& getTestDir() const
+    {
+        return test_dir;
+    }
 
 private:
     std::filesystem::path test_dir;
