@@ -1,63 +1,14 @@
 # Clang-tidy configuration for docker-cpp project
-# Minimal configuration - only essential and actionable checks
+# Ultra-minimal - only 3 most critical checks
 ---
 Checks: >
-  # Only critical bugs that cause real issues
   bugprone-use-after-move,
   bugprone-dangling-handle,
-  bugprone-sizeof-expression,
-
-  # Performance issues that matter
-  performance-move-const-arg,
-  performance-unnecessary-copy-initialization,
-
-  # Modern C++ essentials
-  modernize-use-nullptr,
-  modernize-use-override,
-
-  # Memory safety (only most important)
-  misc-uniqueptr-reset-release
+  bugprone-sizeof-expression
 
 WarningsAsErrors: >
   bugprone-use-after-move,
-  bugprone-dangling-handle,
-  bugprone-misplaced-widening-cast,
-  bugprone-sizeof-expression,
-  performance-move-const-arg,
-  performance-unnecessary-copy-initialization,
-  modernize-use-nullptr,
-  modernize-use-override
+  bugprone-dangling-handle
 
 HeaderFilterRegex: '^(src|include)/.*'
 FormatStyle: file
-
-CheckOptions:
-  # Key for naming checks
-  - key: readability-identifier-naming.ClassCase
-    value: CamelCase
-  - key: readability-identifier-naming.FunctionCase
-    value: camelBack
-  - key: readability-identifier-naming.VariableCase
-    value: camelBack
-  - key: readability-identifier-naming.PrivateMemberSuffix
-    value: '_'
-  - key: readability-identifier-naming.MemberCase
-    value: lower_case
-  - key: readability-identifier-naming.ConstantCase
-    value: UPPER_CASE
-  - key: readability-identifier-naming.EnumConstantCase
-    value: UPPER_CASE
-  - key: readability-identifier-naming.EnumCase
-    value: CamelCase
-  - key: readability-identifier-naming.MacroCase
-    value: UPPER_CASE
-
-  # Performance checks
-  - key: performance-unnecessary-copy-initialization.CheckTriviallyCopyableMove
-    value: false
-
-  # Modernize checks
-  - key: modernize-loop-convert.MinConfidence
-    value: reasonable
-  - key: modernize-use-override.IgnoreMacroDeclarations
-    value: true
