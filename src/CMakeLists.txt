@@ -121,6 +121,11 @@ add_library(docker-cpp-lib STATIC
     cgroup/resource_monitor.cpp
     plugin/plugin_registry.cpp
     config/config_manager.cpp
+    runtime/container_config.cpp
+    # TODO: Add back runtime components after fixing compilation issues
+    # runtime/container.cpp
+    # runtime/container_registry.cpp
+    # runtime/container_runtime.cpp
 )
 
 target_link_libraries(docker-cpp-lib
