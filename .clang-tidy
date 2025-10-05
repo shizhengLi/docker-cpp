@@ -3,20 +3,38 @@
 ---
 Checks: >
   bugprone-*,
-  cert-*,
   performance-*,
   modernize-*,
   readability-identifier-naming,
   readability-isolate-declaration,
   readability-simplify-boolean-expr,
+  misc-uniqueptr-reset-release,
+  misc-use-anonymous-namespace,
+  cert-dcl03-cpp,
+  cert-dcl21-cpp,
+  cert-dcl54-cpp,
+  cert-dcl58-cpp,
+  cert-dcl60-cpp,
+  cert-err34-c,
+  cert-err52-cpp,
+  cert-err60-cpp,
+  cert-fio38-c,
+  cert-flp30-c,
+  cert-mem57-cpp,
+  cert-msc50-cpp,
+  cert-oop57-cpp,
+  cert-oop58-cpp,
+  cert-pos44-c,
+  cert-pos51-cpp,
+  cert-pos54-c,
+  cert-sig30-c,
+  cert-str34-c,
   cppcoreguidelines-pro-type-const-cast,
   cppcoreguidelines-pro-type-reinterpret-cast,
   cppcoreguidelines-pro-type-vararg,
   cppcoreguidelines-slicing,
-  misc-uniqueptr-reset-release,
-  misc-use-anonymous-namespace,
 
-# Disable overly noisy or less relevant checks
+  # Disable overly noisy or less relevant checks
   -misc-no-recursion,
   -cppcoreguidelines-avoid-non-const-global-variables,
   -cppcoreguidelines-owning-memory,
@@ -28,8 +46,8 @@ Checks: >
   -readability-magic-numbers,
   -readability-redundant-access-specifiers,
   -readability-convert-member-functions-to-static,
-  -cert-err58-cpp,  # Too strict for current codebase
   -cert-dcl50-cpp,   # Too strict for current codebase
+  -cert-err58-cpp,   # Too strict for current codebase
 
 WarningsAsErrors: >
   bugprone-use-after-move,
