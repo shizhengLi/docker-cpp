@@ -268,10 +268,12 @@ TEST_F(EventAdvancedTest, EventPriorityQueueUnderLoad)
             const auto& event_i = received_events[i].getData();
             const auto& event_j = received_events[j].getData();
 
-            if (event_i.find("high") != std::string::npos && event_j.find("normal") != std::string::npos) {
+            if (event_i.find("high") != std::string::npos
+                && event_j.find("normal") != std::string::npos) {
                 high_before_normal++;
             }
-            if (event_i.find("normal") != std::string::npos && event_j.find("low") != std::string::npos) {
+            if (event_i.find("normal") != std::string::npos
+                && event_j.find("low") != std::string::npos) {
                 normal_before_low++;
             }
         }
