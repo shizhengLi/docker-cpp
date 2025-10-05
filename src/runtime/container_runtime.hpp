@@ -145,11 +145,11 @@ public:
 
 private:
     // Core components
-    std::unique_ptr<ContainerRegistry> container_registry_;
-    std::unique_ptr<core::ConfigManager> config_manager_;
+    ContainerRegistry* container_registry_;
+    core::ConfigManager* config_manager_;
     core::Logger* logger_;
     core::EventManager* event_manager_;
-    std::unique_ptr<plugin::PluginRegistry> plugin_registry_;
+    plugin::PluginRegistry* plugin_registry_;
 
     // Runtime configuration
     RuntimeConfig runtime_config_;

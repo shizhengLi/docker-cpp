@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <iostream>
 #include <random>
+#include <sstream>
 
 namespace docker_cpp {
 namespace runtime {

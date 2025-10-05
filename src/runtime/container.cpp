@@ -351,6 +351,7 @@ bool Container::isProcessRunning() const {
 }
 
 void Container::updateResources(const ResourceLimits& limits) {
+    (void)limits; // Suppress unused parameter warning
     std::lock_guard<std::mutex> lock(mutex_);
 
     if (state_.load() != ContainerState::RUNNING) {
@@ -602,6 +603,7 @@ void Container::cleanupResources() {
 
 void Container::emitEvent(const std::string& event_type,
                          const std::map<std::string, std::string>& event_data) {
+    (void)event_data; // Suppress unused parameter warning
     // TODO: Implement event emission when EventManager integration is complete
     logInfo("Event: " + event_type);
 }
@@ -781,43 +783,43 @@ std::vector<Container::StateTransition> Container::getStateTransitionTable() con
     return {
         // FROM -> TO transitions with conditions
         {ContainerState::CREATED, ContainerState::STARTING, true, [this]() { return !removed_.load(); }},
-        {ContainerState::CREATED, ContainerState::REMOVING, true, [this]() { return true; }},
-        {ContainerState::CREATED, ContainerState::ERROR, true, [this]() { return true; }},
+        {ContainerState::CREATED, ContainerState::REMOVING, true, []() { return true; }},
+        {ContainerState::CREATED, ContainerState::ERROR, true, []() { return true; }},
 
         {ContainerState::STARTING, ContainerState::RUNNING, true, [this]() { return main_pid_.load() > 0; }},
-        {ContainerState::STARTING, ContainerState::STOPPING, true, [this]() { return true; }},
-        {ContainerState::STARTING, ContainerState::ERROR, true, [this]() { return true; }},
-        {ContainerState::STARTING, ContainerState::REMOVING, true, [this]() { return true; }},
+        {ContainerState::STARTING, ContainerState::STOPPING, true, []() { return true; }},
+        {ContainerState::STARTING, ContainerState::ERROR, true, []() { return true; }},
+        {ContainerState::STARTING, ContainerState::REMOVING, true, []() { return true; }},
 
         {ContainerState::RUNNING, ContainerState::PAUSED, true, [this]() { return main_pid_.load() > 0; }},
-        {ContainerState::RUNNING, ContainerState::STOPPING, true, [this]() { return true; }},
-        {ContainerState::RUNNING, ContainerState::RESTARTING, true, [this]() { return true; }},
-        {ContainerState::RUNNING, ContainerState::ERROR, true, [this]() { return true; }},
-        {ContainerState::RUNNING, ContainerState::REMOVING, true, [this]() { return true; }},
+        {ContainerState::RUNNING, ContainerState::STOPPING, true, []() { return true; }},
+        {ContainerState::RUNNING, ContainerState::RESTARTING, true, []() { return true; }},
+        {ContainerState::RUNNING, ContainerState::ERROR, true, []() { return true; }},
+        {ContainerState::RUNNING, ContainerState::REMOVING, true, []() { return true; }},
 
         {ContainerState::PAUSED, ContainerState::RUNNING, true, [this]() { return main_pid_.load() > 0; }},
-        {ContainerState::PAUSED, ContainerState::STOPPING, true, [this]() { return true; }},
-        {ContainerState::PAUSED, ContainerState::REMOVING, true, [this]() { return true; }},
+        {ContainerState::PAUSED, ContainerState::STOPPING, true, []() { return true; }},
+        {ContainerState::PAUSED, ContainerState::REMOVING, true, []() { return true; }},
 
-        {ContainerState::STOPPING, ContainerState::STOPPED, true, [this]() { return true; }},
-        {ContainerState::STOPPING, ContainerState::DEAD, true, [this]() { return true; }},
-        {ContainerState::STOPPING, ContainerState::ERROR, true, [this]() { return true; }},
-        {ContainerState::STOPPING, ContainerState::REMOVING, true, [this]() { return true; }},
+        {ContainerState::STOPPING, ContainerState::STOPPED, true, []() { return true; }},
+        {ContainerState::STOPPING, ContainerState::DEAD, true, []() { return true; }},
+        {ContainerState::STOPPING, ContainerState::ERROR, true, []() { return true; }},
+        {ContainerState::STOPPING, ContainerState::REMOVING, true, []() { return true; }},
 
         {ContainerState::STOPPED, ContainerState::STARTING, true, [this]() { return !removed_.load(); }},
-        {ContainerState::STOPPED, ContainerState::REMOVING, true, [this]() { return true; }},
+        {ContainerState::STOPPED, ContainerState::REMOVING, true, []() { return true; }},
         {ContainerState::STOPPED, ContainerState::RESTARTING, true, [this]() { return !removed_.load(); }},
 
         {ContainerState::RESTARTING, ContainerState::STARTING, true, [this]() { return !removed_.load(); }},
-        {ContainerState::RESTARTING, ContainerState::STOPPING, true, [this]() { return true; }},
-        {ContainerState::RESTARTING, ContainerState::ERROR, true, [this]() { return true; }},
-        {ContainerState::RESTARTING, ContainerState::REMOVING, true, [this]() { return true; }},
+        {ContainerState::RESTARTING, ContainerState::STOPPING, true, []() { return true; }},
+        {ContainerState::RESTARTING, ContainerState::ERROR, true, []() { return true; }},
+        {ContainerState::RESTARTING, ContainerState::REMOVING, true, []() { return true; }},
 
-        {ContainerState::ERROR, ContainerState::STOPPED, true, [this]() { return true; }},
-        {ContainerState::ERROR, ContainerState::REMOVING, true, [this]() { return true; }},
+        {ContainerState::ERROR, ContainerState::STOPPED, true, []() { return true; }},
+        {ContainerState::ERROR, ContainerState::REMOVING, true, []() { return true; }},
 
-        {ContainerState::REMOVING, ContainerState::REMOVED, true, [this]() { return true; }},
-        {ContainerState::REMOVING, ContainerState::ERROR, true, [this]() { return true; }}
+        {ContainerState::REMOVING, ContainerState::REMOVED, true, []() { return true; }},
+        {ContainerState::REMOVING, ContainerState::ERROR, true, []() { return true; }}
 
         // REMOVED, DEAD are terminal states - no outgoing transitions
     };

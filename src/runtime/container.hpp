@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <signal.h>
 #include "container_config.hpp"
 
 namespace docker_cpp {

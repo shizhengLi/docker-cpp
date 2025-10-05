@@ -71,6 +71,7 @@ ContainerRuntime& ContainerRuntime::operator=(ContainerRuntime&& other) noexcept
 }
 
 std::string ContainerRuntime::createContainer(const ContainerConfig& config) {
+    (void)config; // Suppress unused parameter warning
     if (!initialized_) {
         throw ContainerRuntimeError("ContainerRuntime not initialized");
     }
@@ -131,11 +132,13 @@ ContainerInfo ContainerRuntime::inspectContainer(const std::string& container_id
 }
 
 std::vector<ContainerInfo> ContainerRuntime::listContainers(bool all) const {
+    (void)all; // Suppress unused parameter warning
     // TODO: Implement container listing
     return {};
 }
 
 std::vector<std::string> ContainerRuntime::listContainerIds(bool all) const {
+    (void)all; // Suppress unused parameter warning
     // TODO: Implement container ID listing
     return {};
 }
@@ -151,6 +154,7 @@ size_t ContainerRuntime::getRunningContainerCount() const {
 }
 
 ContainerState ContainerRuntime::getContainerState(const std::string& container_id) const {
+    (void)container_id; // Suppress unused parameter warning
     // TODO: Implement container state retrieval
     return ContainerState::STOPPED;
 }
@@ -158,6 +162,9 @@ ContainerState ContainerRuntime::getContainerState(const std::string& container_
 void ContainerRuntime::waitForContainer(const std::string& container_id,
                                        ContainerState desired_state,
                                        int timeout_seconds) {
+    (void)container_id; // Suppress unused parameter warning
+    (void)desired_state; // Suppress unused parameter warning
+    (void)timeout_seconds; // Suppress unused parameter warning
     // TODO: Implement container wait
     std::cout << "Waiting for container: " << container_id << " to reach state "
               << static_cast<int>(desired_state) << " with timeout " << timeout_seconds << std::endl;
@@ -166,17 +173,23 @@ void ContainerRuntime::waitForContainer(const std::string& container_id,
 std::future<void> ContainerRuntime::waitForContainerAsync(const std::string& container_id,
                                                          ContainerState desired_state,
                                                          int timeout_seconds) {
+    (void)container_id; // Suppress unused parameter warning
+    (void)desired_state; // Suppress unused parameter warning
+    (void)timeout_seconds; // Suppress unused parameter warning
     // TODO: Implement async container wait
     std::cout << "Async wait for container: " << container_id << std::endl;
     return std::async(std::launch::async, []{});
 }
 
 void ContainerRuntime::updateContainerResources(const std::string& container_id, const ResourceLimits& limits) {
+    (void)container_id; // Suppress unused parameter warning
+    (void)limits; // Suppress unused parameter warning
     // TODO: Implement resource updates
     std::cout << "Updating resources for container: " << container_id << std::endl;
 }
 
 ResourceStats ContainerRuntime::getContainerStats(const std::string& container_id) const {
+    (void)container_id; // Suppress unused parameter warning
     // TODO: Implement container stats
     ResourceStats stats;
     return stats;
@@ -196,12 +209,17 @@ ResourceStats ContainerRuntime::getAggregatedStats() const {
 std::vector<std::string> ContainerRuntime::getContainerLogs(const std::string& container_id,
                                                            int tail_lines,
                                                            bool follow) const {
+    (void)container_id; // Suppress unused parameter warning
+    (void)tail_lines; // Suppress unused parameter warning
+    (void)follow; // Suppress unused parameter warning
     // TODO: Implement log retrieval
     return {};
 }
 
 void ContainerRuntime::streamContainerLogs(const std::string& container_id,
                                           std::function<void(const std::string&)> log_callback) const {
+    (void)container_id; // Suppress unused parameter warning
+    (void)log_callback; // Suppress unused parameter warning
     // TODO: Implement log streaming
     std::cout << "Streaming logs for container: " << container_id << std::endl;
 }
@@ -211,11 +229,17 @@ std::string ContainerRuntime::execInContainer(const std::string& container_id,
                                               const std::vector<std::string>& env,
                                               bool tty,
                                               bool stdin_open) {
+    (void)container_id; // Suppress unused parameter warning
+    (void)command; // Suppress unused parameter warning
+    (void)env; // Suppress unused parameter warning
+    (void)tty; // Suppress unused parameter warning
+    (void)stdin_open; // Suppress unused parameter warning
     // TODO: Implement container exec
     return "exec-id-placeholder";
 }
 
 std::vector<std::string> ContainerRuntime::getContainerFileChanges(const std::string& container_id) const {
+    (void)container_id; // Suppress unused parameter warning
     // TODO: Implement file changes detection
     return {};
 }
@@ -229,6 +253,8 @@ std::string ContainerRuntime::commitContainer(const std::string& container_id,
                                               const std::string& repository,
                                               const std::string& tag,
                                               const std::map<std::string, std::string>& labels) const {
+    (void)container_id; // Suppress unused parameter warning
+    (void)labels; // Suppress unused parameter warning
     // TODO: Implement container commit
     return repository + ":" + tag;
 }
@@ -260,6 +286,8 @@ ContainerRuntime::RuntimeConfig ContainerRuntime::getRuntimeConfig() const {
 
 void ContainerRuntime::subscribeToEvents(RuntimeEventCallback callback,
                                         const std::vector<std::string>& event_types) {
+    (void)callback; // Suppress unused parameter warning
+    (void)event_types; // Suppress unused parameter warning
     // TODO: Implement event subscription
     std::cout << "Subscribing to events" << std::endl;
 }
@@ -366,12 +394,14 @@ void ContainerRuntime::performMaintenanceTasks() {
 }
 
 void ContainerRuntime::validateRuntimeConfig(const RuntimeConfig& config) const {
+    (void)config; // Suppress unused parameter warning
     // TODO: Validate runtime configuration
     std::cout << "Validating runtime configuration" << std::endl;
 }
 
 void ContainerRuntime::emitRuntimeEvent(const std::string& event_type,
                                        const std::map<std::string, std::string>& data) const {
+    (void)data; // Suppress unused parameter warning
     // TODO: Emit runtime events
     std::cout << "Emitting runtime event: " << event_type << std::endl;
 }
