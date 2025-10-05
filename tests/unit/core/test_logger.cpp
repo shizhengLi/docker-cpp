@@ -47,7 +47,7 @@ TEST_F(LoggerTest, DefaultConstructorCreatesDefaultLogger)
     EXPECT_FALSE(logger->isLevelEnabled(docker_cpp::LogLevel::DEBUG));
 }
 
-TEST_F(LoggerTest, SetAndGetdocker_cpp::LogLevel)
+TEST_F(LoggerTest, SetAndGetLogLevel)
 {
     auto* logger = docker_cpp::Logger::getInstance();
 
@@ -184,9 +184,9 @@ TEST_F(LoggerTest, CustomSink)
     auto* logger = docker_cpp::Logger::getInstance();
     std::vector<std::string> captured_messages;
 
-    auto custom_sink = [&](const LogMessage& message) {
+    auto custom_sink = [&](const docker_cpp::LogMessage& message) {
         std::ostringstream oss;
-        oss << "[" << toString(message.level) << "] " << message.message;
+        oss << "[" << docker_cpp::toString(message.level) << "] " << message.message;
         captured_messages.push_back(oss.str());
     };
 
@@ -210,7 +210,7 @@ TEST_F(LoggerTest, LogMessageFormatting)
     auto* logger = docker_cpp::Logger::getInstance();
     (void)logger; // Suppress unused variable warning
 
-    LogMessage msg;
+    docker_cpp::LogMessage msg;
     msg.level = docker_cpp::LogLevel::ERROR;
     msg.message = "Test error";
     msg.logger_name = "test_logger";
@@ -302,25 +302,25 @@ TEST_F(LoggerTest, ThreadSafety)
     EXPECT_EQ(thread_count, num_threads * messages_per_thread);
 }
 
-TEST_F(LoggerTest, docker_cpp::LogLevelToString)
+TEST_F(LoggerTest, LogLevelToString)
 {
-    EXPECT_EQ(toString(docker_cpp::LogLevel::TRACE), "TRACE");
-    EXPECT_EQ(toString(docker_cpp::LogLevel::DEBUG), "DEBUG");
-    EXPECT_EQ(toString(docker_cpp::LogLevel::INFO), "INFO");
-    EXPECT_EQ(toString(docker_cpp::LogLevel::WARNING), "WARNING");
-    EXPECT_EQ(toString(docker_cpp::LogLevel::ERROR), "ERROR");
-    EXPECT_EQ(toString(docker_cpp::LogLevel::CRITICAL), "CRITICAL");
+    EXPECT_EQ(docker_cpp::toString(docker_cpp::LogLevel::TRACE), "TRACE");
+    EXPECT_EQ(docker_cpp::toString(docker_cpp::LogLevel::DEBUG), "DEBUG");
+    EXPECT_EQ(docker_cpp::toString(docker_cpp::LogLevel::INFO), "INFO");
+    EXPECT_EQ(docker_cpp::toString(docker_cpp::LogLevel::WARNING), "WARNING");
+    EXPECT_EQ(docker_cpp::toString(docker_cpp::LogLevel::ERROR), "ERROR");
+    EXPECT_EQ(docker_cpp::toString(docker_cpp::LogLevel::CRITICAL), "CRITICAL");
 }
 
-TEST_F(LoggerTest, StringTodocker_cpp::LogLevel)
+TEST_F(LoggerTest, StringToLogLevel)
 {
-    EXPECT_EQ(fromString("TRACE"), docker_cpp::LogLevel::TRACE);
-    EXPECT_EQ(fromString("DEBUG"), docker_cpp::LogLevel::DEBUG);
-    EXPECT_EQ(fromString("INFO"), docker_cpp::LogLevel::INFO);
-    EXPECT_EQ(fromString("WARNING"), docker_cpp::LogLevel::WARNING);
-    EXPECT_EQ(fromString("ERROR"), docker_cpp::LogLevel::ERROR);
-    EXPECT_EQ(fromString("CRITICAL"), docker_cpp::LogLevel::CRITICAL);
-    EXPECT_EQ(fromString("invalid"), docker_cpp::LogLevel::INFO); // Default
+    EXPECT_EQ(docker_cpp::fromString("TRACE"), docker_cpp::LogLevel::TRACE);
+    EXPECT_EQ(docker_cpp::fromString("DEBUG"), docker_cpp::LogLevel::DEBUG);
+    EXPECT_EQ(docker_cpp::fromString("INFO"), docker_cpp::LogLevel::INFO);
+    EXPECT_EQ(docker_cpp::fromString("WARNING"), docker_cpp::LogLevel::WARNING);
+    EXPECT_EQ(docker_cpp::fromString("ERROR"), docker_cpp::LogLevel::ERROR);
+    EXPECT_EQ(docker_cpp::fromString("CRITICAL"), docker_cpp::LogLevel::CRITICAL);
+    EXPECT_EQ(docker_cpp::fromString("invalid"), docker_cpp::LogLevel::INFO); // Default
 }
 
 TEST_F(LoggerTest, ConsoleSinkToggle)

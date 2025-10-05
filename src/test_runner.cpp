@@ -5,7 +5,6 @@
 #include <iostream>
 #include <string>
 
-
 // Simple test framework
 class TestRunner {
 public:
@@ -66,15 +65,17 @@ int TestRunner::failed_count_ = 0;
 // Test functions
 void testErrorCreation()
 {
-    docker_cpp::ContainerError error(ErrorCode::CONTAINER_NOT_FOUND, "Container with ID 'test' not found");
-    assert(error.getErrorCode() == ErrorCode::CONTAINER_NOT_FOUND);
+    docker_cpp::ContainerError error(docker_cpp::ErrorCode::CONTAINER_NOT_FOUND,
+                                     "Container with ID 'test' not found");
+    assert(error.getErrorCode() == docker_cpp::ErrorCode::CONTAINER_NOT_FOUND);
     assert(std::string(error.what()).find("Container not found") != std::string::npos);
 }
 
 void testErrorCodeConversion()
 {
-    docker_cpp::ContainerError error1(ErrorCode::NAMESPACE_CREATION_FAILED, "Test message");
-    assert(error1.getErrorCode() == ErrorCode::NAMESPACE_CREATION_FAILED);
+    docker_cpp::ContainerError error1(docker_cpp::ErrorCode::NAMESPACE_CREATION_FAILED,
+                                      "Test message");
+    assert(error1.getErrorCode() == docker_cpp::ErrorCode::NAMESPACE_CREATION_FAILED);
 }
 
 void testErrorCopy()
@@ -93,22 +94,23 @@ void testErrorMove()
 
 void testErrorCategory()
 {
-    assert(std::string(getdocker_cpp::ContainerErrorCategory().name()) == "docker-cpp");
+    assert(std::string(getContainerErrorCategory().name()) == "docker-cpp");
 
-    docker_cpp::ContainerError error(ErrorCode::CONTAINER_NOT_FOUND, "Test");
+    docker_cpp::ContainerError error(docker_cpp::ErrorCode::CONTAINER_NOT_FOUND, "Test");
     assert(error.code().category().name() == std::string("docker-cpp"));
 }
 
 void testSystemError()
 {
     std::system_error sys_error(errno, std::system_category(), "System call failed");
-    docker_cpp::ContainerError container_error = makeSystemError(ErrorCode::SYSTEM_ERROR, sys_error);
-    assert(container_error.getErrorCode() == ErrorCode::SYSTEM_ERROR);
+    docker_cpp::ContainerError container_error =
+        makeSystemError(docker_cpp::ErrorCode::SYSTEM_ERROR, sys_error);
+    assert(container_error.getErrorCode() == docker_cpp::ErrorCode::SYSTEM_ERROR);
     assert(std::string(container_error.what()).find("System call failed") != std::string::npos);
 }
 
 // Namespace manager tests
-void testdocker_cpp::NamespaceManagerCreation()
+void testNamespaceManagerCreation()
 {
     try {
         // Test creating a UTS namespace (usually available)
@@ -255,10 +257,10 @@ int main()
     TestRunner::runTest("System Error", testSystemError);
 
     // Namespace manager tests
-    TestRunner::runTest("Namespace Manager Creation", testdocker_cpp::NamespaceManagerCreation);
-    TestRunner::runTest("Namespace Manager Types", testdocker_cpp::NamespaceManagerTypes);
-    TestRunner::runTest("Namespace Manager Move Semantics", testdocker_cpp::NamespaceManagerMoveSemantics);
-    TestRunner::runTest("Namespace Manager Join", testdocker_cpp::NamespaceManagerJoin);
+    TestRunner::runTest("Namespace Manager Creation", testNamespaceManagerCreation);
+    TestRunner::runTest("Namespace Manager Types", testNamespaceManagerTypes);
+    TestRunner::runTest("Namespace Manager Move Semantics", testNamespaceManagerMoveSemantics);
+    TestRunner::runTest("Namespace Manager Join", testNamespaceManagerJoin);
 
     TestRunner::printSummary();
 

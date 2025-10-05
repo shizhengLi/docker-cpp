@@ -11,22 +11,22 @@
 #include <vector>
 
 
-class docker_cpp::EventTest : public ::testing::Test {
+class EventTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
         // Reset event system before each test
-        docker_cpp::docker_cpp::EventManager::resetInstance();
+        docker_cpp::EventManager::resetInstance();
     }
 
     void TearDown() override
     {
-        docker_cpp::docker_cpp::EventManager::resetInstance();
+        docker_cpp::EventManager::resetInstance();
     }
 };
 
 // Test basic event creation and properties
-TEST_F(docker_cpp::EventTest, Basicdocker_cpp::EventCreation)
+TEST_F(EventTest, BasicEventCreation)
 {
     docker_cpp::Event event("test.event", "Test event data");
 
@@ -36,7 +36,7 @@ TEST_F(docker_cpp::EventTest, Basicdocker_cpp::EventCreation)
     EXPECT_GT(event.getId(), 0);
 }
 
-TEST_F(docker_cpp::EventTest, docker_cpp::EventWithCustomTimestamp)
+TEST_F(EventTest, EventWithCustomTimestamp)
 {
     auto custom_time = std::chrono::system_clock::now() - std::chrono::hours(1);
     docker_cpp::Event event("test.event", "Test data", custom_time);
@@ -44,7 +44,7 @@ TEST_F(docker_cpp::EventTest, docker_cpp::EventWithCustomTimestamp)
     EXPECT_EQ(event.getTimestamp(), custom_time);
 }
 
-TEST_F(docker_cpp::EventTest, docker_cpp::EventCopyAndMove)
+TEST_F(EventTest, EventCopyAndMove)
 {
     docker_cpp::Event original("test.event", "Original data");
     docker_cpp::EventId original_id = original.getId();
@@ -65,17 +65,17 @@ TEST_F(docker_cpp::EventTest, docker_cpp::EventCopyAndMove)
 }
 
 // Test event manager basic functionality
-TEST_F(docker_cpp::EventTest, docker_cpp::docker_cpp::EventManagerSingleton)
+TEST_F(EventTest, EventManagerSingleton)
 {
-    auto* manager1 = docker_cpp::docker_cpp::EventManager::getInstance();
-    auto* manager2 = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager1 = docker_cpp::EventManager::getInstance();
+    auto* manager2 = docker_cpp::EventManager::getInstance();
 
     EXPECT_EQ(manager1, manager2);
 }
 
-TEST_F(docker_cpp::EventTest, Basicdocker_cpp::EventPublishing)
+TEST_F(EventTest, BasicEventPublishing)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received_events;
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) { received_events.push_back(event); };
@@ -93,9 +93,9 @@ TEST_F(docker_cpp::EventTest, Basicdocker_cpp::EventPublishing)
     EXPECT_EQ(received_events[0].getData(), "Test data");
 }
 
-TEST_F(docker_cpp::EventTest, MultipleSubscribers)
+TEST_F(EventTest,MultipleSubscribers)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received1, received2;
     docker_cpp::EventListener listener1 = [&](const docker_cpp::Event& event) { received1.push_back(event); };
@@ -113,9 +113,9 @@ TEST_F(docker_cpp::EventTest, MultipleSubscribers)
     EXPECT_EQ(received2[0].getData(), "Test data");
 }
 
-TEST_F(docker_cpp::EventTest, docker_cpp::EventFiltering)
+TEST_F(EventTest, EventFiltering)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received_events;
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) { received_events.push_back(event); };
@@ -136,9 +136,9 @@ TEST_F(docker_cpp::EventTest, docker_cpp::EventFiltering)
     EXPECT_EQ(received_events[1].getData(), "Should also receive");
 }
 
-TEST_F(docker_cpp::EventTest, Unsubscribedocker_cpp::Events)
+TEST_F(EventTest, UnsubscribeEvents)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received_events;
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) { received_events.push_back(event); };
@@ -157,9 +157,9 @@ TEST_F(docker_cpp::EventTest, Unsubscribedocker_cpp::Events)
     EXPECT_EQ(received_events[0].getData(), "Before unsubscribe");
 }
 
-TEST_F(docker_cpp::EventTest, WildcardSubscriptions)
+TEST_F(EventTest,WildcardSubscriptions)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received_events;
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) { received_events.push_back(event); };
@@ -179,9 +179,9 @@ TEST_F(docker_cpp::EventTest, WildcardSubscriptions)
     EXPECT_EQ(received_events[1].getType(), "test.event2");
 }
 
-TEST_F(docker_cpp::EventTest, ThreadSafety)
+TEST_F(EventTest,ThreadSafety)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received_events;
     std::mutex received_mutex;
@@ -219,9 +219,9 @@ TEST_F(docker_cpp::EventTest, ThreadSafety)
     EXPECT_EQ(received_events.size(), num_threads * events_per_thread);
 }
 
-TEST_F(docker_cpp::EventTest, docker_cpp::EventQueueing)
+TEST_F(EventTest, EventQueueing)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received_events;
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) { received_events.push_back(event); };
@@ -245,7 +245,7 @@ TEST_F(docker_cpp::EventTest, docker_cpp::EventQueueing)
     }
 }
 
-TEST_F(docker_cpp::EventTest, docker_cpp::EventMetadata)
+TEST_F(EventTest, EventMetadata)
 {
     docker_cpp::Event event("test.event", "Test data");
 
@@ -265,9 +265,9 @@ TEST_F(docker_cpp::EventTest, docker_cpp::EventMetadata)
     EXPECT_FALSE(event.hasMetadata("key1"));
 }
 
-TEST_F(docker_cpp::EventTest, docker_cpp::EventPriority)
+TEST_F(EventTest, EventPriority)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received_events;
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) { received_events.push_back(event); };
@@ -295,9 +295,9 @@ TEST_F(docker_cpp::EventTest, docker_cpp::EventPriority)
     EXPECT_EQ(received_events[2].getData(), "Low priority");
 }
 
-TEST_F(docker_cpp::EventTest, docker_cpp::EventStatistics)
+TEST_F(EventTest, EventStatistics)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     docker_cpp::EventListener listener = [](const docker_cpp::Event& /*event*/) { /* Do nothing */ };
 
@@ -317,9 +317,9 @@ TEST_F(docker_cpp::EventTest, docker_cpp::EventStatistics)
     EXPECT_EQ(stats.pending_events, 0);
 }
 
-TEST_F(docker_cpp::EventTest, docker_cpp::EventBatching)
+TEST_F(EventTest, EventBatching)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received_events;
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) { received_events.push_back(event); };
@@ -342,9 +342,9 @@ TEST_F(docker_cpp::EventTest, docker_cpp::EventBatching)
     EXPECT_EQ(received_events.size(), 25);
 }
 
-TEST_F(docker_cpp::EventTest, Asyncdocker_cpp::EventProcessing)
+TEST_F(EventTest, AsyncEventProcessing)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received_events;
     std::atomic<int> processing_count{0};
@@ -373,9 +373,9 @@ TEST_F(docker_cpp::EventTest, Asyncdocker_cpp::EventProcessing)
     EXPECT_EQ(processing_count, 5);
 }
 
-TEST_F(docker_cpp::EventTest, ErrorHandlingInListeners)
+TEST_F(EventTest,ErrorHandlingInListeners)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received_events;
 
@@ -405,9 +405,9 @@ TEST_F(docker_cpp::EventTest, ErrorHandlingInListeners)
     EXPECT_GE(received_events.size(), 2); // At least the events from normal listener
 }
 
-TEST_F(docker_cpp::EventTest, docker_cpp::docker_cpp::EventManagerReset)
+TEST_F(EventTest, EventManagerReset)
 {
-    auto* manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* manager = docker_cpp::EventManager::getInstance();
 
     std::vector<docker_cpp::Event> received_events;
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) { received_events.push_back(event); };
@@ -419,10 +419,10 @@ TEST_F(docker_cpp::EventTest, docker_cpp::docker_cpp::EventManagerReset)
 
     EXPECT_EQ(received_events.size(), 1);
 
-    docker_cpp::docker_cpp::EventManager::resetInstance();
+    docker_cpp::EventManager::resetInstance();
 
     // Get new instance
-    auto* new_manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto* new_manager = docker_cpp::EventManager::getInstance();
 
     docker_cpp::Event event2("test.event", "After reset");
     new_manager->publish(event2);

@@ -8,23 +8,22 @@
 #include <thread>
 #include <vector>
 
-
-class docker_cpp::EventSimpleTest : public ::testing::Test {
+class EventSimpleTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
         // Reset event system before each test
-        docker_cpp::docker_cpp::EventManager::resetInstance();
+        docker_cpp::EventManager::resetInstance();
     }
 
     void TearDown() override
     {
-        docker_cpp::docker_cpp::EventManager::resetInstance();
+        docker_cpp::EventManager::resetInstance();
     }
 };
 
 // Test basic event creation and properties
-TEST_F(docker_cpp::EventSimpleTest, Basicdocker_cpp::EventCreation)
+TEST_F(EventSimpleTest, BasicEventCreation)
 {
     docker_cpp::Event event("test.event", "Test event data");
 
@@ -34,7 +33,7 @@ TEST_F(docker_cpp::EventSimpleTest, Basicdocker_cpp::EventCreation)
     EXPECT_GT(event.getId(), 0);
 }
 
-TEST_F(docker_cpp::EventSimpleTest, docker_cpp::EventMetadata)
+TEST_F(EventSimpleTest, EventMetadata)
 {
     docker_cpp::Event event("test.event", "Test data");
 
@@ -54,17 +53,17 @@ TEST_F(docker_cpp::EventSimpleTest, docker_cpp::EventMetadata)
     EXPECT_FALSE(event.hasMetadata("key1"));
 }
 
-TEST_F(docker_cpp::EventSimpleTest, docker_cpp::docker_cpp::EventManagerSingleton)
+TEST_F(EventSimpleTest, EventManagerSingleton)
 {
-    auto manager1 = docker_cpp::docker_cpp::EventManager::getInstance();
-    auto manager2 = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto manager1 = docker_cpp::EventManager::getInstance();
+    auto manager2 = docker_cpp::EventManager::getInstance();
 
     EXPECT_EQ(manager1, manager2);
 }
 
-TEST_F(docker_cpp::EventSimpleTest, Basicdocker_cpp::EventPublishing)
+TEST_F(EventSimpleTest, BasicEventPublishing)
 {
-    auto manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto manager = docker_cpp::EventManager::getInstance();
 
     std::atomic<int> received_count{0};
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) {
@@ -84,9 +83,9 @@ TEST_F(docker_cpp::EventSimpleTest, Basicdocker_cpp::EventPublishing)
     EXPECT_EQ(received_count, 1);
 }
 
-TEST_F(docker_cpp::EventSimpleTest, MultipleSubscribers)
+TEST_F(EventSimpleTest,MultipleSubscribers)
 {
-    auto manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto manager = docker_cpp::EventManager::getInstance();
 
     std::atomic<int> received1_count{0};
     std::atomic<int> received2_count{0};
@@ -114,9 +113,9 @@ TEST_F(docker_cpp::EventSimpleTest, MultipleSubscribers)
     EXPECT_EQ(received2_count, 1);
 }
 
-TEST_F(docker_cpp::EventSimpleTest, docker_cpp::EventFiltering)
+TEST_F(EventSimpleTest, EventFiltering)
 {
-    auto manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto manager = docker_cpp::EventManager::getInstance();
 
     std::atomic<int> received_count{0};
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) {
@@ -142,9 +141,9 @@ TEST_F(docker_cpp::EventSimpleTest, docker_cpp::EventFiltering)
     EXPECT_EQ(received_count, 2);
 }
 
-TEST_F(docker_cpp::EventSimpleTest, Unsubscribedocker_cpp::Events)
+TEST_F(EventSimpleTest, UnsubscribeEvents)
 {
-    auto manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto manager = docker_cpp::EventManager::getInstance();
 
     std::atomic<int> received_count{0};
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) {
@@ -152,7 +151,7 @@ TEST_F(docker_cpp::EventSimpleTest, Unsubscribedocker_cpp::Events)
         received_count++;
     };
 
-    SubscriptionId subscription = manager->subscribe("test.event", listener);
+    docker_cpp::SubscriptionId subscription = manager->subscribe("test.event", listener);
 
     docker_cpp::Event event1("test.event", "Before unsubscribe");
     manager->publish(event1);
@@ -172,9 +171,9 @@ TEST_F(docker_cpp::EventSimpleTest, Unsubscribedocker_cpp::Events)
     EXPECT_EQ(received_count, 1);
 }
 
-TEST_F(docker_cpp::EventSimpleTest, docker_cpp::EventStatistics)
+TEST_F(EventSimpleTest, EventStatistics)
 {
-    auto manager = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto manager = docker_cpp::EventManager::getInstance();
 
     std::atomic<int> received_count{0};
     docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) {
