@@ -98,9 +98,10 @@ target_include_directories(tests-config
     ${CMAKE_SOURCE_DIR}/include
 )
 
-# Integration tests (currently just a placeholder)
+# Integration tests - comprehensive Phase 1 component tests
 add_executable(tests-integration
-    integration/test_container_runtime.cpp
+    integration/test_phase1_integration.cpp
+    integration/test_performance_benchmarks.cpp
 )
 
 target_link_libraries(tests-integration
