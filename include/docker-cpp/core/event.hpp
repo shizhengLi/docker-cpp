@@ -148,6 +148,7 @@ private:
     void processEventQueue();
     void processEvent(const Event& event);
     void processBatch(const std::string& event_type);
+    void processBatchQueue();
     bool matchesPattern(const std::string& event_type, const std::string& pattern) const;
     void startProcessingThread();
 
@@ -165,6 +166,7 @@ private:
     std::unordered_map<std::string, BatchConfig> batch_configs_;
 
     std::thread processing_thread_;
+    std::thread batch_processing_thread_;
     std::condition_variable queue_condition_;
     std::atomic<bool> should_stop_{false};
 

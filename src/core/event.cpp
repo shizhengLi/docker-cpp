@@ -53,6 +53,9 @@ void EventManager::resetInstance()
         if (instance_->processing_thread_.joinable()) {
             instance_->processing_thread_.join();
         }
+        if (instance_->batch_processing_thread_.joinable()) {
+            instance_->batch_processing_thread_.join();
+        }
         instance_.reset();
     }
 }
@@ -63,6 +66,9 @@ EventManager::~EventManager()
     queue_condition_.notify_all();
     if (processing_thread_.joinable()) {
         processing_thread_.join();
+    }
+    if (batch_processing_thread_.joinable()) {
+        batch_processing_thread_.join();
     }
 }
 
@@ -146,6 +152,11 @@ void EventManager::enableBatching(const std::string& event_type,
     config.last_flush = std::chrono::system_clock::now();
 
     batch_configs_[event_type] = std::move(config);
+
+    // Start batch processing thread if not already running
+    if (!batch_processing_thread_.joinable()) {
+        batch_processing_thread_ = std::thread(&EventManager::processBatchQueue, this);
+    }
 }
 
 void EventManager::disableBatching(const std::string& event_type)
@@ -170,17 +181,15 @@ EventStatistics EventManager::getStatistics() const
 
 void EventManager::flush()
 {
-    // Process all pending events
-    while (true) {
-        {
-            std::lock_guard<std::mutex> lock(event_queue_mutex_);
-            if (event_queue_.empty()) {
-                break;
-            }
+    // Process all pending events in the main queue
+    {
+        std::unique_lock<std::mutex> lock(event_queue_mutex_);
+        if (!event_queue_.empty()) {
+            // Wait for the queue to be processed
+            queue_condition_.wait_for(lock, std::chrono::milliseconds(100), [this] {
+                return event_queue_.empty();
+            });
         }
-
-        // Give some time for processing
-        std::this_thread::sleep_for(DEFAULT_FLUSH_WAIT_TIME);
     }
 
     // Process all batches
@@ -247,43 +256,52 @@ void EventManager::processEvent(const Event& event)
 
             // Check if batch should be flushed
             auto now = std::chrono::system_clock::now();
-            if (it->second.pending_events.size() >= it->second.max_batch_size
-                || now - it->second.last_flush >= it->second.interval) {
-                processBatch(event.getType());
+            auto elapsed = now - it->second.last_flush;
+            bool should_flush = it->second.pending_events.size() >= it->second.max_batch_size
+                             || elapsed >= it->second.interval;
+
+            if (should_flush) {
+                // Update last_flush before releasing lock
                 it->second.last_flush = now;
+                // Release lock before calling processBatch to avoid deadlock
+                // processBatch will acquire its own lock
+            } else {
+                return; // No flush needed, return while still holding lock
             }
-            return;
-        }
-    }
+        } else {
+            // No batching configured, process directly
+            std::vector<Subscription> active_subscriptions;
+            {
+                std::lock_guard<std::mutex> lock(subscriptions_mutex_);
 
-    // Process event directly (no batching)
-    std::vector<Subscription> active_subscriptions;
-    {
-        std::lock_guard<std::mutex> lock(subscriptions_mutex_);
-
-        active_subscriptions.reserve(subscriptions_.size());
-        for (const auto& subscription : subscriptions_) {
-            if (subscription.active
-                && matchesPattern(event.getType(), subscription.event_type_pattern)) {
-                active_subscriptions.push_back(subscription);
+                active_subscriptions.reserve(subscriptions_.size());
+                for (const auto& subscription : subscriptions_) {
+                    if (subscription.active
+                        && matchesPattern(event.getType(), subscription.event_type_pattern)) {
+                        active_subscriptions.push_back(subscription);
+                    }
+                }
             }
-        }
-    }
 
-    // Notify subscribers
-    for (const auto& subscription : active_subscriptions) {
-        try {
-            subscription.listener(event);
+            // Notify subscribers
+            for (const auto& subscription : active_subscriptions) {
+                try {
+                    subscription.listener(event);
+                }
+                catch (const std::exception& e) {
+                    // Continue processing other listeners
+                }
+                catch (...) {
+                    // Continue processing other listeners
+                }
+            }
+            return; // Return after processing directly
         }
-        catch (const std::exception& e) {
-            std::cerr << "Exception in event listener: " << e.what() << std::endl;
-            // Continue processing other listeners
-        }
-        catch (...) {
-            std::cerr << "Unknown exception in event listener" << std::endl;
-            // Continue processing other listeners
-        }
-    }
+    } // batches_lock released here
+
+    // Call processBatch outside of the lock to avoid deadlock
+    processBatch(event.getType());
+    return; // Return after processing batch
 }
 
 void EventManager::processBatch(const std::string& event_type)
@@ -297,6 +315,11 @@ void EventManager::processBatch(const std::string& event_type)
             events_to_process = std::move(it->second.pending_events);
             it->second.pending_events.clear();
         }
+    }
+
+    // If no events to process, return early
+    if (events_to_process.empty()) {
+        return;
     }
 
     // Process all events in the batch
@@ -320,10 +343,10 @@ void EventManager::processBatch(const std::string& event_type)
                 subscription.listener(event);
             }
             catch (const std::exception& e) {
-                std::cerr << "Exception in event listener: " << e.what() << std::endl;
+                // Continue processing other listeners
             }
             catch (...) {
-                std::cerr << "Unknown exception in event listener" << std::endl;
+                // Continue processing other listeners
             }
         }
     }
@@ -366,7 +389,11 @@ void EventManager::startProcessingThread()
         priority_queue<Event, std::vector<Event>, std::function<bool(const Event&, const Event&)>>(
             [](const Event& a, const Event& b) {
                 // Higher priority events should be processed first
-                return static_cast<int>(a.getPriority()) < static_cast<int>(b.getPriority());
+                if (a.getPriority() != b.getPriority()) {
+                    return static_cast<int>(a.getPriority()) < static_cast<int>(b.getPriority());
+                }
+                // For same priority, process earlier events first (FIFO)
+                return a.getId() > b.getId();
             });
 
     // Initialize statistics
@@ -374,6 +401,29 @@ void EventManager::startProcessingThread()
 
     // Start processing thread
     processing_thread_ = std::thread(&EventManager::processEventQueue, this);
+}
+
+void EventManager::processBatchQueue()
+{
+    while (!should_stop_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Check every 10ms
+
+        std::lock_guard<std::mutex> lock(batches_mutex_);
+
+        auto now = std::chrono::system_clock::now();
+
+        for (auto& [event_type, config] : batch_configs_) {
+            if (!config.enabled || config.pending_events.empty()) {
+                continue;
+            }
+
+            auto elapsed = now - config.last_flush;
+            if (elapsed >= config.interval || config.pending_events.size() >= config.max_batch_size) {
+                processBatch(event_type);
+                config.last_flush = now;
+            }
+        }
+    }
 }
 
 } // namespace docker_cpp
