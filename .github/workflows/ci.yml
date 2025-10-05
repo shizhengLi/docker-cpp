@@ -287,7 +287,7 @@ jobs:
 
     - name: Run static analysis
       run: |
-        find src include tests -name '*.cpp' -o -name '*.hpp' | xargs clang-tidy-14 -p build/Release --warnings-as-errors='clang-diagnostic-*'
+        find src include tests -name '*.cpp' -o -name '*.hpp' | xargs clang-tidy-14 -p build/Release --warnings-as-errors='bugprone-*,performance-*,readability-*,modernize-*,-misc-include-cleaner,-misc-const-correctness,-modernize-use-designated-initializers,-readability-qualified-auto,-performance-inefficient-vector-operation'
 
     - name: Run cppcheck
       run: |

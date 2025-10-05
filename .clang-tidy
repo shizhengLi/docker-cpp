@@ -40,7 +40,16 @@ Checks: >
   -modernize-use-default-member-init,
   -readability-redundant-access-specifiers,
   -cppcoreguidelines-explicit-virtual-functions,
-  -readability-convert-member-functions-to-static
+  -readability-convert-member-functions-to-static,
+  # 禁用产生大量噪音的检查
+  -misc-include-cleaner,
+  -misc-const-correctness,
+  -modernize-use-designated-initializers,
+  -readability-qualified-auto,
+  -performance-inefficient-vector-operation,
+  -performance-avoid-endl,
+  -modernize-use-auto,
+  -readability-function-cognitive-complexity
 
 WarningsAsErrors: >
   modernize-*,
@@ -49,7 +58,11 @@ WarningsAsErrors: >
   cert-*,
   clang-analyzer-*,
   concurrency-*,
-  misc-*,
+  -misc-include-cleaner,
+  -misc-const-correctness,
+  -modernize-use-designated-initializers,
+  -readability-qualified-auto,
+  -performance-inefficient-vector-operation,
   -bugprone-lambda-function-name,
   -bugprone-narrowing-conversions,
   -bugprone-signed-char-misuse,
