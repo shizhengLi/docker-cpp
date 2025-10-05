@@ -93,7 +93,7 @@ TEST_F(EventAdvancedTest, ComplexEventBatching)
     }
 
     // Wait for batch processing to complete
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     // Should receive all events in batches
     EXPECT_EQ(received_events.size(), 25);
