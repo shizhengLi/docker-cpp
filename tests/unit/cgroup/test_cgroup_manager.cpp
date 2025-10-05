@@ -292,8 +292,8 @@ TEST(CgroupManagerUtilitiesTest, UtilityFunctions)
         EXPECT_FALSE(controllers.empty());
 
         // Test specific controller availability
-        bool cpu_available = docker_cpp::CgroupManager::isControllerAvailable("cpu");
-        bool memory_available = docker_cpp::CgroupManager::isControllerAvailable("memory");
+        docker_cpp::CgroupManager::isControllerAvailable("cpu");
+        docker_cpp::CgroupManager::isControllerAvailable("memory");
         // Results depend on system configuration
     }
 }
@@ -429,14 +429,10 @@ TEST_F(ResourceMonitorTest, Alerting)
 
     // Test alert callback
     bool callback_called = false;
-    std::string alert_type;
-    double alert_value;
 
-    auto callback = [&](const std::string& cgroup_path, const std::string& type, double value) {
-        callback_called = true;
-        alert_type = type;
-        alert_value = value;
-    };
+    auto callback = [&](const std::string& /*cgroup_path*/,
+                        const std::string& /*type*/,
+                        double /*value*/) { callback_called = true; };
 
     monitor_->setAlertCallback(callback);
 }
