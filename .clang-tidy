@@ -1,75 +1,22 @@
 # Clang-tidy configuration for docker-cpp project
-# Focused on most critical and actionable checks only
+# Minimal configuration - only essential and actionable checks
 ---
 Checks: >
-  # Critical bug prevention
+  # Only critical bugs that cause real issues
   bugprone-use-after-move,
   bugprone-dangling-handle,
-  bugprone-misplaced-widening-cast,
   bugprone-sizeof-expression,
-  bugprone-integer-division,
-  bugprone-suspicious-missing-comma,
-  bugprone-suspicious-semicolon,
-  bugprone-throw-keyword-missing,
 
-  # Important performance issues
+  # Performance issues that matter
   performance-move-const-arg,
   performance-unnecessary-copy-initialization,
-  performance-unnecessary-value-param,
-  performance-for-range-copy,
 
-  # Modern C++ best practices (most important ones)
+  # Modern C++ essentials
   modernize-use-nullptr,
   modernize-use-override,
-  modernize-use-enum-class,
-  modernize-use-using,
-  modernize-loop-convert,
-  modernize-replace-auto-ptr,
-  modernize-replace-random-shuffle,
 
-  # Code readability (selective)
-  readability-isolate-declaration,
-  readability-simplify-boolean-expr,
-  readability-container-size-empty,
-  readability-delete-null-pointer,
-  readability-redundant-control-flow,
-
-  # Memory and resource management
-  misc-uniqueptr-reset-release,
-  misc-dangling-handle,
-  misc-new-delete-overloads,
-  misc-non-copyable-objects,
-
-  # Core guidelines (selective)
-  cppcoreguidelines-pro-type-const-cast,
-  cppcoreguidelines-pro-type-reinterpret-cast,
-  cppcoreguidelines-pro-type-vararg,
-  cppcoreguidelines-pro-type-member-init,
-  cppcoreguidelines-slicing,
-  cppcoreguidelines-special-member-functions,
-
-  # Key security checks
-  cert-dcl03-cpp,
-  cert-dcl21-cpp,
-  cert-dcl50-cpp,
-  cert-err34-c,
-  cert-err52-cpp,
-  cert-err60-cpp,
-  cert-fio38-c,
-  cert-mem57-cpp,
-  cert-oop57-cpp,
-  cert-oop58-cpp,
-  cert-pos54-c,
-  cert-str34-c,
-
-  # Disabled checks that are too noisy
-  -readability-function-cognitive-complexity,
-  -readability-magic-numbers,
-  -readability-identifier-naming,
-  -misc-use-anonymous-namespace,
-  -modernize-use-trailing-return-type,
-  -readability-redundant-access-specifiers,
-  -readability-convert-member-functions-to-static
+  # Memory safety (only most important)
+  misc-uniqueptr-reset-release
 
 WarningsAsErrors: >
   bugprone-use-after-move,
