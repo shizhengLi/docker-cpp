@@ -3,20 +3,29 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <signal.h>
-#include <string>
-#include <vector>
-#include <memory>
-#include <functional>
-#include <mutex>
-#include <unordered_map>
-#include <chrono>
-#include <thread>
 #include <atomic>
+#include <chrono>
+#include <csignal>
+#include <cstdint>
 #include <docker-cpp/core/error.hpp>
 #include <docker-cpp/namespace/namespace_manager.hpp>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <vector>
 
 namespace docker_cpp {
+
+/**
+ * @brief Constants for process management
+ */
+constexpr int DEFAULT_PROCESS_TIMEOUT = 10;
+constexpr std::chrono::milliseconds PROCESS_CLEANUP_TIMEOUT{100};
+constexpr std::chrono::milliseconds MONITORING_INTERVAL{500};
+constexpr int CHILD_EXIT_CODE = 127;
 
 /**
  * @brief Process configuration for container execution
@@ -41,12 +50,7 @@ struct ProcessConfig {
 /**
  * @brief Process status information
  */
-enum class ProcessStatus {
-    RUNNING,
-    STOPPED,
-    ZOMBIE,
-    UNKNOWN
-};
+enum class ProcessStatus : std::uint8_t { RUNNING, STOPPED, ZOMBIE, UNKNOWN };
 
 /**
  * @brief Process information structure
@@ -113,7 +117,7 @@ public:
      * @return true if process was stopped, false if timeout occurred
      * @throws ContainerError if process stopping fails
      */
-    bool stopProcess(pid_t pid, int timeout = 10);
+    bool stopProcess(pid_t pid, int timeout = DEFAULT_PROCESS_TIMEOUT);
 
     /**
      * @brief Force kill a process

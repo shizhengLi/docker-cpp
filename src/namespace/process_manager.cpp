@@ -1,17 +1,14 @@
-#include <docker-cpp/namespace/process_manager.hpp>
+#include <fcntl.h>
+#include <unistd.h>
 #include <algorithm>
 #include <cstring>
+#include <docker-cpp/namespace/process_manager.hpp>
 #include <iostream>
 #include <thread>
-#include <unistd.h>
-#include <fcntl.h>
 
 namespace docker_cpp {
 
-ProcessManager::ProcessManager()
-    : should_stop_monitoring_(false), monitoring_active_(false)
-{
-}
+ProcessManager::ProcessManager() : should_stop_monitoring_(false), monitoring_active_(false) {}
 
 ProcessManager::~ProcessManager()
 {
@@ -23,7 +20,7 @@ ProcessManager::~ProcessManager()
         if (isProcessRunning(pid)) {
             kill(pid, SIGTERM);
             // Give process a chance to exit gracefully
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(PROCESS_CLEANUP_TIMEOUT);
             if (isProcessRunning(pid)) {
                 kill(pid, SIGKILL);
             }
@@ -66,7 +63,7 @@ pid_t ProcessManager::createProcess(const ProcessConfig& config)
                     int error_code = errno;
                     write(error_pipe[1], &error_code, sizeof(error_code));
                     close(error_pipe[1]);
-                    exit(127);
+                    exit(CHILD_EXIT_CODE);
                 }
             }
 
@@ -79,17 +76,21 @@ pid_t ProcessManager::createProcess(const ProcessConfig& config)
 
             freeArgv(argv);
             freeEnvp(envp);
-            exit(127);
+            exit(CHILD_EXIT_CODE);
         }
         catch (...) {
             int error_code = ECANCELED;
             write(error_pipe[1], &error_code, sizeof(error_code));
             close(error_pipe[1]);
-            exit(127);
+            exit(CHILD_EXIT_CODE);
         }
-    } else {
+    }
+    else {
         // Parent process
         close(error_pipe[1]); // Close write end
+
+        // Give child process a moment to fail and write to pipe
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         // Check for errors from child with non-blocking read
         int flags = fcntl(error_pipe[0], F_GETFL);
@@ -104,13 +105,16 @@ pid_t ProcessManager::createProcess(const ProcessConfig& config)
             int status;
             waitpid(pid, &status, 0); // Clean up zombie
             throw ContainerError(ErrorCode::PROCESS_CREATION_FAILED,
-                                 "Failed to execute '" + config.executable + "': " + std::string(strerror(child_error)));
-        } else if (bytes_read == -1 && errno != EAGAIN) {
+                                 "Failed to execute '" + config.executable
+                                     + "': " + std::string(strerror(child_error)));
+        }
+        else if (bytes_read == -1 && errno != EAGAIN) {
             // Unexpected error reading from pipe
             int status;
             waitpid(pid, &status, 0); // Clean up zombie
-            throw ContainerError(ErrorCode::PROCESS_CREATION_FAILED,
-                                 "Failed to read error status from child: " + std::string(strerror(errno)));
+            throw ContainerError(
+                ErrorCode::PROCESS_CREATION_FAILED,
+                "Failed to read error status from child: " + std::string(strerror(errno)));
         }
         // If bytes_read is 0 (EOF) or -1 with EAGAIN, the child exec'd successfully
 
@@ -154,8 +158,9 @@ bool ProcessManager::stopProcess(pid_t pid, int timeout)
     {
         std::lock_guard<std::mutex> lock(processes_mutex_);
         if (managed_processes_.find(pid) == managed_processes_.end()) {
-            throw ContainerError(ErrorCode::PROCESS_NOT_FOUND,
-                                 "Process " + std::to_string(pid) + " not found in managed processes");
+            throw ContainerError(
+                ErrorCode::PROCESS_NOT_FOUND,
+                "Process " + std::to_string(pid) + " not found in managed processes");
         }
     }
 
@@ -178,7 +183,7 @@ bool ProcessManager::stopProcess(pid_t pid, int timeout)
             killProcess(pid, SIGKILL);
             return false;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(PROCESS_CLEANUP_TIMEOUT);
     }
 
     updateProcessStatus(pid);
@@ -191,8 +196,9 @@ void ProcessManager::killProcess(pid_t pid, int signal)
     {
         std::lock_guard<std::mutex> lock(processes_mutex_);
         if (managed_processes_.find(pid) == managed_processes_.end()) {
-            throw ContainerError(ErrorCode::PROCESS_NOT_FOUND,
-                                 "Process " + std::to_string(pid) + " not found in managed processes");
+            throw ContainerError(
+                ErrorCode::PROCESS_NOT_FOUND,
+                "Process " + std::to_string(pid) + " not found in managed processes");
         }
     }
 
@@ -239,7 +245,7 @@ bool ProcessManager::waitForProcess(pid_t pid, int timeout)
                 return false;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(PROCESS_CLEANUP_TIMEOUT);
     }
 
     updateProcessStatus(pid);
@@ -341,7 +347,8 @@ void ProcessManager::updateProcessStatus(pid_t pid)
             if (waitpid(pid, &status, WNOHANG) == pid) {
                 if (WIFEXITED(status)) {
                     it->second.exit_code = WEXITSTATUS(status);
-                } else if (WIFSIGNALED(status)) {
+                }
+                else if (WIFSIGNALED(status)) {
                     it->second.exit_code = -WTERMSIG(status);
                 }
             }
@@ -374,16 +381,17 @@ void ProcessManager::monitoringLoop()
             std::lock_guard<std::mutex> lock(processes_mutex_);
             auto it = managed_processes_.begin();
             while (it != managed_processes_.end()) {
-                if (it->second.status == ProcessStatus::STOPPED ||
-                    it->second.status == ProcessStatus::ZOMBIE) {
+                if (it->second.status == ProcessStatus::STOPPED
+                    || it->second.status == ProcessStatus::ZOMBIE) {
                     it = managed_processes_.erase(it);
-                } else {
+                }
+                else {
                     ++it;
                 }
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(MONITORING_INTERVAL);
     }
 }
 
@@ -439,9 +447,9 @@ void ProcessManager::setupNamespaces(const ProcessConfig& config)
 
         // Namespaces will be automatically cleaned up when they go out of scope
         // or when the process exits
-
-    } catch (const ContainerError& e) {
-        exit(127);
+    }
+    catch (const ContainerError& e) {
+        exit(CHILD_EXIT_CODE);
     }
 }
 
@@ -498,7 +506,8 @@ ProcessStatus ProcessManager::determineProcessStatus(pid_t pid) const
     pid_t result = waitpid(pid, &status, WNOHANG);
     if (result == pid) {
         return ProcessStatus::ZOMBIE;
-    } else if (result == -1) {
+    }
+    else if (result == -1) {
         return ProcessStatus::UNKNOWN;
     }
 

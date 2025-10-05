@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <chrono>
 #include <docker-cpp/namespace/namespace_manager.hpp>
 #include <docker-cpp/namespace/process_manager.hpp>
 #include <thread>
-#include <chrono>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <signal.h>
 
 class NamespaceAdvancedTest : public ::testing::Test {
 protected:
@@ -42,7 +42,8 @@ TEST_F(NamespaceAdvancedTest, NamespaceIsolationWithFork)
             // Namespace creation failed - exit with error code
             exit(1);
         }
-    } else if (pid > 0) {
+    }
+    else if (pid > 0) {
         // Parent process
         int status;
         waitpid(pid, &status, 0);
@@ -50,7 +51,8 @@ TEST_F(NamespaceAdvancedTest, NamespaceIsolationWithFork)
         // Child should have exited successfully
         EXPECT_TRUE(WIFEXITED(status));
         EXPECT_EQ(WEXITSTATUS(status), 0);
-    } else {
+    }
+    else {
         FAIL() << "Fork failed";
     }
 }
@@ -76,14 +78,16 @@ TEST_F(NamespaceAdvancedTest, UTSNamespaceIsolation)
         catch (const std::exception& e) {
             exit(1);
         }
-    } else if (pid > 0) {
+    }
+    else if (pid > 0) {
         // Parent process
         int status;
         waitpid(pid, &status, 0);
 
         EXPECT_TRUE(WIFEXITED(status));
         EXPECT_EQ(WEXITSTATUS(status), 0);
-    } else {
+    }
+    else {
         FAIL() << "Fork failed";
     }
 }
@@ -108,14 +112,16 @@ TEST_F(NamespaceAdvancedTest, NetworkNamespaceIsolation)
         catch (const std::exception& e) {
             exit(1);
         }
-    } else if (pid > 0) {
+    }
+    else if (pid > 0) {
         // Parent process
         int status;
         waitpid(pid, &status, 0);
 
         EXPECT_TRUE(WIFEXITED(status));
         EXPECT_EQ(WEXITSTATUS(status), 0);
-    } else {
+    }
+    else {
         FAIL() << "Fork failed";
     }
 }
@@ -140,14 +146,16 @@ TEST_F(NamespaceAdvancedTest, MountNamespaceIsolation)
         catch (const std::exception& e) {
             exit(1);
         }
-    } else if (pid > 0) {
+    }
+    else if (pid > 0) {
         // Parent process
         int status;
         waitpid(pid, &status, 0);
 
         EXPECT_TRUE(WIFEXITED(status));
         EXPECT_EQ(WEXITSTATUS(status), 0);
-    } else {
+    }
+    else {
         FAIL() << "Fork failed";
     }
 }
@@ -172,14 +180,16 @@ TEST_F(NamespaceAdvancedTest, IPCNamespaceIsolation)
         catch (const std::exception& e) {
             exit(1);
         }
-    } else if (pid > 0) {
+    }
+    else if (pid > 0) {
         // Parent process
         int status;
         waitpid(pid, &status, 0);
 
         EXPECT_TRUE(WIFEXITED(status));
         EXPECT_EQ(WEXITSTATUS(status), 0);
-    } else {
+    }
+    else {
         FAIL() << "Fork failed";
     }
 }
@@ -204,14 +214,16 @@ TEST_F(NamespaceAdvancedTest, UserNamespaceIsolation)
         catch (const std::exception& e) {
             exit(1);
         }
-    } else if (pid > 0) {
+    }
+    else if (pid > 0) {
         // Parent process
         int status;
         waitpid(pid, &status, 0);
 
         EXPECT_TRUE(WIFEXITED(status));
         EXPECT_EQ(WEXITSTATUS(status), 0);
-    } else {
+    }
+    else {
         FAIL() << "Fork failed";
     }
 }
@@ -236,14 +248,16 @@ TEST_F(NamespaceAdvancedTest, CgroupNamespaceIsolation)
         catch (const std::exception& e) {
             exit(1);
         }
-    } else if (pid > 0) {
+    }
+    else if (pid > 0) {
         // Parent process
         int status;
         waitpid(pid, &status, 0);
 
         EXPECT_TRUE(WIFEXITED(status));
         EXPECT_EQ(WEXITSTATUS(status), 0);
-    } else {
+    }
+    else {
         FAIL() << "Fork failed";
     }
 }
@@ -275,14 +289,16 @@ TEST_F(NamespaceAdvancedTest, MultipleNamespaceCreation)
         catch (const std::exception& e) {
             exit(1);
         }
-    } else if (pid > 0) {
+    }
+    else if (pid > 0) {
         // Parent process
         int status;
         waitpid(pid, &status, 0);
 
         EXPECT_TRUE(WIFEXITED(status));
         EXPECT_EQ(WEXITSTATUS(status), 0);
-    } else {
+    }
+    else {
         FAIL() << "Fork failed";
     }
 }
@@ -310,7 +326,8 @@ TEST_F(NamespaceAdvancedTest, NamespaceCleanupOnExit)
         catch (const std::exception& e) {
             exit(1);
         }
-    } else if (pid > 0) {
+    }
+    else if (pid > 0) {
         // Parent process
         int status;
         waitpid(pid, &status, 0);
@@ -322,7 +339,8 @@ TEST_F(NamespaceAdvancedTest, NamespaceCleanupOnExit)
         // After child exits, namespaces should be cleaned up automatically
         // In a real implementation, we could verify this by checking
         // /proc/[pid]/ns/ files, but for now we just ensure no crashes
-    } else {
+    }
+    else {
         FAIL() << "Fork failed";
     }
 }
@@ -354,14 +372,16 @@ TEST_F(NamespaceAdvancedTest, NamespaceMoveSemanticsWithFork)
         catch (const std::exception& e) {
             exit(1);
         }
-    } else if (pid > 0) {
+    }
+    else if (pid > 0) {
         // Parent process
         int status;
         waitpid(pid, &status, 0);
 
         EXPECT_TRUE(WIFEXITED(status));
         EXPECT_EQ(WEXITSTATUS(status), 0);
-    } else {
+    }
+    else {
         FAIL() << "Fork failed";
     }
 }
@@ -411,12 +431,9 @@ TEST_F(NamespaceAdvancedTest, ErrorHandlingForInvalidOperations)
     // Test joining non-existent process namespace
     EXPECT_THROW(
         docker_cpp::NamespaceManager::joinNamespace(999999, docker_cpp::NamespaceType::UTS),
-        docker_cpp::ContainerError
-    );
+        docker_cpp::ContainerError);
 
     // Test creating namespace with invalid file descriptor
-    EXPECT_THROW(
-        docker_cpp::NamespaceManager(docker_cpp::NamespaceType::UTS, -1),
-        docker_cpp::ContainerError
-    );
+    EXPECT_THROW(docker_cpp::NamespaceManager(docker_cpp::NamespaceType::UTS, -1),
+                 docker_cpp::ContainerError);
 }

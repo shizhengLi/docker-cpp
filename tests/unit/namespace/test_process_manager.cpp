@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
-#include <docker-cpp/namespace/process_manager.hpp>
-#include <docker-cpp/namespace/namespace_manager.hpp>
-#include <thread>
-#include <chrono>
-#include <unistd.h>
 #include <sys/wait.h>
+#include <unistd.h>
+#include <chrono>
+#include <docker-cpp/namespace/namespace_manager.hpp>
+#include <docker-cpp/namespace/process_manager.hpp>
+#include <thread>
 
 class ProcessManagerTest : public ::testing::Test {
 protected:
@@ -128,7 +128,7 @@ TEST_F(ProcessManagerTest, CreateProcessWithNetworkNamespace)
     docker_cpp::ProcessManager manager;
 
     docker_cpp::ProcessConfig config;
-    config.executable = "/bin/ip";
+    config.executable = "/sbin/ping";
     config.args = {"ip", "addr", "show"};
     config.create_network_namespace = true;
 
@@ -148,7 +148,7 @@ TEST_F(ProcessManagerTest, CreateProcessWithMountNamespace)
     docker_cpp::ProcessManager manager;
 
     docker_cpp::ProcessConfig config;
-    config.executable = "/bin/mount";
+    config.executable = "/bin/df";
     config.args = {"mount"};
     config.create_mount_namespace = true;
 
@@ -168,7 +168,7 @@ TEST_F(ProcessManagerTest, CreateProcessWithIPCNamespace)
     docker_cpp::ProcessManager manager;
 
     docker_cpp::ProcessConfig config;
-    config.executable = "/bin/ipc";
+    config.executable = "/bin/ps";
     config.args = {"ipcs"};
     config.create_ipc_namespace = true;
 
@@ -388,10 +388,11 @@ TEST_F(ProcessManagerTest, ProcessExitCallback)
     bool callback_called = false;
     pid_t callback_pid = 0;
 
-    manager.setProcessExitCallback([&callback_called, &callback_pid](const docker_cpp::ProcessInfo& info) {
-        callback_called = true;
-        callback_pid = info.pid;
-    });
+    manager.setProcessExitCallback(
+        [&callback_called, &callback_pid](const docker_cpp::ProcessInfo& info) {
+            callback_called = true;
+            callback_pid = info.pid;
+        });
 
     docker_cpp::ProcessConfig config;
     config.executable = "/bin/echo";
@@ -478,10 +479,7 @@ TEST_F(ProcessManagerTest, ErrorHandlingInvalidExecutable)
     config.executable = "/nonexistent/executable";
     config.args = {"test"};
 
-    EXPECT_THROW(
-        manager.createProcess(config),
-        docker_cpp::ContainerError
-    );
+    EXPECT_THROW(manager.createProcess(config), docker_cpp::ContainerError);
 }
 
 // Test error handling for non-existent process
@@ -491,10 +489,7 @@ TEST_F(ProcessManagerTest, ErrorHandlingNonExistentProcess)
 
     pid_t fake_pid = 999999;
 
-    EXPECT_THROW(
-        manager.getProcessInfo(fake_pid),
-        docker_cpp::ContainerError
-    );
+    EXPECT_THROW(manager.getProcessInfo(fake_pid), docker_cpp::ContainerError);
 
     EXPECT_FALSE(manager.isProcessRunning(fake_pid));
     EXPECT_EQ(manager.getProcessStatus(fake_pid), docker_cpp::ProcessStatus::UNKNOWN);
@@ -507,13 +502,7 @@ TEST_F(ProcessManagerTest, ErrorHandlingStopNonExistentProcess)
 
     pid_t fake_pid = 999999;
 
-    EXPECT_THROW(
-        manager.stopProcess(fake_pid),
-        docker_cpp::ContainerError
-    );
+    EXPECT_THROW(manager.stopProcess(fake_pid), docker_cpp::ContainerError);
 
-    EXPECT_THROW(
-        manager.killProcess(fake_pid),
-        docker_cpp::ContainerError
-    );
+    EXPECT_THROW(manager.killProcess(fake_pid), docker_cpp::ContainerError);
 }
