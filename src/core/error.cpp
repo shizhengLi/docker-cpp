@@ -9,8 +9,8 @@ const ContainerErrorCategory& getContainerErrorCategory()
     return category;
 }
 
-ContainerError::ContainerError(ErrorCode code, const std::string& message)
-    : error_code_(code), message_(message)
+ContainerError::ContainerError(ErrorCode code, std::string message)
+    : error_code_(code), message_(std::move(message))
 {}
 
 ContainerError::ContainerError(const ContainerError& other) noexcept

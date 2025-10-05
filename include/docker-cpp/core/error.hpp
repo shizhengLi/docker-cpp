@@ -221,7 +221,7 @@ public:
      * @param code The error code
      * @param message The error message
      */
-    ContainerError(ErrorCode code, const std::string& message);
+    ContainerError(ErrorCode code, std::string message);
 
     /**
      * @brief Copy constructor

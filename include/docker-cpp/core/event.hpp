@@ -23,8 +23,8 @@ enum class EventPriority { LOW = 0, NORMAL = 1, HIGH = 2, CRITICAL = 3 };
 
 class Event {
 public:
-    Event(const std::string& type,
-          const std::string& data,
+    Event(std::string type,
+          std::string data,
           const std::chrono::system_clock::time_point& timestamp = std::chrono::system_clock::now(),
           EventPriority priority = EventPriority::NORMAL);
 
@@ -115,14 +115,14 @@ public:
     void setMaxQueueSize(size_t max_size);
     void setProcessingThreads(size_t num_threads);
 
-private:
-    EventManager() = default;
-
     // Non-copyable, non-movable
     EventManager(const EventManager&) = delete;
     EventManager& operator=(const EventManager&) = delete;
     EventManager(EventManager&&) = delete;
     EventManager& operator=(EventManager&&) = delete;
+
+private:
+    EventManager() = default;
 
     struct Subscription {
         SubscriptionId id;

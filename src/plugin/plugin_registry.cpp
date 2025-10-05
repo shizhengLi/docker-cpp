@@ -268,7 +268,8 @@ void PluginRegistry::loadPluginsFromDirectory(const std::string& plugin_dir)
             try {
                 auto plugin = plugin_loader_(entry.path().string());
                 if (plugin) {
-                    registerPlugin(plugin->getName(), std::move(plugin));
+                    std::string plugin_name = plugin->getName();
+                    registerPlugin(plugin_name, std::move(plugin));
                 }
             }
             catch (const std::exception& e) {

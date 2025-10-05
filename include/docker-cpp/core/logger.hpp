@@ -78,7 +78,7 @@ public:
     Logger& operator=(Logger&&) = delete;
 
 private:
-    Logger(const std::string& name);
+    Logger(std::string name);
 
     void log(LogLevel level, const std::string& message);
     void logToFile(const std::filesystem::path& file_path, const LogMessage& message);

@@ -28,8 +28,8 @@ void Logger::resetInstance(const std::string& name)
     instances_.erase(name);
 }
 
-Logger::Logger(const std::string& name)
-    : name_(name), level_(LogLevel::INFO),
+Logger::Logger(std::string name)
+    : name_(std::move(name)), level_(LogLevel::INFO),
       pattern_("[%l] %n: %v") // Default pattern: [level] name: message
       ,
       console_sink_enabled_(true)

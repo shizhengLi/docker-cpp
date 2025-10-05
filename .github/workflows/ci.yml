@@ -287,12 +287,7 @@ jobs:
 
     - name: Run static analysis
       run: |
-        # Temporarily disable clang-tidy due to excessive false positives
-        # Code quality will be maintained through:
-        # 1. clang-format (code formatting)
-        # 2. cppcheck (static analysis)
-        # 3. compiler warnings (-Wall -Wextra -Werror)
-        echo "Clang-tidy temporarily disabled - using alternative quality checks"
+        find src include tests -name '*.cpp' -o -name '*.hpp' | xargs clang-tidy-14 -p build/Release
 
     - name: Run cppcheck
       run: |

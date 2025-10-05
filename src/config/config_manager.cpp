@@ -110,16 +110,16 @@ bool ConfigManager::isEmpty() const
     return values_.empty() && layers_.empty();
 }
 
-size_t ConfigManager::size() const
+size_t ConfigManager::size() const  // NOLINT(misc-no-recursion)
 {
     size_t count = values_.size();
     for (const auto& [name, layer] : layers_) {
-        count += layer->size();
+        count += layer->size();  // NOLINT(misc-no-recursion)
     }
     return count;
 }
 
-bool ConfigManager::has(const std::string& key) const
+bool ConfigManager::has(const std::string& key) const  // NOLINT(misc-no-recursion)
 {
     if (values_.find(key) != values_.end()) {
         return true;
@@ -127,7 +127,7 @@ bool ConfigManager::has(const std::string& key) const
 
     // Check layers
     for (const auto& [name, layer] : layers_) {
-        if (layer->has(key)) {
+        if (layer->has(key)) {  // NOLINT(misc-no-recursion)
             return true;
         }
     }
@@ -149,7 +149,7 @@ void ConfigManager::clear()
     layers_.clear();
 }
 
-std::vector<std::string> ConfigManager::getKeys() const
+std::vector<std::string> ConfigManager::getKeys() const  // NOLINT(misc-no-recursion)
 {
     std::vector<std::string> keys;
 
@@ -160,7 +160,7 @@ std::vector<std::string> ConfigManager::getKeys() const
 
     // Add keys from layers
     for (const auto& [name, layer] : layers_) {
-        auto layer_keys = layer->getKeys();
+        auto layer_keys = layer->getKeys();  // NOLINT(misc-no-recursion)
         keys.insert(keys.end(), layer_keys.begin(), layer_keys.end());
     }
 
@@ -171,7 +171,7 @@ std::vector<std::string> ConfigManager::getKeys() const
     return keys;
 }
 
-std::vector<std::string> ConfigManager::getKeysWithPrefix(const std::string& prefix) const
+std::vector<std::string> ConfigManager::getKeysWithPrefix(const std::string& prefix) const  // NOLINT(misc-no-recursion)
 {
     std::vector<std::string> keys;
 
@@ -184,7 +184,7 @@ std::vector<std::string> ConfigManager::getKeysWithPrefix(const std::string& pre
 
     // Add matching keys from layers
     for (const auto& [name, layer] : layers_) {
-        auto layer_keys = layer->getKeysWithPrefix(prefix);
+        auto layer_keys = layer->getKeysWithPrefix(prefix);  // NOLINT(misc-no-recursion)
         keys.insert(keys.end(), layer_keys.begin(), layer_keys.end());
     }
 
@@ -195,7 +195,7 @@ std::vector<std::string> ConfigManager::getKeysWithPrefix(const std::string& pre
     return keys;
 }
 
-ConfigManager ConfigManager::getSubConfig(const std::string& prefix) const
+ConfigManager ConfigManager::getSubConfig(const std::string& prefix) const  // NOLINT(misc-no-recursion)
 {
     ConfigManager sub_config;
 
@@ -209,7 +209,7 @@ ConfigManager ConfigManager::getSubConfig(const std::string& prefix) const
 
     // Copy matching keys from layers
     for (const auto& [name, layer] : layers_) {
-        auto layer_sub = layer->getSubConfig(prefix);
+        auto layer_sub = layer->getSubConfig(prefix);  // NOLINT(misc-no-recursion)
         sub_config.merge(layer_sub);
     }
 
@@ -366,7 +366,7 @@ void ConfigManager::mergeFromJsonString(const std::string& json_string)
 #endif
 }
 
-ConfigManager ConfigManager::expandEnvironmentVariables() const
+ConfigManager ConfigManager::expandEnvironmentVariables() const  // NOLINT(misc-no-recursion)
 {
     ConfigManager expanded;
 
@@ -382,7 +382,7 @@ ConfigManager ConfigManager::expandEnvironmentVariables() const
 
     // Expand layers
     for (const auto& [name, layer] : layers_) {
-        expanded.addLayer(name, layer->expandEnvironmentVariables());
+        expanded.addLayer(name, layer->expandEnvironmentVariables());  // NOLINT(misc-no-recursion)
     }
 
     return expanded;
@@ -484,7 +484,7 @@ void ConfigManager::notifyChange(const std::string& key,
     }
 }
 
-ConfigValue ConfigManager::getEffectiveValue(const std::string& key) const
+ConfigValue ConfigManager::getEffectiveValue(const std::string& key) const  // NOLINT(misc-no-recursion)
 {
     // Check current config first (highest priority)
     auto it = values_.find(key);
@@ -495,7 +495,7 @@ ConfigValue ConfigManager::getEffectiveValue(const std::string& key) const
     // Check layers in order
     for (const auto& [name, layer] : layers_) {
         if (layer->has(key)) {
-            return layer->getEffectiveValue(key);
+            return layer->getEffectiveValue(key);  // NOLINT(misc-no-recursion)
         }
     }
 
@@ -602,7 +602,7 @@ std::string ConfigManager::expandValue(const std::string& value) const
     std::vector<Replacement> replacements;
 
     for (; iter != end; ++iter) {
-        std::smatch match = *iter;
+        const std::smatch& match = *iter;
         std::string var_name = match[1].str();
 
         // Note: std::getenv is not thread-safe, but this is acceptable for config loading
@@ -614,7 +614,7 @@ std::string ConfigManager::expandValue(const std::string& value) const
     }
 
     // Apply replacements in reverse order
-    for (auto it = replacements.rbegin(); it != replacements.rend(); ++it) {
+    for (auto it = replacements.rbegin(); it != replacements.rend(); ++it) {  // NOLINT(modernize-loop-convert)
         result.replace(it->position, it->length, it->replacement);
     }
 

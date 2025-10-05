@@ -12,11 +12,11 @@ std::unique_ptr<EventManager> EventManager::instance_;
 std::mutex EventManager::instance_mutex_;
 
 // Event implementation
-Event::Event(const std::string& type,
-             const std::string& data,
+Event::Event(std::string type,
+             std::string data,
              const std::chrono::system_clock::time_point& timestamp,
              EventPriority priority)
-    : type_(type), data_(data), timestamp_(timestamp), id_(next_id_++), priority_(priority)
+    : type_(std::move(type)), data_(std::move(data)), timestamp_(timestamp), id_(next_id_++), priority_(priority)
 {}
 
 bool Event::hasMetadata(const std::string& key) const
@@ -246,16 +246,8 @@ void EventManager::processEvent(const Event& event)
 
             // Check if batch should be flushed
             auto now = std::chrono::system_clock::now();
-            bool should_flush = false;
-
-            if (it->second.pending_events.size() >= it->second.max_batch_size) {
-                should_flush = true;
-            }
-            else if (now - it->second.last_flush >= it->second.interval) {
-                should_flush = true;
-            }
-
-            if (should_flush) {
+            if (it->second.pending_events.size() >= it->second.max_batch_size ||
+                now - it->second.last_flush >= it->second.interval) {
                 processBatch(event.getType());
                 it->second.last_flush = now;
             }
