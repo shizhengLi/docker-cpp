@@ -117,6 +117,12 @@ void EventManager::unsubscribe(SubscriptionId subscription_id)
 
 void EventManager::publish(const Event& event)
 {
+    // Update statistics for publish attempt
+    {
+        std::lock_guard<std::mutex> stats_lock(stats_mutex_);
+        stats_.total_events_published++;
+    }
+
     {
         std::lock_guard<std::mutex> lock(event_queue_mutex_);
 
@@ -128,10 +134,9 @@ void EventManager::publish(const Event& event)
 
         event_queue_.push(event);
 
-        // Update statistics
+        // Update pending events count
         {
             std::lock_guard<std::mutex> stats_lock(stats_mutex_);
-            stats_.total_events_published++;
             stats_.pending_events = event_queue_.size();
         }
     }
