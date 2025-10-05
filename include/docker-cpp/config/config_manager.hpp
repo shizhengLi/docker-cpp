@@ -3,7 +3,9 @@
 #include <docker-cpp/core/error.hpp>
 #include <filesystem>
 #include <functional>
+#include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -60,13 +62,13 @@ public:
     ConfigManager() = default;
     ~ConfigManager() = default;
 
-    // Not copyable due to unique_ptr members
-    ConfigManager(const ConfigManager&) = delete;
-    ConfigManager& operator=(const ConfigManager&) = delete;
+    // Copyable and movable (custom implementations needed due to mutex)
+    ConfigManager(const ConfigManager& other);
+    ConfigManager& operator=(const ConfigManager& other);
 
     // Movable
-    ConfigManager(ConfigManager&& other) noexcept = default;
-    ConfigManager& operator=(ConfigManager&& other) noexcept = default;
+    ConfigManager(ConfigManager&& other) noexcept;
+    ConfigManager& operator=(ConfigManager&& other) noexcept;
 
     // Value access methods
     template <typename T>
@@ -117,6 +119,7 @@ public:
     void addLayer(const std::string& name, const ConfigManager& layer);
     void removeLayer(const std::string& name);
     ConfigManager getEffectiveConfig() const;
+    size_t getLayerCount() const { return layers_.size(); }
 
     // Watch for file changes
     void watchFile(const std::filesystem::path& file_path);
@@ -124,10 +127,11 @@ public:
 
 private:
     std::unordered_map<std::string, ConfigValue> values_;
-    std::unordered_map<std::string, std::unique_ptr<ConfigManager>> layers_;
+    std::map<std::string, std::unique_ptr<ConfigManager>> layers_;
     ConfigChangeCallback change_callback_;
     bool change_notifications_enabled_ = false;
     std::string watched_file_;
+    mutable std::recursive_mutex values_mutex_;
 
     // Helper methods
     std::vector<std::string> splitKey(const std::string& key) const;
@@ -146,24 +150,28 @@ private:
 template <typename T>
 void ConfigManager::set(const std::string& key, T value)
 {
+    std::lock_guard<std::recursive_mutex> lock(values_mutex_);
+
     ConfigValue old_value;
     bool had_old_value = false;
 
-    if (has(key)) {
-        old_value = values_.at(key);
+    if (values_.find(key) != values_.end()) {
+        old_value = values_[key];
         had_old_value = true;
     }
 
     values_[key] = ConfigValue(std::move(value));
 
-    if (change_notifications_enabled_ && had_old_value && change_callback_) {
-        notifyChange(key, old_value, values_[key]);
+    if (change_notifications_enabled_ && change_callback_) {
+        notifyChange(key, had_old_value ? old_value : ConfigValue{}, values_[key]);
     }
 }
 
 template <typename T>
 T ConfigManager::get(const std::string& key) const
 {
+    std::lock_guard<std::recursive_mutex> lock(values_mutex_);
+
     if (!has(key)) {
         throw ContainerError(ErrorCode::CONFIG_MISSING, "Configuration key not found: " + key);
     }
@@ -173,6 +181,8 @@ T ConfigManager::get(const std::string& key) const
 template <typename T>
 T ConfigManager::get(const std::string& key, T default_value) const
 {
+    std::lock_guard<std::recursive_mutex> lock(values_mutex_);
+
     if (!has(key)) {
         return default_value;
     }

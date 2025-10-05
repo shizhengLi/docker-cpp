@@ -68,7 +68,7 @@ test-results/
 *.gcno
 coverage/
 lcov/
-
+/build-coverage
 # Profiling
 *.prof
 *.profraw

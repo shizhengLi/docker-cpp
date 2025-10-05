@@ -58,6 +58,62 @@ std::string simpleJsonEscape(const std::string& str)
 
 namespace docker_cpp {
 
+// Copy constructor
+ConfigManager::ConfigManager(const ConfigManager& other)
+    : values_(other.values_),
+      change_callback_(other.change_callback_),
+      change_notifications_enabled_(other.change_notifications_enabled_),
+      watched_file_(other.watched_file_)
+{
+    // Deep copy layers
+    for (const auto& [name, layer] : other.layers_) {
+        layers_[name] = std::make_unique<ConfigManager>(*layer);
+    }
+}
+
+// Copy assignment operator
+ConfigManager& ConfigManager::operator=(const ConfigManager& other)
+{
+    if (this != &other) {
+        std::lock_guard<std::recursive_mutex> lock(values_mutex_);
+        values_ = other.values_;
+        change_callback_ = other.change_callback_;
+        change_notifications_enabled_ = other.change_notifications_enabled_;
+        watched_file_ = other.watched_file_;
+
+        // Deep copy layers
+        layers_.clear();
+        for (const auto& [name, layer] : other.layers_) {
+            layers_[name] = std::make_unique<ConfigManager>(*layer);
+        }
+    }
+    return *this;
+}
+
+// Move constructor
+ConfigManager::ConfigManager(ConfigManager&& other) noexcept
+    : values_(std::move(other.values_)),
+      layers_(std::move(other.layers_)),
+      change_callback_(std::move(other.change_callback_)),
+      change_notifications_enabled_(other.change_notifications_enabled_),
+      watched_file_(std::move(other.watched_file_))
+{
+}
+
+// Move assignment operator
+ConfigManager& ConfigManager::operator=(ConfigManager&& other) noexcept
+{
+    if (this != &other) {
+        std::lock_guard<std::recursive_mutex> lock(values_mutex_);
+        values_ = std::move(other.values_);
+        layers_ = std::move(other.layers_);
+        change_callback_ = std::move(other.change_callback_);
+        change_notifications_enabled_ = other.change_notifications_enabled_;
+        watched_file_ = std::move(other.watched_file_);
+    }
+    return *this;
+}
+
 #if HAS_NLOHMANN_JSON
 namespace {
 // Helper function to process JSON arrays efficiently
@@ -97,6 +153,10 @@ std::string processJsonArray(const nlohmann::json& j)
 
 std::string ConfigValue::toString() const
 {
+    if (value_.index() == 0 && std::get<std::string>(value_).empty()) {
+        return "";
+    }
+
     switch (getType()) {
         case ConfigValueType::STRING:
             return get<std::string>();
@@ -128,6 +188,8 @@ size_t ConfigManager::size() const // NOLINT(misc-no-recursion)
 
 bool ConfigManager::has(const std::string& key) const // NOLINT(misc-no-recursion)
 {
+    std::lock_guard<std::recursive_mutex> lock(values_mutex_);
+
     if (values_.find(key) != values_.end()) {
         return true;
     }
@@ -144,14 +206,25 @@ bool ConfigManager::has(const std::string& key) const // NOLINT(misc-no-recursio
 
 void ConfigManager::remove(const std::string& key)
 {
+    std::lock_guard<std::recursive_mutex> lock(values_mutex_);
+
+    ConfigValue old_value;
+    bool had_old_value = false;
+
+    if (values_.find(key) != values_.end()) {
+        old_value = values_[key];
+        had_old_value = true;
+    }
+
     if (values_.erase(key) > 0 && change_notifications_enabled_ && change_callback_) {
         // Notify removal with empty value
-        notifyChange(key, ConfigValue{}, ConfigValue{});
+        notifyChange(key, old_value, ConfigValue{});
     }
 }
 
 void ConfigManager::clear()
 {
+    std::lock_guard<std::recursive_mutex> lock(values_mutex_);
     values_.clear();
     layers_.clear();
 }
@@ -341,9 +414,21 @@ void ConfigManager::mergeFromJsonString(const std::string& json_string)
                                  "Invalid JSON: must start with { or [ and end with } or ]");
         }
 
-        // Check for obviously malformed patterns (dangling colons, unbalanced quotes, etc.)
-        if (cleaned.find(":}") != std::string::npos || cleaned.find(":]") != std::string::npos
-            || cleaned.find("\")") != std::string::npos) {
+        // Check for unbalanced quotes
+        size_t quote_count = 0;
+        bool in_string = false;
+        for (size_t i = 0; i < cleaned.length(); ++i) {
+            if (cleaned[i] == '"' && (i == 0 || cleaned[i-1] != '\\')) {
+                quote_count++;
+                in_string = !in_string;
+            }
+        }
+        if (quote_count % 2 != 0) {
+            throw ContainerError(ErrorCode::CONFIG_INVALID, "Invalid JSON: unbalanced quotes");
+        }
+
+        // Check for obviously malformed patterns (dangling colons, etc.)
+        if (cleaned.find(":}") != std::string::npos || cleaned.find(":]") != std::string::npos) {
             throw ContainerError(ErrorCode::CONFIG_INVALID, "Invalid JSON: malformed structure");
         }
 
@@ -437,13 +522,15 @@ ConfigManager ConfigManager::getEffectiveConfig() const
 {
     ConfigManager effective;
 
-    // Start with layers (lower priority)
-    for (const auto& [unused_name, layer] : layers_) {
-        effective.merge(*layer);
-    }
+    // Start with a copy of current values (base priority)
+    effective.values_ = values_;
 
-    // Apply current values (higher priority)
-    effective.merge(*this);
+    // Apply layers in order - later layers override earlier ones
+    for (const auto& [unused_name, layer] : layers_) {
+        for (const auto& [key, value] : layer->values_) {
+            effective.values_[key] = value;
+        }
+    }
 
     return effective;
 }
@@ -497,6 +584,8 @@ void ConfigManager::notifyChange(const std::string& key,
 ConfigValue
 ConfigManager::getEffectiveValue(const std::string& key) const // NOLINT(misc-no-recursion)
 {
+    std::lock_guard<std::recursive_mutex> lock(values_mutex_);
+
     // Check current config first (highest priority)
     auto it = values_.find(key);
     if (it != values_.end()) {
@@ -619,9 +708,11 @@ std::string ConfigManager::expandValue(const std::string& value) const
         // Note: std::getenv is not thread-safe, but this is acceptable for config loading
         // which typically happens during single-threaded initialization
         const char* env_value = std::getenv(var_name.c_str());
-        std::string replacement = env_value ? env_value : "";
-
-        replacements.emplace_back(match.position(), match.length(), std::move(replacement));
+        if (env_value) {
+            std::string replacement = env_value;
+            replacements.emplace_back(match.position(), match.length(), std::move(replacement));
+        }
+        // If environment variable not found, leave the pattern unchanged
     }
 
     // Apply replacements in reverse order

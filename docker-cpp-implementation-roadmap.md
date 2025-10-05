@@ -194,17 +194,17 @@ public:
 ```
 
 **Deliverables**:
-- [x] Complete namespace wrapper implementations
-- [x] Process management utilities
-- [x] Secure namespace creation and joining
-- [x] Namespace testing framework
+- [ ] Complete namespace wrapper implementations
+- [ ] Process management utilities
+- [ ] Secure namespace creation and joining
+- [ ] Namespace testing framework
 - [ ] Documentation for namespace usage
 
 **Success Criteria**:
-- [x] All namespace types are properly isolated
-- [x] Resource cleanup happens correctly on errors
-- [x] Namespace operations are secure and reliable
-- [x] Comprehensive test coverage for namespace operations
+- [ ] All namespace types are properly isolated
+- [ ] Resource cleanup happens correctly on errors
+- [ ] Namespace operations are secure and reliable
+- [ ] Comprehensive test coverage for namespace operations
 
 **Actual Status**: 🔄 **FRAMEWORK ONLY** - Basic structure exists but implementation is incomplete:
 - Namespace manager: ⚠️ Has basic structure (176 lines) but uses mock implementations for macOS
@@ -251,17 +251,17 @@ private:
 ```
 
 **Deliverables**:
-- [x] Cgroup v2 manager implementation
-- [x] Resource limit enforcement
-- [x] Performance monitoring interfaces
-- [x] Cgroup hierarchy management
-- [x] Resource usage statistics
+- [ ] Cgroup v2 manager implementation
+- [ ] Resource limit enforcement
+- [ ] Performance monitoring interfaces
+- [ ] Cgroup hierarchy management
+- [ ] Resource usage statistics
 
 **Success Criteria**:
-- [x] Cgroup operations work reliably across different kernel versions
-- [x] Resource limits are properly enforced
-- [x] Performance monitoring provides accurate metrics
-- [x] Cgroup cleanup works correctly
+- [ ] Cgroup operations work reliably across different kernel versions
+- [ ] Resource limits are properly enforced
+- [ ] Performance monitoring provides accurate metrics
+- [ ] Cgroup cleanup works correctly
 
 **Actual Status**: ❌ **EMPTY PLACEHOLDERS** - Only skeleton files exist:
 - Cgroup manager: ❌ Empty placeholder (only 7 lines of code)
