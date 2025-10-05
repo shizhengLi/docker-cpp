@@ -159,7 +159,7 @@ void testNamespaceManagerTypes()
         for (int i = static_cast<int>(docker_cpp::NamespaceType::PID);
              i <= static_cast<int>(docker_cpp::NamespaceType::CGROUP);
              ++i) {
-            auto type = static_cast<NamespaceType>(i);
+            auto type = static_cast<docker_cpp::NamespaceType>(i);
             try {
                 docker_cpp::NamespaceManager ns(type);
                 assert(ns.getType() == type);
