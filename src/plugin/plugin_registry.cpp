@@ -202,7 +202,7 @@ std::vector<std::string> PluginRegistry::getLoadOrder() const
         auto it = plugins_.find(name);
         if (it != plugins_.end()) {
             for (const auto& dep : it->second->getDependencies()) {
-                if (hasPlugin(dep)) {
+                if (plugins_.find(dep) != plugins_.end()) {
                     visit(dep);
                 }
             }
