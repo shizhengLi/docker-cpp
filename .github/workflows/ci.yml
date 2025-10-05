@@ -298,10 +298,7 @@ jobs:
           --suppress=missingIncludeSystem \
           --suppress=unusedFunction:src/test_runner.cpp \
           --suppress=unusedFunction:src/core/logger.cpp \
-          --suppress=noValidConfiguration:src/config/config_manager.cpp \
-          --suppress=unusedVariable:src/core/logger.cpp \
-          --suppress=unusedVariable:src/plugin/plugin_registry.cpp \
-          --suppress=unassignedVariable:src/plugin/plugin_registry.cpp \
+          --suppress=useStlAlgorithm:src/plugin/plugin_registry.cpp \
           -DCPPCHECK \
           include/ src/
 
