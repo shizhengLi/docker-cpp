@@ -61,7 +61,7 @@ std::vector<std::string> PluginRegistry::getPluginNames() const
     std::vector<std::string> names;
     names.reserve(plugins_.size());
 
-    for (const auto& [unused_name, plugin] : plugins_) {
+    for (const auto& [name, plugin] : plugins_) {
         names.push_back(name);
     }
 
@@ -213,7 +213,7 @@ std::vector<std::string> PluginRegistry::getLoadOrder() const
         result.push_back(name);
     };
 
-    for (const auto& [unused_name, plugin] : plugins_) {
+    for (const auto& [name, plugin] : plugins_) {
         if (!visited[name]) {
             visit(name);
         }
@@ -244,7 +244,7 @@ std::unordered_map<std::string, std::vector<std::string>> PluginRegistry::getDep
 
     std::unordered_map<std::string, std::vector<std::string>> graph;
 
-    for (const auto& [unused_name, plugin] : plugins_) {
+    for (const auto& [name, plugin] : plugins_) {
         graph[name] = plugin->getDependencies();
     }
 
@@ -375,7 +375,7 @@ std::vector<std::string> PluginRegistry::getLoadOrderUnsafe() const
         result.push_back(name);
     };
 
-    for (const auto& [unused_name, plugin] : plugins_) {
+    for (const auto& [name, plugin] : plugins_) {
         if (!visited[name]) {
             visit(name);
         }
