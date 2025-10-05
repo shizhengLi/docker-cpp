@@ -152,7 +152,7 @@ TEST_F(EventTest, UnsubscribeEvents)
         received_events.push_back(event);
     };
 
-    SubscriptionId subscription = manager->subscribe("test.event", listener);
+    docker_cpp::SubscriptionId subscription = manager->subscribe("test.event", listener);
 
     docker_cpp::Event event1("test.event", "Before unsubscribe");
     manager->publish(event1);

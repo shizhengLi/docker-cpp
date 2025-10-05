@@ -80,16 +80,16 @@ void testErrorCodeConversion()
 
 void testErrorCopy()
 {
-    docker_cpp::ContainerError original(ErrorCode::IMAGE_NOT_FOUND, "Image not found");
-    assert(original.getErrorCode() == ErrorCode::IMAGE_NOT_FOUND);
+    docker_cpp::ContainerError original(docker_cpp::ErrorCode::IMAGE_NOT_FOUND, "Image not found");
+    assert(original.getErrorCode() == docker_cpp::ErrorCode::IMAGE_NOT_FOUND);
     assert(std::string(original.what()).find("Image not found") != std::string::npos);
 }
 
 void testErrorMove()
 {
-    docker_cpp::ContainerError original(ErrorCode::IMAGE_NOT_FOUND, "Image not found");
+    docker_cpp::ContainerError original(docker_cpp::ErrorCode::IMAGE_NOT_FOUND, "Image not found");
     docker_cpp::ContainerError moved(std::move(original));
-    assert(moved.getErrorCode() == ErrorCode::IMAGE_NOT_FOUND);
+    assert(moved.getErrorCode() == docker_cpp::ErrorCode::IMAGE_NOT_FOUND);
 }
 
 void testErrorCategory()
@@ -115,15 +115,15 @@ void testNamespaceManagerCreation()
     try {
         // Test creating a UTS namespace (usually available)
         {
-            docker_cpp::NamespaceManager ns(NamespaceType::UTS);
-            assert(ns.getType() == NamespaceType::UTS);
+            docker_cpp::NamespaceManager ns(docker_cpp::NamespaceType::UTS);
+            assert(ns.getType() == docker_cpp::NamespaceType::UTS);
             assert(ns.isValid());
         } // Destructor should be called here
 
         // Test creating a PID namespace
         {
-            docker_cpp::NamespaceManager ns(NamespaceType::PID);
-            assert(ns.getType() == NamespaceType::PID);
+            docker_cpp::NamespaceManager ns(docker_cpp::NamespaceType::PID);
+            assert(ns.getType() == docker_cpp::NamespaceType::PID);
             assert(ns.isValid());
         }
 
@@ -143,21 +143,21 @@ void testNamespaceManagerCreation()
     }
 }
 
-void testdocker_cpp::NamespaceManagerTypes()
+void testNamespaceManagerTypes()
 {
     try {
         // Test namespace type string conversion
-        assert(namespaceTypeToString(NamespaceType::PID) == "PID");
-        assert(namespaceTypeToString(NamespaceType::NETWORK) == "Network");
-        assert(namespaceTypeToString(NamespaceType::MOUNT) == "Mount");
-        assert(namespaceTypeToString(NamespaceType::UTS) == "UTS");
-        assert(namespaceTypeToString(NamespaceType::IPC) == "IPC");
-        assert(namespaceTypeToString(NamespaceType::USER) == "User");
-        assert(namespaceTypeToString(NamespaceType::CGROUP) == "Cgroup");
+        assert(docker_cpp::namespaceTypeToString(docker_cpp::NamespaceType::PID) == "PID");
+        assert(docker_cpp::namespaceTypeToString(docker_cpp::NamespaceType::NETWORK) == "Network");
+        assert(docker_cpp::namespaceTypeToString(docker_cpp::NamespaceType::MOUNT) == "Mount");
+        assert(docker_cpp::namespaceTypeToString(docker_cpp::NamespaceType::UTS) == "UTS");
+        assert(docker_cpp::namespaceTypeToString(docker_cpp::NamespaceType::IPC) == "IPC");
+        assert(docker_cpp::namespaceTypeToString(docker_cpp::NamespaceType::USER) == "User");
+        assert(docker_cpp::namespaceTypeToString(docker_cpp::NamespaceType::CGROUP) == "Cgroup");
 
         // Test namespace manager with different types
-        for (int i = static_cast<int>(NamespaceType::PID);
-             i <= static_cast<int>(NamespaceType::CGROUP);
+        for (int i = static_cast<int>(docker_cpp::NamespaceType::PID);
+             i <= static_cast<int>(docker_cpp::NamespaceType::CGROUP);
              ++i) {
             auto type = static_cast<NamespaceType>(i);
             try {
@@ -180,13 +180,13 @@ void testdocker_cpp::NamespaceManagerTypes()
     }
 }
 
-void testdocker_cpp::NamespaceManagerMoveSemantics()
+void testNamespaceManagerMoveSemantics()
 {
     try {
         // Test move constructor
         {
-            docker_cpp::NamespaceManager ns1(NamespaceType::UTS);
-            NamespaceType type1 = ns1.getType();
+            docker_cpp::NamespaceManager ns1(docker_cpp::NamespaceType::UTS);
+            docker_cpp::NamespaceType type1 = ns1.getType();
 
             docker_cpp::NamespaceManager ns2 = std::move(ns1);
 
@@ -198,12 +198,12 @@ void testdocker_cpp::NamespaceManagerMoveSemantics()
 
         // Test move assignment
         {
-            docker_cpp::NamespaceManager ns1(NamespaceType::PID);
-            docker_cpp::NamespaceManager ns2(NamespaceType::UTS);
+            docker_cpp::NamespaceManager ns1(docker_cpp::NamespaceType::PID);
+            docker_cpp::NamespaceManager ns2(docker_cpp::NamespaceType::UTS);
 
             ns1 = std::move(ns2);
 
-            assert(ns1.getType() == NamespaceType::UTS);
+            assert(ns1.getType() == docker_cpp::NamespaceType::UTS);
             assert(ns1.isValid());
         }
 
@@ -221,14 +221,14 @@ void testdocker_cpp::NamespaceManagerMoveSemantics()
     }
 }
 
-void testdocker_cpp::NamespaceManagerJoin()
+void testNamespaceManagerJoin()
 {
     try {
         // Test joining current process namespace
         pid_t current_pid = getpid();
 
         // This should work for the current process
-        docker_cpp::NamespaceManager::joinNamespace(current_pid, NamespaceType::UTS);
+        docker_cpp::NamespaceManager::joinNamespace(current_pid, docker_cpp::NamespaceType::UTS);
 
         std::cout << "Namespace join tests passed" << std::endl;
     }
