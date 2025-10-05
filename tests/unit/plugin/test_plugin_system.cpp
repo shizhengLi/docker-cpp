@@ -33,7 +33,8 @@ public:
 
     PluginInfo getPluginInfo() const override
     {
-        return PluginInfo(PluginInfoParams{name_, version_, "Mock Plugin for testing", PluginType::CUSTOM, "Test Author", "MIT"});
+        return PluginInfo(PluginInfoParams{
+            name_, version_, "Mock Plugin for testing", PluginType::CUSTOM, "Test Author", "MIT"});
     }
 
     bool initialize(const PluginConfig& config) override
@@ -372,13 +373,12 @@ class PluginInfoTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        info = PluginInfo(PluginInfoParams{
-            "test-plugin",
-            "1.0.0",
-            "Test Plugin Description",
-            PluginType::CORE,
-            "test-author",
-            "MIT"});
+        info = PluginInfo(PluginInfoParams{"test-plugin",
+                                           "1.0.0",
+                                           "Test Plugin Description",
+                                           PluginType::CORE,
+                                           "test-author",
+                                           "MIT"});
     }
 
     PluginInfo info{}; // Default construct first
@@ -419,13 +419,12 @@ TEST_F(PluginInfoTest, EqualityOperatorWorks)
 {
     PluginInfo info2(PluginInfoParams{
         "test-plugin", "1.0.0", "Test Plugin Description", PluginType::CORE, "test-author", "MIT"});
-    PluginInfo info3(PluginInfoParams{
-        "different-plugin",
-        "1.0.0",
-        "Test Plugin Description",
-        PluginType::CORE,
-        "test-author",
-        "MIT"});
+    PluginInfo info3(PluginInfoParams{"different-plugin",
+                                      "1.0.0",
+                                      "Test Plugin Description",
+                                      PluginType::CORE,
+                                      "test-author",
+                                      "MIT"});
 
     EXPECT_TRUE(info == info2);
     EXPECT_FALSE(info == info3);
@@ -433,13 +432,12 @@ TEST_F(PluginInfoTest, EqualityOperatorWorks)
 
 TEST_F(PluginInfoTest, InequalityOperatorWorks)
 {
-    PluginInfo info2(PluginInfoParams{
-        "different-plugin",
-        "1.0.0",
-        "Test Plugin Description",
-        PluginType::CORE,
-        "test-author",
-        "MIT"});
+    PluginInfo info2(PluginInfoParams{"different-plugin",
+                                      "1.0.0",
+                                      "Test Plugin Description",
+                                      PluginType::CORE,
+                                      "test-author",
+                                      "MIT"});
 
     EXPECT_TRUE(info != info2);
 }

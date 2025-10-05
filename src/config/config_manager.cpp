@@ -282,7 +282,8 @@ void ConfigManager::mergeFromJsonString(const std::string& json_string)
                         std::string full_key;
                         if (prefix.empty()) {
                             full_key = key;
-                        } else {
+                        }
+                        else {
                             full_key.reserve(prefix.length() + 1 + key.length());
                             full_key = prefix;
                             full_key += ".";
