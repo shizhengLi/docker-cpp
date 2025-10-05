@@ -77,6 +77,7 @@ enum class ErrorCode {
     PLUGIN_DEPENDENCY_FAILED = 10007,
     CIRCULAR_DEPENDENCY = 10008,
     DIRECTORY_NOT_FOUND = 10009,
+    PLUGIN_SHUTDOWN_FAILED = 10010,
 
     // Generic error
     UNKNOWN_ERROR = 9999
@@ -198,6 +199,8 @@ public:
                 return "Circular dependency detected";
             case ErrorCode::DIRECTORY_NOT_FOUND:
                 return "Directory not found";
+            case ErrorCode::PLUGIN_SHUTDOWN_FAILED:
+                return "Plugin shutdown failed";
 
             case ErrorCode::UNKNOWN_ERROR:
             default:

@@ -11,6 +11,7 @@ add_executable(tests-core
     unit/core/test_error.cpp
     unit/core/test_logger.cpp
     unit/core/test_event_simple.cpp
+    unit/core/test_event_advanced.cpp
 )
 
 target_link_libraries(tests-core
@@ -62,6 +63,7 @@ target_include_directories(tests-cgroup
 # Plugin library tests
 add_executable(tests-plugin
     unit/plugin/test_plugin_system.cpp
+    unit/plugin/test_plugin_system_advanced.cpp
 )
 
 target_link_libraries(tests-plugin
@@ -79,6 +81,7 @@ target_include_directories(tests-plugin
 # Configuration library tests
 add_executable(tests-config
     unit/config/test_config_manager.cpp
+    unit/config/test_config_manager_advanced.cpp
 )
 
 target_link_libraries(tests-config
