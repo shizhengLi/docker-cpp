@@ -68,15 +68,15 @@ TEST_F(EventTest, EventCopyAndMove)
 // Test event manager basic functionality
 TEST_F(EventTest, EventManagerSingleton)
 {
-    auto manager1 = EventManager::getInstance();
-    auto manager2 = EventManager::getInstance();
+    auto* manager1 = EventManager::getInstance();
+    auto* manager2 = EventManager::getInstance();
 
     EXPECT_EQ(manager1, manager2);
 }
 
 TEST_F(EventTest, BasicEventPublishing)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
     EventListener listener = [&](const Event& event) { received_events.push_back(event); };
@@ -96,7 +96,7 @@ TEST_F(EventTest, BasicEventPublishing)
 
 TEST_F(EventTest, MultipleSubscribers)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received1, received2;
     EventListener listener1 = [&](const Event& event) { received1.push_back(event); };
@@ -116,7 +116,7 @@ TEST_F(EventTest, MultipleSubscribers)
 
 TEST_F(EventTest, EventFiltering)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
     EventListener listener = [&](const Event& event) { received_events.push_back(event); };
@@ -139,7 +139,7 @@ TEST_F(EventTest, EventFiltering)
 
 TEST_F(EventTest, UnsubscribeEvents)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
     EventListener listener = [&](const Event& event) { received_events.push_back(event); };
@@ -160,7 +160,7 @@ TEST_F(EventTest, UnsubscribeEvents)
 
 TEST_F(EventTest, WildcardSubscriptions)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
     EventListener listener = [&](const Event& event) { received_events.push_back(event); };
@@ -182,7 +182,7 @@ TEST_F(EventTest, WildcardSubscriptions)
 
 TEST_F(EventTest, ThreadSafety)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
     std::mutex received_mutex;
@@ -197,6 +197,7 @@ TEST_F(EventTest, ThreadSafety)
     const int num_threads = 10;
     const int events_per_thread = 100;
     std::vector<std::thread> threads;
+    threads.reserve(num_threads);
 
     for (int i = 0; i < num_threads; ++i) {
         threads.emplace_back([&, i]() {
@@ -221,7 +222,7 @@ TEST_F(EventTest, ThreadSafety)
 
 TEST_F(EventTest, EventQueueing)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
     EventListener listener = [&](const Event& event) { received_events.push_back(event); };
@@ -267,7 +268,7 @@ TEST_F(EventTest, EventMetadata)
 
 TEST_F(EventTest, EventPriority)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
     EventListener listener = [&](const Event& event) { received_events.push_back(event); };
@@ -297,7 +298,7 @@ TEST_F(EventTest, EventPriority)
 
 TEST_F(EventTest, EventStatistics)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     EventListener listener = [](const Event& /*event*/) { /* Do nothing */ };
 
@@ -319,7 +320,7 @@ TEST_F(EventTest, EventStatistics)
 
 TEST_F(EventTest, EventBatching)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
     EventListener listener = [&](const Event& event) { received_events.push_back(event); };
@@ -344,7 +345,7 @@ TEST_F(EventTest, EventBatching)
 
 TEST_F(EventTest, AsyncEventProcessing)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
     std::atomic<int> processing_count{0};
@@ -375,7 +376,7 @@ TEST_F(EventTest, AsyncEventProcessing)
 
 TEST_F(EventTest, ErrorHandlingInListeners)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
 
@@ -407,7 +408,7 @@ TEST_F(EventTest, ErrorHandlingInListeners)
 
 TEST_F(EventTest, EventManagerReset)
 {
-    auto manager = EventManager::getInstance();
+    auto* manager = EventManager::getInstance();
 
     std::vector<Event> received_events;
     EventListener listener = [&](const Event& event) { received_events.push_back(event); };
@@ -422,7 +423,7 @@ TEST_F(EventTest, EventManagerReset)
     EventManager::resetInstance();
 
     // Get new instance
-    auto new_manager = EventManager::getInstance();
+    auto* new_manager = EventManager::getInstance();
 
     Event event2("test.event", "After reset");
     new_manager->publish(event2);

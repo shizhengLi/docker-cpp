@@ -28,12 +28,16 @@ protected:
         std::filesystem::remove_all(test_dir);
     }
 
+protected:
+    const std::filesystem::path& getTestDir() const { return test_dir; }
+
+private:
     std::filesystem::path test_dir;
 };
 
 TEST_F(LoggerTest, DefaultConstructorCreatesDefaultLogger)
 {
-    auto logger = Logger::getInstance();
+    auto* logger = Logger::getInstance();
 
     EXPECT_NE(logger, nullptr);
     EXPECT_EQ(logger->getLevel(), LogLevel::INFO);
@@ -43,7 +47,7 @@ TEST_F(LoggerTest, DefaultConstructorCreatesDefaultLogger)
 
 TEST_F(LoggerTest, SetAndGetLogLevel)
 {
-    auto logger = Logger::getInstance();
+    auto* logger = Logger::getInstance();
 
     logger->setLevel(LogLevel::DEBUG);
     EXPECT_EQ(logger->getLevel(), LogLevel::DEBUG);
@@ -64,7 +68,7 @@ TEST_F(LoggerTest, SetAndGetLogLevel)
 
 TEST_F(LoggerTest, BasicLoggingOperations)
 {
-    auto logger = Logger::getInstance();
+    auto* logger = Logger::getInstance();
     logger->setLevel(LogLevel::DEBUG);
 
     // Capture console output
@@ -87,7 +91,7 @@ TEST_F(LoggerTest, BasicLoggingOperations)
 
 TEST_F(LoggerTest, LoggingWithParameters)
 {
-    auto logger = Logger::getInstance();
+    auto* logger = Logger::getInstance();
     logger->setLevel(LogLevel::DEBUG);
 
     testing::internal::CaptureStdout();
@@ -105,8 +109,8 @@ TEST_F(LoggerTest, LoggingWithParameters)
 
 TEST_F(LoggerTest, FileLogging)
 {
-    auto logger = Logger::getInstance();
-    std::filesystem::path log_file = test_dir / "test.log";
+    auto* logger = Logger::getInstance();
+    std::filesystem::path log_file = getTestDir() / "test.log";
 
     logger->addFileSink(log_file, LogLevel::INFO);
     logger->setLevel(LogLevel::DEBUG);
@@ -134,9 +138,9 @@ TEST_F(LoggerTest, FileLogging)
 
 TEST_F(LoggerTest, MultipleFileSinks)
 {
-    auto logger = Logger::getInstance();
-    std::filesystem::path info_file = test_dir / "info.log";
-    std::filesystem::path error_file = test_dir / "error.log";
+    auto* logger = Logger::getInstance();
+    std::filesystem::path info_file = getTestDir() / "info.log";
+    std::filesystem::path error_file = getTestDir() / "error.log";
 
     logger->addFileSink(info_file, LogLevel::INFO);
     logger->addFileSink(error_file, LogLevel::ERROR);
@@ -175,7 +179,7 @@ TEST_F(LoggerTest, MultipleFileSinks)
 
 TEST_F(LoggerTest, CustomSink)
 {
-    auto logger = Logger::getInstance();
+    auto* logger = Logger::getInstance();
     std::vector<std::string> captured_messages;
 
     auto custom_sink = [&](const LogMessage& message) {
@@ -201,7 +205,7 @@ TEST_F(LoggerTest, CustomSink)
 
 TEST_F(LoggerTest, LogMessageFormatting)
 {
-    auto logger = Logger::getInstance();
+    auto* logger = Logger::getInstance();
     (void)logger; // Suppress unused variable warning
 
     LogMessage msg;
@@ -220,8 +224,8 @@ TEST_F(LoggerTest, LogMessageFormatting)
 
 TEST_F(LoggerTest, LoggerNaming)
 {
-    auto default_logger = Logger::getInstance("default");
-    auto custom_logger = Logger::getInstance("custom");
+    auto* default_logger = Logger::getInstance("default");
+    auto* custom_logger = Logger::getInstance("custom");
 
     EXPECT_NE(default_logger, nullptr);
     EXPECT_NE(custom_logger, nullptr);
@@ -229,14 +233,14 @@ TEST_F(LoggerTest, LoggerNaming)
     EXPECT_EQ(custom_logger->getName(), "custom");
 
     // Same name should return same instance
-    auto same_logger = Logger::getInstance("default");
+    auto* same_logger = Logger::getInstance("default");
     EXPECT_EQ(default_logger, same_logger);
 }
 
 TEST_F(LoggerTest, RemoveFileSink)
 {
-    auto logger = Logger::getInstance();
-    std::filesystem::path log_file = test_dir / "test.log";
+    auto* logger = Logger::getInstance();
+    std::filesystem::path log_file = getTestDir() / "test.log";
 
     logger->addFileSink(log_file, LogLevel::INFO);
     logger->info("Message before removal");
@@ -256,15 +260,16 @@ TEST_F(LoggerTest, RemoveFileSink)
 
 TEST_F(LoggerTest, ThreadSafety)
 {
-    auto logger = Logger::getInstance();
+    auto* logger = Logger::getInstance();
     logger->setLevel(LogLevel::INFO);
 
-    std::filesystem::path log_file = test_dir / "thread_test.log";
+    std::filesystem::path log_file = getTestDir() / "thread_test.log";
     logger->addFileSink(log_file, LogLevel::INFO);
 
     const int num_threads = 10;
     const int messages_per_thread = 100;
     std::vector<std::thread> threads;
+    threads.reserve(num_threads);
 
     for (int i = 0; i < num_threads; ++i) {
         threads.emplace_back([&, i]() {
@@ -318,7 +323,7 @@ TEST_F(LoggerTest, StringToLogLevel)
 
 TEST_F(LoggerTest, ConsoleSinkToggle)
 {
-    auto logger = Logger::getInstance();
+    auto* logger = Logger::getInstance();
 
     testing::internal::CaptureStdout();
     logger->info("Message with console enabled");
@@ -341,7 +346,7 @@ TEST_F(LoggerTest, ConsoleSinkToggle)
 
 TEST_F(LoggerTest, LogPatternFormatting)
 {
-    auto logger = Logger::getInstance();
+    auto* logger = Logger::getInstance();
     logger->setPattern("[%l] %n: %v"); // [level] name: message
 
     testing::internal::CaptureStdout();
