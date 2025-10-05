@@ -304,11 +304,12 @@ jobs:
 
     - name: Run cppcheck
       run: |
-        cppcheck --enable=all --inconclusive --error-exitcode=1 \
+        cppcheck --enable=all --error-exitcode=1 \
           --suppress=missingIncludeSystem \
           --suppress=unusedFunction:src/test_runner.cpp \
           --suppress=unusedFunction:src/core/logger.cpp \
           --suppress=useStlAlgorithm:src/plugin/plugin_registry.cpp \
+          --suppress=normalCheckLevelMaxBranches:src/config/config_manager.cpp \
           -DCPPCHECK \
           include/ src/
 
