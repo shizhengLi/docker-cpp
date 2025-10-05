@@ -140,6 +140,7 @@ TEST_F(EventSimpleTest, UnsubscribeEvents) {
 
     std::atomic<int> received_count{0};
     EventListener listener = [&](const Event& event) {
+        (void)event; // Suppress unused parameter warning
         received_count++;
     };
 
@@ -168,6 +169,7 @@ TEST_F(EventSimpleTest, EventStatistics) {
 
     std::atomic<int> received_count{0};
     EventListener listener = [&](const Event& event) {
+        (void)event; // Suppress unused parameter warning
         received_count++;
     };
 

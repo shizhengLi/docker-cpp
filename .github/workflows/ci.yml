@@ -173,6 +173,17 @@ jobs:
         echo "Final verification - CMake files in root:"
         ls -la CMakePresets.json CMakeUserPresets.json conan_toolchain.cmake 2>/dev/null || echo "Some files missing"
 
+        # Debug: Check include directory structure
+        echo "=== Debug: Project structure ==="
+        echo "Current directory: $(pwd)"
+        echo "Include directory contents:"
+        ls -la include/ 2>/dev/null || echo "include directory not found"
+        echo "Config header check:"
+        ls -la include/docker-cpp/config/ 2>/dev/null || echo "config include directory not found"
+        echo "Source directory contents:"
+        ls -la src/config/ 2>/dev/null || echo "src/config directory not found"
+        echo "=== End Debug ==="
+
         # Use CMake preset from root directory
         echo "Running CMake with preset: $preset_name"
         cmake --preset $preset_name -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}

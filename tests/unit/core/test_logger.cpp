@@ -193,6 +193,7 @@ TEST_F(LoggerTest, CustomSink) {
 
 TEST_F(LoggerTest, LogMessageFormatting) {
     auto logger = Logger::getInstance();
+    (void)logger; // Suppress unused variable warning
 
     LogMessage msg;
     msg.level = LogLevel::ERROR;

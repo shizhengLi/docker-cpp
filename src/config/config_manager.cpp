@@ -61,7 +61,7 @@ bool ConfigManager::isEmpty() const {
 size_t ConfigManager::size() const {
     size_t count = values_.size();
     for (const auto& [name, layer] : layers_) {
-        count += layer.size();
+        count += layer->size();
     }
     return count;
 }
@@ -73,7 +73,7 @@ bool ConfigManager::has(const std::string& key) const {
 
     // Check layers
     for (const auto& [name, layer] : layers_) {
-        if (layer.has(key)) {
+        if (layer->has(key)) {
             return true;
         }
     }
@@ -103,7 +103,7 @@ std::vector<std::string> ConfigManager::getKeys() const {
 
     // Add keys from layers
     for (const auto& [name, layer] : layers_) {
-        auto layer_keys = layer.getKeys();
+        auto layer_keys = layer->getKeys();
         keys.insert(keys.end(), layer_keys.begin(), layer_keys.end());
     }
 
@@ -126,7 +126,7 @@ std::vector<std::string> ConfigManager::getKeysWithPrefix(const std::string& pre
 
     // Add matching keys from layers
     for (const auto& [name, layer] : layers_) {
-        auto layer_keys = layer.getKeysWithPrefix(prefix);
+        auto layer_keys = layer->getKeysWithPrefix(prefix);
         keys.insert(keys.end(), layer_keys.begin(), layer_keys.end());
     }
 
@@ -150,7 +150,7 @@ ConfigManager ConfigManager::getSubConfig(const std::string& prefix) const {
 
     // Copy matching keys from layers
     for (const auto& [name, layer] : layers_) {
-        auto layer_sub = layer.getSubConfig(prefix);
+        auto layer_sub = layer->getSubConfig(prefix);
         sub_config.merge(layer_sub);
     }
 
@@ -201,7 +201,7 @@ void ConfigManager::merge(const ConfigManager& other) {
 
     // Merge layers
     for (const auto& [name, layer] : other.layers_) {
-        layers_.emplace(name, layer);
+        layers_.emplace(name, std::make_unique<ConfigManager>(layer->copyValuesOnly()));
     }
 }
 
@@ -250,12 +250,27 @@ void ConfigManager::mergeFromJsonString(const std::string& json_string) {
     // Simple JSON parsing fallback
     // This is a very basic implementation - in production, use a proper JSON library
     try {
-        // Remove whitespace and extract basic key-value pairs
+        // Remove whitespace for basic validation
         std::string cleaned = json_string;
         std::regex whitespace(R"(\s+)");
         cleaned = std::regex_replace(cleaned, whitespace, "");
 
-        std::regex kv_pattern(R"("([^"]+)"\s*:\s*"([^"]*)"|\"([^\"]+)\"\s*:\s*(\d+)|\"([^\"]+)\"\s*:\s*(true|false))");
+        // Basic validation: check for obvious syntax errors
+        if (cleaned.empty() || (cleaned.front() != '{' && cleaned.front() != '[') ||
+            (cleaned.back() != '}' && cleaned.back() != ']')) {
+            throw ContainerError(ErrorCode::CONFIG_INVALID,
+                               "Invalid JSON: must start with { or [ and end with } or ]");
+        }
+
+        // Check for obviously malformed patterns (dangling colons, unbalanced quotes, etc.)
+        if (cleaned.find(":}") != std::string::npos ||
+            cleaned.find(":]") != std::string::npos ||
+            cleaned.find("\")") != std::string::npos) {
+            throw ContainerError(ErrorCode::CONFIG_INVALID,
+                               "Invalid JSON: malformed structure");
+        }
+
+        std::regex kv_pattern(R"(\"([^\"]+)\"\s*:\s*\"([^\"]*)\"|\"([^\"]+)\"\s*:\s*(\d+)|\"([^\"]+)\"\s*:\s*(true|false))");
         std::sregex_iterator iter(cleaned.begin(), cleaned.end(), kv_pattern);
         std::sregex_iterator end;
 
@@ -270,6 +285,8 @@ void ConfigManager::mergeFromJsonString(const std::string& json_string) {
                 set(match[5].str(), match[6].str() == "true");
             }
         }
+    } catch (const ContainerError&) {
+        throw; // Re-throw ContainerError as-is
     } catch (const std::exception& e) {
         throw ContainerError(ErrorCode::CONFIG_INVALID,
                            "JSON parsing failed: " + std::string(e.what()));
@@ -291,7 +308,7 @@ ConfigManager ConfigManager::expandEnvironmentVariables() const {
 
     // Expand layers
     for (const auto& [name, layer] : layers_) {
-        expanded.addLayer(name, layer.expandEnvironmentVariables());
+        expanded.addLayer(name, layer->expandEnvironmentVariables());
     }
 
     return expanded;
@@ -318,7 +335,9 @@ void ConfigManager::enableChangeNotifications(bool enabled) {
 }
 
 void ConfigManager::addLayer(const std::string& name, const ConfigManager& layer) {
-    layers_.emplace(name, layer);
+    auto new_layer = std::make_unique<ConfigManager>();
+    new_layer->values_ = layer.values_;
+    layers_.emplace(name, std::move(new_layer));
 }
 
 void ConfigManager::removeLayer(const std::string& name) {
@@ -330,7 +349,7 @@ ConfigManager ConfigManager::getEffectiveConfig() const {
 
     // Start with layers (lower priority)
     for (const auto& [name, layer] : layers_) {
-        effective.merge(layer);
+        effective.merge(*layer);
     }
 
     // Apply current values (higher priority)
@@ -386,8 +405,8 @@ ConfigValue ConfigManager::getEffectiveValue(const std::string& key) const {
 
     // Check layers in order
     for (const auto& [name, layer] : layers_) {
-        if (layer.has(key)) {
-            return layer.getEffectiveValue(key);
+        if (layer->has(key)) {
+            return layer->getEffectiveValue(key);
         }
     }
 
@@ -503,6 +522,12 @@ std::string ConfigManager::expandValue(const std::string& value) const {
     }
 
     return result;
+}
+
+ConfigManager ConfigManager::copyValuesOnly() const {
+    ConfigManager copy;
+    copy.values_ = values_;
+    return copy;
 }
 
 } // namespace docker_cpp

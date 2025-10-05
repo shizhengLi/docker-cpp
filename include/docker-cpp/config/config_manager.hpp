@@ -61,9 +61,11 @@ public:
     ConfigManager() = default;
     ~ConfigManager() = default;
 
-    // Copyable and movable
-    ConfigManager(const ConfigManager&) = default;
-    ConfigManager& operator=(const ConfigManager&) = default;
+    // Not copyable due to unique_ptr members
+    ConfigManager(const ConfigManager&) = delete;
+    ConfigManager& operator=(const ConfigManager&) = delete;
+
+    // Movable
     ConfigManager(ConfigManager&& other) noexcept = default;
     ConfigManager& operator=(ConfigManager&& other) noexcept = default;
 
@@ -123,7 +125,7 @@ public:
 
 private:
     std::unordered_map<std::string, ConfigValue> values_;
-    std::unordered_map<std::string, ConfigManager> layers_;
+    std::unordered_map<std::string, std::unique_ptr<ConfigManager>> layers_;
     ConfigChangeCallback change_callback_;
     bool change_notifications_enabled_ = false;
     std::string watched_file_;
@@ -136,6 +138,7 @@ private:
     void parseJsonValue(const std::string& key, const std::string& json_value);
     std::string serializeToJson() const;
     std::string expandValue(const std::string& value) const;
+    ConfigManager copyValuesOnly() const;
 };
 
 // Template implementations
