@@ -90,7 +90,7 @@ pid_t ProcessManager::createProcess(const ProcessConfig& config)
         close(error_pipe[1]); // Close write end
 
         // Give child process a moment to fail and write to pipe
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         // Check for errors from child with non-blocking read
         int flags = fcntl(error_pipe[0], F_GETFL);
