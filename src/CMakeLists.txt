@@ -114,7 +114,6 @@ target_compile_definitions(docker-cpp-config
 add_library(docker-cpp-lib STATIC
     core/error.cpp
     core/logger.cpp
-    core/config.cpp
     core/event.cpp
     namespace/namespace_manager.cpp
     namespace/process_manager.cpp

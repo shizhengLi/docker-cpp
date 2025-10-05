@@ -209,11 +209,9 @@ void ConfigManager::remove(const std::string& key)
     std::lock_guard<std::recursive_mutex> lock(values_mutex_);
 
     ConfigValue old_value;
-    bool had_old_value = false;
 
     if (values_.find(key) != values_.end()) {
         old_value = values_[key];
-        had_old_value = true;
     }
 
     if (values_.erase(key) > 0 && change_notifications_enabled_ && change_callback_) {
