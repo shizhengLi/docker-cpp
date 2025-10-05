@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
+#include <chrono>
 #include <docker-cpp/config/config_manager.hpp>
 #include <docker-cpp/core/error.hpp>
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
-#include <chrono>
-#include <thread>
 
 class ConfigManagerAdvancedTest : public ::testing::Test {
 protected:
@@ -44,28 +44,32 @@ TEST_F(ConfigManagerAdvancedTest, PerformanceLargeConfig)
 
     // Add many configuration entries
     for (int i = 0; i < num_entries; ++i) {
-        std::string key = "section" + std::to_string(i / 100) + ".subsection" + std::to_string(i % 100) + ".key" + std::to_string(i);
+        std::string key = "section" + std::to_string(i / 100) + ".subsection"
+                          + std::to_string(i % 100) + ".key" + std::to_string(i);
         config_manager->set(key, "value" + std::to_string(i));
     }
 
     auto insertion_time = std::chrono::high_resolution_clock::now();
-    auto insertion_duration = std::chrono::duration_cast<std::chrono::milliseconds>(insertion_time - start_time);
+    auto insertion_duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(insertion_time - start_time);
 
     // Test lookup performance
     start_time = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < num_entries; i += 100) {
-        std::string key = "section" + std::to_string(i / 100) + ".subsection" + std::to_string(i % 100) + ".key" + std::to_string(i);
+        std::string key = "section" + std::to_string(i / 100) + ".subsection"
+                          + std::to_string(i % 100) + ".key" + std::to_string(i);
         auto value = config_manager->get<std::string>(key);
         EXPECT_EQ(value, "value" + std::to_string(i));
     }
 
     auto lookup_time = std::chrono::high_resolution_clock::now();
-    auto lookup_duration = std::chrono::duration_cast<std::chrono::milliseconds>(lookup_time - start_time);
+    auto lookup_duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(lookup_time - start_time);
 
     // Performance assertions (adjust these values based on your requirements)
     EXPECT_LT(insertion_duration.count(), 1000); // Should complete insertion in under 1 second
-    EXPECT_LT(lookup_duration.count(), 100);   // Should complete lookups in under 100ms
+    EXPECT_LT(lookup_duration.count(), 100);     // Should complete lookups in under 100ms
     EXPECT_EQ(config_manager->size(), num_entries);
 }
 
@@ -149,9 +153,9 @@ TEST_F(ConfigManagerAdvancedTest, ConfigurationLayering)
 
     // User config should win
     EXPECT_EQ(effective_config.get<std::string>("server.host"), "prod.example.com"); // from prod
-    EXPECT_EQ(effective_config.get<int>("server.port"), 8080); // from base
-    EXPECT_TRUE(effective_config.get<bool>("debug")); // from user
-    EXPECT_EQ(effective_config.get<std::string>("log.level"), "DEBUG"); // from user
+    EXPECT_EQ(effective_config.get<int>("server.port"), 8080);                       // from base
+    EXPECT_TRUE(effective_config.get<bool>("debug"));                                // from user
+    EXPECT_EQ(effective_config.get<std::string>("log.level"), "DEBUG");              // from user
 }
 
 // Test environment variable expansion with edge cases
@@ -182,7 +186,8 @@ TEST_F(ConfigManagerAdvancedTest, EnvironmentVariableExpansionEdgeCases)
     EXPECT_EQ(expanded.get<std::string>("test.missing"), "${MISSING_VAR}"); // Unchanged
     EXPECT_EQ(expanded.get<std::string>("test.multiple"), "expanded_value_expanded_value");
     EXPECT_EQ(expanded.get<std::string>("test.nested"), "prefix_expanded_value_suffix");
-    EXPECT_EQ(expanded.get<std::string>("test.mixed"), "text_expanded_value_more_expanded_value_text");
+    EXPECT_EQ(expanded.get<std::string>("test.mixed"),
+              "text_expanded_value_more_expanded_value_text");
 }
 
 // Test configuration validation with complex schemas
@@ -209,8 +214,7 @@ TEST_F(ConfigManagerAdvancedTest, AdvancedConfigurationValidation)
         {"database.port", docker_cpp::ConfigValueType::INTEGER},
         {"database.name", docker_cpp::ConfigValueType::STRING},
         {"cache.enabled", docker_cpp::ConfigValueType::BOOLEAN},
-        {"cache.ttl", docker_cpp::ConfigValueType::INTEGER}
-    };
+        {"cache.ttl", docker_cpp::ConfigValueType::INTEGER}};
 
     // Should pass validation
     EXPECT_NO_THROW(config_manager->validate(schema));
@@ -232,7 +236,9 @@ TEST_F(ConfigManagerAdvancedTest, ConfigurationChangeNotifications)
 {
     std::vector<std::tuple<std::string, std::string, std::string>> changes;
 
-    config_manager->setChangeCallback([&](const std::string& key, const docker_cpp::ConfigValue& old_val, const docker_cpp::ConfigValue& new_val) {
+    config_manager->setChangeCallback([&](const std::string& key,
+                                          const docker_cpp::ConfigValue& old_val,
+                                          const docker_cpp::ConfigValue& new_val) {
         changes.emplace_back(key, old_val.toString(), new_val.toString());
     });
     config_manager->enableChangeNotifications(true);
@@ -280,7 +286,8 @@ TEST_F(ConfigManagerAdvancedTest, ConcurrentAccessSafety)
 
                 // Read back some values
                 if (j > 0) {
-                    std::string prev_key = "thread" + std::to_string(i) + ".key" + std::to_string(j - 1);
+                    std::string prev_key =
+                        "thread" + std::to_string(i) + ".key" + std::to_string(j - 1);
                     auto retrieved = config_manager->get<std::string>(prev_key);
                     EXPECT_EQ(retrieved, "value" + std::to_string(j - 1));
                 }
@@ -300,7 +307,8 @@ TEST_F(ConfigManagerAdvancedTest, ConcurrentAccessSafety)
 // Test memory usage with large configurations
 TEST_F(ConfigManagerAdvancedTest, MemoryUsageEfficiency)
 {
-    // This is a basic test - in real scenarios you might want to use more sophisticated memory measurement
+    // This is a basic test - in real scenarios you might want to use more sophisticated memory
+    // measurement
     const int num_entries = 50000;
     size_t initial_size = config_manager->size();
 
@@ -350,7 +358,8 @@ TEST_F(ConfigManagerAdvancedTest, ErrorRecoveryAndResilience)
 
     // Test with completely invalid JSON
     std::string completely_invalid = "this is not json at all { invalid syntax";
-    EXPECT_THROW(config_manager->loadFromJsonString(completely_invalid), docker_cpp::ContainerError);
+    EXPECT_THROW(config_manager->loadFromJsonString(completely_invalid),
+                 docker_cpp::ContainerError);
 
     // Should still be functional
     EXPECT_NO_THROW(config_manager->set("another.test", "still_working"));

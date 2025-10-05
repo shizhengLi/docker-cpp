@@ -119,7 +119,10 @@ public:
     void addLayer(const std::string& name, const ConfigManager& layer);
     void removeLayer(const std::string& name);
     ConfigManager getEffectiveConfig() const;
-    size_t getLayerCount() const { return layers_.size(); }
+    size_t getLayerCount() const
+    {
+        return layers_.size();
+    }
 
     // Watch for file changes
     void watchFile(const std::filesystem::path& file_path);

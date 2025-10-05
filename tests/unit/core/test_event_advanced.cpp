@@ -163,7 +163,8 @@ TEST_F(EventAdvancedTest, EventSystemConcurrencyStress)
     for (int i = 0; i < num_threads; ++i) {
         threads.emplace_back([i, &publisher_count]() {
             for (int j = 0; j < events_per_thread; ++j) {
-                docker_cpp::Event event("stress.test", "thread-" + std::to_string(i) + " event-" + std::to_string(j));
+                docker_cpp::Event event(
+                    "stress.test", "thread-" + std::to_string(i) + " event-" + std::to_string(j));
                 docker_cpp::EventManager::getInstance()->publish(event);
                 publisher_count++;
             }
@@ -230,8 +231,7 @@ TEST_F(EventAdvancedTest, EventPriorityQueueUnderLoad)
         {docker_cpp::EventPriority::HIGH, "high-3"},
         {docker_cpp::EventPriority::CRITICAL, "critical-1"},
         {docker_cpp::EventPriority::LOW, "low-3"},
-        {docker_cpp::EventPriority::NORMAL, "normal-3"}
-    };
+        {docker_cpp::EventPriority::NORMAL, "normal-3"}};
 
     // Publish events rapidly
     for (const auto& [priority, data] : test_events) {
@@ -246,14 +246,18 @@ TEST_F(EventAdvancedTest, EventPriorityQueueUnderLoad)
     EXPECT_EQ(received_events.size(), test_events.size());
 
     // Check that critical events come first
-    auto critical_pos = std::find_if(received_events.begin(), received_events.end(),
-        [](const docker_cpp::Event& e) { return e.getData() == "critical-1"; });
+    auto critical_pos = std::find_if(
+        received_events.begin(), received_events.end(), [](const docker_cpp::Event& e) {
+            return e.getData() == "critical-1";
+        });
     EXPECT_NE(critical_pos, received_events.end());
     EXPECT_EQ(critical_pos - received_events.begin(), 0); // Critical should be first
 
     // Check that high priority events come before normal and low
-    auto high_count = std::count_if(received_events.begin(), received_events.end(),
-        [](const docker_cpp::Event& e) { return e.getData().find("high") != std::string::npos; });
+    auto high_count = std::count_if(
+        received_events.begin(), received_events.end(), [](const docker_cpp::Event& e) {
+            return e.getData().find("high") != std::string::npos;
+        });
     EXPECT_EQ(high_count, 3);
 
     // Verify all high priority events come before normal ones
@@ -262,7 +266,9 @@ TEST_F(EventAdvancedTest, EventPriorityQueueUnderLoad)
     for (size_t i = 0; i < received_events.size(); ++i) {
         if (received_events[i].getData().find("high") != std::string::npos) {
             last_high_pos = i;
-        } else if (received_events[i].getData().find("normal") != std::string::npos && first_normal_pos == received_events.size()) {
+        }
+        else if (received_events[i].getData().find("normal") != std::string::npos
+                 && first_normal_pos == received_events.size()) {
             first_normal_pos = i;
         }
     }
@@ -320,7 +326,8 @@ TEST_F(EventAdvancedTest, EventMetadataPerformance)
     }
 
     auto add_time = std::chrono::high_resolution_clock::now();
-    auto add_duration = std::chrono::duration_cast<std::chrono::milliseconds>(add_time - start_time);
+    auto add_duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(add_time - start_time);
 
     // Retrieve metadata items
     start_time = std::chrono::high_resolution_clock::now();
@@ -331,10 +338,11 @@ TEST_F(EventAdvancedTest, EventMetadataPerformance)
     }
 
     auto retrieve_time = std::chrono::high_resolution_clock::now();
-    auto retrieve_duration = std::chrono::duration_cast<std::chrono::milliseconds>(retrieve_time - start_time);
+    auto retrieve_duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(retrieve_time - start_time);
 
     // Performance assertions
-    EXPECT_LT(add_duration.count(), 100);  // Should add 1000 metadata items in under 100ms
+    EXPECT_LT(add_duration.count(), 100);      // Should add 1000 metadata items in under 100ms
     EXPECT_LT(retrieve_duration.count(), 100); // Should retrieve 1000 items in under 100ms
 
     // Test metadata operations
@@ -362,12 +370,10 @@ TEST_F(EventAdvancedTest, EventFilteringPerformance)
     std::atomic<int> received_count{0};
 
     // Subscribe to multiple filter patterns
-    std::vector<std::string> filters = {
-        "filter.test.*",
-        "filter.test.category1.*",
-        "filter.test.category2.*",
-        "filter.test.category3.subcategory.*"
-    };
+    std::vector<std::string> filters = {"filter.test.*",
+                                        "filter.test.category1.*",
+                                        "filter.test.category2.*",
+                                        "filter.test.category3.subcategory.*"};
 
     std::vector<docker_cpp::SubscriptionId> subscription_ids;
     for (const auto& filter : filters) {
@@ -385,11 +391,14 @@ TEST_F(EventAdvancedTest, EventFilteringPerformance)
         std::string event_type;
         if (i % 4 == 0) {
             event_type = "filter.test.general";
-        } else if (i % 4 == 1) {
+        }
+        else if (i % 4 == 1) {
             event_type = "filter.test.category1.event" + std::to_string(i);
-        } else if (i % 4 == 2) {
+        }
+        else if (i % 4 == 2) {
             event_type = "filter.test.category2.event" + std::to_string(i);
-        } else {
+        }
+        else {
             event_type = "filter.test.category3.subcategory.event" + std::to_string(i);
         }
 
@@ -418,7 +427,8 @@ TEST_F(EventAdvancedTest, EventFilteringPerformance)
 
     // Performance assertions
     EXPECT_EQ(received_count, expected_count); // Each event should match expected number of filters
-    EXPECT_LT(duration.count(), 2000); // Should process 5000 events with complex filtering in under 2 seconds
+    EXPECT_LT(duration.count(),
+              2000); // Should process 5000 events with complex filtering in under 2 seconds
 }
 
 // Test event manager recovery from errors

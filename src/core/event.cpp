@@ -191,9 +191,8 @@ void EventManager::flush()
         std::unique_lock<std::mutex> lock(event_queue_mutex_);
         if (!event_queue_.empty()) {
             // Wait for the queue to be processed
-            queue_condition_.wait_for(lock, std::chrono::milliseconds(100), [this] {
-                return event_queue_.empty();
-            });
+            queue_condition_.wait_for(
+                lock, std::chrono::milliseconds(100), [this] { return event_queue_.empty(); });
         }
     }
 
@@ -263,17 +262,19 @@ void EventManager::processEvent(const Event& event)
             auto now = std::chrono::system_clock::now();
             auto elapsed = now - it->second.last_flush;
             bool should_flush = it->second.pending_events.size() >= it->second.max_batch_size
-                             || elapsed >= it->second.interval;
+                                || elapsed >= it->second.interval;
 
             if (should_flush) {
                 // Update last_flush before releasing lock
                 it->second.last_flush = now;
                 // Release lock before calling processBatch to avoid deadlock
                 // processBatch will acquire its own lock
-            } else {
+            }
+            else {
                 return; // No flush needed, return while still holding lock
             }
-        } else {
+        }
+        else {
             // No batching configured, process directly
             std::vector<Subscription> active_subscriptions;
             {
@@ -423,7 +424,8 @@ void EventManager::processBatchQueue()
             }
 
             auto elapsed = now - config.last_flush;
-            if (elapsed >= config.interval || config.pending_events.size() >= config.max_batch_size) {
+            if (elapsed >= config.interval
+                || config.pending_events.size() >= config.max_batch_size) {
                 processBatch(event_type);
                 config.last_flush = now;
             }

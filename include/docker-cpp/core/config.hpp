@@ -14,7 +14,8 @@
 namespace docker_cpp {
 
 using ConfigValue = std::variant<std::string, int, double, bool>;
-using ConfigChangeCallback = std::function<void(const std::string&, const ConfigValue&, const ConfigValue&)>;
+using ConfigChangeCallback =
+    std::function<void(const std::string&, const ConfigValue&, const ConfigValue&)>;
 using ConfigLayer = std::unordered_map<std::string, ConfigValue>;
 
 class ConfigManager {
@@ -53,7 +54,10 @@ public:
     void addChangeListener(const std::string& key, ConfigChangeCallback callback);
     void removeChangeListener(const std::string& key);
     std::vector<std::tuple<std::string, ConfigValue, ConfigValue>> getRecentChanges() const;
-  size_t getLayerCount() const { return layers_.size(); }
+    size_t getLayerCount() const
+    {
+        return layers_.size();
+    }
 
     // Copyable and movable
     ConfigManager(const ConfigManager&) = default;
@@ -69,13 +73,16 @@ private:
 
     ConfigValue getValue(const std::string& key) const;
     void setValue(const std::string& key, const ConfigValue& value);
-    void notifyChange(const std::string& key, const ConfigValue& old_value, const ConfigValue& new_value);
+    void notifyChange(const std::string& key,
+                      const ConfigValue& old_value,
+                      const ConfigValue& new_value);
     std::string expandEnvironmentVariable(const std::string& str) const;
 };
 
 // Template implementations
 template <typename T>
-void ConfigManager::set(const std::string& key, const T& value) {
+void ConfigManager::set(const std::string& key, const T& value)
+{
     ConfigValue old_value;
     bool has_old = false;
 
@@ -92,17 +99,20 @@ void ConfigManager::set(const std::string& key, const T& value) {
 }
 
 template <typename T>
-T ConfigManager::get(const std::string& key) const {
+T ConfigManager::get(const std::string& key) const
+{
     auto value = getValue(key);
     try {
         return std::get<T>(value);
-    } catch (const std::bad_variant_access&) {
+    }
+    catch (const std::bad_variant_access&) {
         throw ContainerError(ErrorCode::INVALID_TYPE, "Invalid type for configuration key: " + key);
     }
 }
 
 template <typename T>
-T ConfigManager::get(const std::string& key, const T& default_value) const {
+T ConfigManager::get(const std::string& key, const T& default_value) const
+{
     if (!has(key)) {
         return default_value;
     }

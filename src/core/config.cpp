@@ -1,14 +1,15 @@
-#include <docker-cpp/core/config.hpp>
-#include <docker-cpp/core/error.hpp>
 #include <algorithm>
 #include <cstdlib>
+#include <docker-cpp/core/config.hpp>
+#include <docker-cpp/core/error.hpp>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
 namespace docker_cpp {
 
-ConfigValue ConfigManager::getValue(const std::string& key) const {
+ConfigValue ConfigManager::getValue(const std::string& key) const
+{
     // Check current config first (highest priority)
     auto it = config_data_.find(key);
     if (it != config_data_.end()) {
@@ -25,11 +26,13 @@ ConfigValue ConfigManager::getValue(const std::string& key) const {
     throw ContainerError(ErrorCode::CONFIG_MISSING, "Configuration key not found: " + key);
 }
 
-void ConfigManager::setValue(const std::string& key, const ConfigValue& value) {
+void ConfigManager::setValue(const std::string& key, const ConfigValue& value)
+{
     config_data_[key] = value;
 }
 
-bool ConfigManager::has(const std::string& key) const {
+bool ConfigManager::has(const std::string& key) const
+{
     // Check current config first
     if (config_data_.find(key) != config_data_.end()) {
         return true;
@@ -45,7 +48,8 @@ bool ConfigManager::has(const std::string& key) const {
     return false;
 }
 
-void ConfigManager::remove(const std::string& key) {
+void ConfigManager::remove(const std::string& key)
+{
     auto it = config_data_.find(key);
     if (it != config_data_.end()) {
         ConfigValue old_value = it->second;
@@ -54,24 +58,28 @@ void ConfigManager::remove(const std::string& key) {
     }
 }
 
-void ConfigManager::clear() {
+void ConfigManager::clear()
+{
     config_data_.clear();
     layers_.clear();
     change_listeners_.clear();
     recent_changes_.clear();
 }
 
-void ConfigManager::addLayer(const std::string& layer_name, const ConfigManager& other) {
+void ConfigManager::addLayer(const std::string& layer_name, const ConfigManager& other)
+{
     layers_.emplace_back(layer_name, other);
 }
 
-void ConfigManager::merge(const ConfigManager& other) {
+void ConfigManager::merge(const ConfigManager& other)
+{
     for (const auto& [key, value] : other.config_data_) {
         setValue(key, value);
     }
 }
 
-ConfigManager ConfigManager::getEffectiveConfig() const {
+ConfigManager ConfigManager::getEffectiveConfig() const
+{
     ConfigManager result;
 
     // Start with current config (this is the merged base config)
@@ -87,7 +95,8 @@ ConfigManager ConfigManager::getEffectiveConfig() const {
     return result;
 }
 
-ConfigManager ConfigManager::expandEnvironmentVariables() const {
+ConfigManager ConfigManager::expandEnvironmentVariables() const
+{
     ConfigManager result = *this;
 
     for (auto& [key, value] : result.config_data_) {
@@ -100,11 +109,13 @@ ConfigManager ConfigManager::expandEnvironmentVariables() const {
     return result;
 }
 
-std::string ConfigManager::expandValue(const std::string& value) const {
+std::string ConfigManager::expandValue(const std::string& value) const
+{
     return expandEnvironmentVariable(value);
 }
 
-void ConfigManager::loadFromFile(const std::string& filename) {
+void ConfigManager::loadFromFile(const std::string& filename)
+{
     std::ifstream file(filename);
     if (!file.is_open()) {
         throw ContainerError(ErrorCode::FILE_NOT_FOUND, "Cannot open config file: " + filename);
@@ -135,7 +146,8 @@ void ConfigManager::loadFromFile(const std::string& filename) {
     }
 }
 
-void ConfigManager::saveToFile(const std::string& filename) const {
+void ConfigManager::saveToFile(const std::string& filename) const
+{
     std::ofstream file(filename);
     if (!file.is_open()) {
         throw ContainerError(ErrorCode::FILE_NOT_FOUND, "Cannot create config file: " + filename);
@@ -146,11 +158,14 @@ void ConfigManager::saveToFile(const std::string& filename) const {
 
         if (std::holds_alternative<std::string>(value)) {
             file << std::get<std::string>(value);
-        } else if (std::holds_alternative<int>(value)) {
+        }
+        else if (std::holds_alternative<int>(value)) {
             file << std::get<int>(value);
-        } else if (std::holds_alternative<double>(value)) {
+        }
+        else if (std::holds_alternative<double>(value)) {
             file << std::get<double>(value);
-        } else if (std::holds_alternative<bool>(value)) {
+        }
+        else if (std::holds_alternative<bool>(value)) {
             file << (std::get<bool>(value) ? "true" : "false");
         }
 
@@ -158,19 +173,26 @@ void ConfigManager::saveToFile(const std::string& filename) const {
     }
 }
 
-void ConfigManager::addChangeListener(const std::string& key, ConfigChangeCallback callback) {
+void ConfigManager::addChangeListener(const std::string& key, ConfigChangeCallback callback)
+{
     change_listeners_[key] = callback;
 }
 
-void ConfigManager::removeChangeListener(const std::string& key) {
+void ConfigManager::removeChangeListener(const std::string& key)
+{
     change_listeners_.erase(key);
 }
 
-std::vector<std::tuple<std::string, ConfigValue, ConfigValue>> ConfigManager::getRecentChanges() const {
+std::vector<std::tuple<std::string, ConfigValue, ConfigValue>>
+ConfigManager::getRecentChanges() const
+{
     return recent_changes_;
 }
 
-void ConfigManager::notifyChange(const std::string& key, const ConfigValue& old_value, const ConfigValue& new_value) {
+void ConfigManager::notifyChange(const std::string& key,
+                                 const ConfigValue& old_value,
+                                 const ConfigValue& new_value)
+{
     recent_changes_.emplace_back(key, old_value, new_value);
 
     auto it = change_listeners_.find(key);
@@ -179,7 +201,8 @@ void ConfigManager::notifyChange(const std::string& key, const ConfigValue& old_
     }
 }
 
-std::string ConfigManager::expandEnvironmentVariable(const std::string& str) const {
+std::string ConfigManager::expandEnvironmentVariable(const std::string& str) const
+{
     std::string result = str;
     size_t start = 0;
 
@@ -196,7 +219,8 @@ std::string ConfigManager::expandEnvironmentVariable(const std::string& str) con
             std::string replacement = env_value;
             result.replace(start, end - start + 1, replacement);
             start += replacement.length();
-        } else {
+        }
+        else {
             // Environment variable not found, leave pattern unchanged
             start = end + 1;
         }

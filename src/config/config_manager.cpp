@@ -60,8 +60,7 @@ namespace docker_cpp {
 
 // Copy constructor
 ConfigManager::ConfigManager(const ConfigManager& other)
-    : values_(other.values_),
-      change_callback_(other.change_callback_),
+    : values_(other.values_), change_callback_(other.change_callback_),
       change_notifications_enabled_(other.change_notifications_enabled_),
       watched_file_(other.watched_file_)
 {
@@ -92,13 +91,11 @@ ConfigManager& ConfigManager::operator=(const ConfigManager& other)
 
 // Move constructor
 ConfigManager::ConfigManager(ConfigManager&& other) noexcept
-    : values_(std::move(other.values_)),
-      layers_(std::move(other.layers_)),
+    : values_(std::move(other.values_)), layers_(std::move(other.layers_)),
       change_callback_(std::move(other.change_callback_)),
       change_notifications_enabled_(other.change_notifications_enabled_),
       watched_file_(std::move(other.watched_file_))
-{
-}
+{}
 
 // Move assignment operator
 ConfigManager& ConfigManager::operator=(ConfigManager&& other) noexcept
@@ -416,7 +413,7 @@ void ConfigManager::mergeFromJsonString(const std::string& json_string)
         size_t quote_count = 0;
         bool in_string = false;
         for (size_t i = 0; i < cleaned.length(); ++i) {
-            if (cleaned[i] == '"' && (i == 0 || cleaned[i-1] != '\\')) {
+            if (cleaned[i] == '"' && (i == 0 || cleaned[i - 1] != '\\')) {
                 quote_count++;
                 in_string = !in_string;
             }

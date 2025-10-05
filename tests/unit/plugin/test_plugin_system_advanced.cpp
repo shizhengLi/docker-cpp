@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
+#include <atomic>
+#include <chrono>
 #include <docker-cpp/core/error.hpp>
 #include <docker-cpp/plugin/plugin_interface.hpp>
 #include <docker-cpp/plugin/plugin_registry.hpp>
 #include <functional>
 #include <memory>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
-#include <chrono>
-#include <thread>
-#include <atomic>
 
 // Advanced mock plugin for testing complex scenarios
 class AdvancedMockPlugin : public docker_cpp::IPlugin {
@@ -22,23 +22,28 @@ public:
         std::vector<std::string> dependencies;
         std::vector<std::string> capabilities;
 
-        Config() : initialization_delay_ms(0), should_throw_on_init(false),
-                  should_throw_on_shutdown(false), failure_message("Plugin failed intentionally"),
-                  dependencies({}), capabilities({}) {}
+        Config()
+            : initialization_delay_ms(0), should_throw_on_init(false),
+              should_throw_on_shutdown(false), failure_message("Plugin failed intentionally"),
+              dependencies({}), capabilities({})
+        {}
 
-        static Config withDependencies(const std::vector<std::string>& deps) {
+        static Config withDependencies(const std::vector<std::string>& deps)
+        {
             Config config;
             config.dependencies = deps;
             return config;
         }
 
-        static Config withDelay(int delay_ms) {
+        static Config withDelay(int delay_ms)
+        {
             Config config;
             config.initialization_delay_ms = delay_ms;
             return config;
         }
 
-        static Config withFailure(bool on_init, bool on_shutdown, const std::string& message) {
+        static Config withFailure(bool on_init, bool on_shutdown, const std::string& message)
+        {
             Config config;
             config.should_throw_on_init = on_init;
             config.should_throw_on_shutdown = on_shutdown;
@@ -46,7 +51,8 @@ public:
             return config;
         }
 
-        static Config withCapabilities(const std::vector<std::string>& caps) {
+        static Config withCapabilities(const std::vector<std::string>& caps)
+        {
             Config config;
             config.capabilities = caps;
             return config;
@@ -69,13 +75,13 @@ public:
 
     docker_cpp::PluginInfo getPluginInfo() const override
     {
-        return docker_cpp::PluginInfo(docker_cpp::PluginInfoParams{
-            name_,
-            "2.0.0-advanced",
-            "Advanced mock plugin for complex testing scenarios",
-            docker_cpp::PluginType::CUSTOM,
-            "Test Suite",
-            "MIT"});
+        return docker_cpp::PluginInfo(
+            docker_cpp::PluginInfoParams{name_,
+                                         "2.0.0-advanced",
+                                         "Advanced mock plugin for complex testing scenarios",
+                                         docker_cpp::PluginType::CUSTOM,
+                                         "Test Suite",
+                                         "MIT"});
     }
 
     bool initialize(const docker_cpp::PluginConfig& config) override
@@ -205,11 +211,14 @@ TEST_F(PluginSystemAdvancedTest, ComplexDependencyResolution)
     auto plugin_e = std::make_unique<AdvancedMockPlugin>("plugin-e", AdvancedMockPlugin::Config{});
     auto plugin_d = std::make_unique<AdvancedMockPlugin>("plugin-d", AdvancedMockPlugin::Config{});
 
-    auto plugin_b = std::make_unique<AdvancedMockPlugin>("plugin-b", AdvancedMockPlugin::Config::withDependencies({"plugin-d"}));
+    auto plugin_b = std::make_unique<AdvancedMockPlugin>(
+        "plugin-b", AdvancedMockPlugin::Config::withDependencies({"plugin-d"}));
 
-    auto plugin_c = std::make_unique<AdvancedMockPlugin>("plugin-c", AdvancedMockPlugin::Config::withDependencies({"plugin-d", "plugin-e"}));
+    auto plugin_c = std::make_unique<AdvancedMockPlugin>(
+        "plugin-c", AdvancedMockPlugin::Config::withDependencies({"plugin-d", "plugin-e"}));
 
-    auto plugin_a = std::make_unique<AdvancedMockPlugin>("plugin-a", AdvancedMockPlugin::Config::withDependencies({"plugin-b", "plugin-c"}));
+    auto plugin_a = std::make_unique<AdvancedMockPlugin>(
+        "plugin-a", AdvancedMockPlugin::Config::withDependencies({"plugin-b", "plugin-c"}));
 
     // Register plugins
     getRegistry()->registerPlugin("plugin-a", std::move(plugin_a));
@@ -249,7 +258,8 @@ TEST_F(PluginSystemAdvancedTest, ConcurrentPluginOperations)
 
     // Create plugins
     for (int i = 0; i < num_plugins; ++i) {
-        auto plugin = std::make_unique<AdvancedMockPlugin>("concurrent-plugin-" + std::to_string(i));
+        auto plugin =
+            std::make_unique<AdvancedMockPlugin>("concurrent-plugin-" + std::to_string(i));
         getRegistry()->registerPlugin("concurrent-plugin-" + std::to_string(i), std::move(plugin));
     }
 
@@ -280,13 +290,16 @@ TEST_F(PluginSystemAdvancedTest, ConcurrentPluginOperations)
                         bool shutdown_result = getRegistry()->shutdownPlugin(plugin_name);
                         if (shutdown_result) {
                             success_count++;
-                        } else {
+                        }
+                        else {
                             error_count++;
                         }
-                    } else {
+                    }
+                    else {
                         error_count++;
                     }
-                } catch (const std::exception&) {
+                }
+                catch (const std::exception&) {
                     error_count++;
                 }
             }
@@ -308,11 +321,14 @@ TEST_F(PluginSystemAdvancedTest, ConcurrentPluginOperations)
 TEST_F(PluginSystemAdvancedTest, SlowPluginInitialization)
 {
     // Create plugins with different initialization delays
-    auto fast_plugin = std::make_unique<AdvancedMockPlugin>("fast", AdvancedMockPlugin::Config::withDelay(10));
+    auto fast_plugin =
+        std::make_unique<AdvancedMockPlugin>("fast", AdvancedMockPlugin::Config::withDelay(10));
 
-    auto slow_plugin = std::make_unique<AdvancedMockPlugin>("slow", AdvancedMockPlugin::Config::withDelay(100));
+    auto slow_plugin =
+        std::make_unique<AdvancedMockPlugin>("slow", AdvancedMockPlugin::Config::withDelay(100));
 
-    auto medium_plugin = std::make_unique<AdvancedMockPlugin>("medium", AdvancedMockPlugin::Config::withDelay(50));
+    auto medium_plugin =
+        std::make_unique<AdvancedMockPlugin>("medium", AdvancedMockPlugin::Config::withDelay(50));
 
     getRegistry()->registerPlugin("fast", std::move(fast_plugin));
     getRegistry()->registerPlugin("slow", std::move(slow_plugin));
@@ -336,7 +352,7 @@ TEST_F(PluginSystemAdvancedTest, SlowPluginInitialization)
     EXPECT_TRUE(results["slow"]);
 
     // Should take approximately the time of the slowest plugin (with some tolerance)
-    EXPECT_GT(duration.count(), 90); // At least the slow plugin's time
+    EXPECT_GT(duration.count(), 90);  // At least the slow plugin's time
     EXPECT_LT(duration.count(), 200); // But not too much longer
 
     // Verify all plugins are initialized
@@ -353,11 +369,16 @@ TEST_F(PluginSystemAdvancedTest, SlowPluginInitialization)
 TEST_F(PluginSystemAdvancedTest, PluginFailureHandling)
 {
     // Create various failing plugins
-    auto init_failure_plugin = std::make_unique<AdvancedMockPlugin>("init-failure", AdvancedMockPlugin::Config::withFailure(true, false, "Intentional initialization failure"));
+    auto init_failure_plugin = std::make_unique<AdvancedMockPlugin>(
+        "init-failure",
+        AdvancedMockPlugin::Config::withFailure(true, false, "Intentional initialization failure"));
 
-    auto shutdown_failure_plugin = std::make_unique<AdvancedMockPlugin>("shutdown-failure", AdvancedMockPlugin::Config::withFailure(false, true, "Intentional shutdown failure"));
+    auto shutdown_failure_plugin = std::make_unique<AdvancedMockPlugin>(
+        "shutdown-failure",
+        AdvancedMockPlugin::Config::withFailure(false, true, "Intentional shutdown failure"));
 
-    auto working_plugin = std::make_unique<AdvancedMockPlugin>("working", AdvancedMockPlugin::Config{});
+    auto working_plugin =
+        std::make_unique<AdvancedMockPlugin>("working", AdvancedMockPlugin::Config{});
 
     getRegistry()->registerPlugin("init-failure", std::move(init_failure_plugin));
     getRegistry()->registerPlugin("shutdown-failure", std::move(shutdown_failure_plugin));
@@ -375,16 +396,19 @@ TEST_F(PluginSystemAdvancedTest, PluginFailureHandling)
 
     // Test shutdown failure (should not throw, but should return false)
     EXPECT_TRUE(getRegistry()->initializePlugin("shutdown-failure", config));
-    EXPECT_FALSE(getRegistry()->shutdownPlugin("shutdown-failure")); // Should return false due to exception
+    EXPECT_FALSE(
+        getRegistry()->shutdownPlugin("shutdown-failure")); // Should return false due to exception
 }
 
 // Test plugin dependency failures
 TEST_F(PluginSystemAdvancedTest, PluginDependencyFailures)
 {
     // Create plugins where one depends on a failing plugin
-    auto base_plugin = std::make_unique<AdvancedMockPlugin>("base", AdvancedMockPlugin::Config::withFailure(true, false, ""));
+    auto base_plugin = std::make_unique<AdvancedMockPlugin>(
+        "base", AdvancedMockPlugin::Config::withFailure(true, false, ""));
 
-    auto dependent_plugin = std::make_unique<AdvancedMockPlugin>("dependent", AdvancedMockPlugin::Config::withDependencies({"base"}));
+    auto dependent_plugin = std::make_unique<AdvancedMockPlugin>(
+        "dependent", AdvancedMockPlugin::Config::withDependencies({"base"}));
 
     getRegistry()->registerPlugin("base", std::move(base_plugin));
     getRegistry()->registerPlugin("dependent", std::move(dependent_plugin));
@@ -413,8 +437,8 @@ TEST_F(PluginSystemAdvancedTest, RegistryPerformanceWithManyPlugins)
     }
 
     auto registration_time = std::chrono::high_resolution_clock::now();
-    auto registration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-        registration_time - start_time);
+    auto registration_duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(registration_time - start_time);
 
     // Test lookup performance
     start_time = std::chrono::high_resolution_clock::now();
@@ -427,29 +451,36 @@ TEST_F(PluginSystemAdvancedTest, RegistryPerformanceWithManyPlugins)
     }
 
     auto lookup_time = std::chrono::high_resolution_clock::now();
-    auto lookup_duration = std::chrono::duration_cast<std::chrono::milliseconds>(lookup_time - start_time);
+    auto lookup_duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(lookup_time - start_time);
 
     // Test get all plugin names performance
     start_time = std::chrono::high_resolution_clock::now();
     auto all_names = getRegistry()->getPluginNames();
     auto name_time = std::chrono::high_resolution_clock::now();
-    auto name_duration = std::chrono::duration_cast<std::chrono::milliseconds>(name_time - start_time);
+    auto name_duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(name_time - start_time);
 
     // Performance assertions
-    EXPECT_LT(registration_duration.count(), 1000); // Should register 1000 plugins in under 1 second
-    EXPECT_LT(lookup_duration.count(), 500);       // Should look up 100 plugins in under 500ms
-    EXPECT_LT(name_duration.count(), 100);         // Should get all names in under 100ms
+    EXPECT_LT(registration_duration.count(),
+              1000);                         // Should register 1000 plugins in under 1 second
+    EXPECT_LT(lookup_duration.count(), 500); // Should look up 100 plugins in under 500ms
+    EXPECT_LT(name_duration.count(), 100);   // Should get all names in under 100ms
     EXPECT_EQ(all_names.size(), num_plugins);
 }
 
 // Test plugin capability management
 TEST_F(PluginSystemAdvancedTest, PluginCapabilityManagement)
 {
-    auto plugin1 = std::make_unique<AdvancedMockPlugin>("plugin1", AdvancedMockPlugin::Config::withCapabilities({"network", "storage", "security"}));
+    auto plugin1 = std::make_unique<AdvancedMockPlugin>(
+        "plugin1",
+        AdvancedMockPlugin::Config::withCapabilities({"network", "storage", "security"}));
 
-    auto plugin2 = std::make_unique<AdvancedMockPlugin>("plugin2", AdvancedMockPlugin::Config::withCapabilities({"network", "compute"}));
+    auto plugin2 = std::make_unique<AdvancedMockPlugin>(
+        "plugin2", AdvancedMockPlugin::Config::withCapabilities({"network", "compute"}));
 
-    auto plugin3 = std::make_unique<AdvancedMockPlugin>("plugin3", AdvancedMockPlugin::Config::withCapabilities({"storage", "monitoring"}));
+    auto plugin3 = std::make_unique<AdvancedMockPlugin>(
+        "plugin3", AdvancedMockPlugin::Config::withCapabilities({"storage", "monitoring"}));
 
     getRegistry()->registerPlugin("plugin1", std::move(plugin1));
     getRegistry()->registerPlugin("plugin2", std::move(plugin2));
@@ -489,18 +520,24 @@ TEST_F(PluginSystemAdvancedTest, PluginCapabilityManagement)
     EXPECT_EQ(storage_plugins.size(), 2);
 
     // Verify specific plugins
-    EXPECT_TRUE(std::find(network_plugins.begin(), network_plugins.end(), "plugin1") != network_plugins.end());
-    EXPECT_TRUE(std::find(network_plugins.begin(), network_plugins.end(), "plugin2") != network_plugins.end());
-    EXPECT_TRUE(std::find(storage_plugins.begin(), storage_plugins.end(), "plugin1") != storage_plugins.end());
-    EXPECT_TRUE(std::find(storage_plugins.begin(), storage_plugins.end(), "plugin3") != storage_plugins.end());
+    EXPECT_TRUE(std::find(network_plugins.begin(), network_plugins.end(), "plugin1")
+                != network_plugins.end());
+    EXPECT_TRUE(std::find(network_plugins.begin(), network_plugins.end(), "plugin2")
+                != network_plugins.end());
+    EXPECT_TRUE(std::find(storage_plugins.begin(), storage_plugins.end(), "plugin1")
+                != storage_plugins.end());
+    EXPECT_TRUE(std::find(storage_plugins.begin(), storage_plugins.end(), "plugin3")
+                != storage_plugins.end());
 }
 
 // Test plugin registry state consistency
 TEST_F(PluginSystemAdvancedTest, RegistryStateConsistency)
 {
     // Add plugins and perform various operations, checking consistency
-    auto plugin1 = std::make_unique<AdvancedMockPlugin>("state-test-1", AdvancedMockPlugin::Config{});
-    auto plugin2 = std::make_unique<AdvancedMockPlugin>("state-test-2", AdvancedMockPlugin::Config{});
+    auto plugin1 =
+        std::make_unique<AdvancedMockPlugin>("state-test-1", AdvancedMockPlugin::Config{});
+    auto plugin2 =
+        std::make_unique<AdvancedMockPlugin>("state-test-2", AdvancedMockPlugin::Config{});
 
     docker_cpp::PluginConfig config;
 
