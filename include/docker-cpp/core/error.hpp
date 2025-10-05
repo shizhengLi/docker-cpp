@@ -65,6 +65,8 @@ enum class ErrorCode {
     // Configuration errors
     CONFIG_INVALID = 9000,
     CONFIG_MISSING = 9001,
+    INVALID_TYPE = 9002,
+    FILE_NOT_FOUND = 9003,
 
     // Plugin errors
     PLUGIN_NOT_FOUND = 10000,
@@ -177,7 +179,11 @@ public:
             case ErrorCode::CONFIG_INVALID:
                 return "Invalid configuration";
             case ErrorCode::CONFIG_MISSING:
-                return "Missing configuration";
+                return "Missing configuration: Configuration key not found";
+            case ErrorCode::INVALID_TYPE:
+                return "Invalid type for configuration value";
+            case ErrorCode::FILE_NOT_FOUND:
+                return "File not found";
 
             case ErrorCode::PLUGIN_NOT_FOUND:
                 return "Plugin not found";
