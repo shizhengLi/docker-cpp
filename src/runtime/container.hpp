@@ -158,10 +158,38 @@ private:
     // State transition validation
     bool canTransitionTo(ContainerState new_state) const;
     std::vector<ContainerState> getValidTransitions(ContainerState from_state) const;
+    void executeStateTransition(ContainerState new_state);
+    void onStateEntered(ContainerState new_state);
+    void onStateExited(ContainerState old_state);
+    bool isStateTransitionValid(ContainerState from, ContainerState to) const;
 
     // Error handling
     void handleError(const std::string& error_msg);
     void setExitReason(const std::string& reason);
+
+    // State machine configuration
+    struct StateTransition {
+        ContainerState from;
+        ContainerState to;
+        bool allowed;
+        std::function<bool()> condition;
+    };
+
+    std::vector<StateTransition> getStateTransitionTable() const;
+    void initializeStateMachine();
+
+    // State-specific handlers
+    void handleCreatedState();
+    void handleStartingState();
+    void handleRunningState();
+    void handlePausedState();
+    void handleStoppingState();
+    void handleStoppedState();
+    void handleRemovingState();
+    void handleRemovedState();
+    void handleDeadState();
+    void handleRestartingState();
+    void handleErrorState();
 
     // Utility methods
     std::string generateCgroupName() const;
@@ -169,6 +197,11 @@ private:
     void logInfo(const std::string& message) const;
     void logError(const std::string& message) const;
     void logWarning(const std::string& message) const;
+    void logDebug(const std::string& message) const;
+
+    // State machine debugging
+    void logStateTransition(ContainerState from, ContainerState to) const;
+    std::string getStateDescription(ContainerState state) const;
 };
 
 // Container registry for managing multiple containers
