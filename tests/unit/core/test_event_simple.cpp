@@ -8,26 +8,25 @@
 #include <thread>
 #include <vector>
 
-using namespace docker_cpp;
 
-class EventSimpleTest : public ::testing::Test {
+class docker_cpp::EventSimpleTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
         // Reset event system before each test
-        EventManager::resetInstance();
+        docker_cpp::docker_cpp::EventManager::resetInstance();
     }
 
     void TearDown() override
     {
-        EventManager::resetInstance();
+        docker_cpp::docker_cpp::EventManager::resetInstance();
     }
 };
 
 // Test basic event creation and properties
-TEST_F(EventSimpleTest, BasicEventCreation)
+TEST_F(docker_cpp::EventSimpleTest, Basicdocker_cpp::EventCreation)
 {
-    Event event("test.event", "Test event data");
+    docker_cpp::Event event("test.event", "Test event data");
 
     EXPECT_EQ(event.getType(), "test.event");
     EXPECT_EQ(event.getData(), "Test event data");
@@ -35,9 +34,9 @@ TEST_F(EventSimpleTest, BasicEventCreation)
     EXPECT_GT(event.getId(), 0);
 }
 
-TEST_F(EventSimpleTest, EventMetadata)
+TEST_F(docker_cpp::EventSimpleTest, docker_cpp::EventMetadata)
 {
-    Event event("test.event", "Test data");
+    docker_cpp::Event event("test.event", "Test data");
 
     // Test metadata operations
     event.setMetadata("key1", "value1");
@@ -55,20 +54,20 @@ TEST_F(EventSimpleTest, EventMetadata)
     EXPECT_FALSE(event.hasMetadata("key1"));
 }
 
-TEST_F(EventSimpleTest, EventManagerSingleton)
+TEST_F(docker_cpp::EventSimpleTest, docker_cpp::docker_cpp::EventManagerSingleton)
 {
-    auto manager1 = EventManager::getInstance();
-    auto manager2 = EventManager::getInstance();
+    auto manager1 = docker_cpp::docker_cpp::EventManager::getInstance();
+    auto manager2 = docker_cpp::docker_cpp::EventManager::getInstance();
 
     EXPECT_EQ(manager1, manager2);
 }
 
-TEST_F(EventSimpleTest, BasicEventPublishing)
+TEST_F(docker_cpp::EventSimpleTest, Basicdocker_cpp::EventPublishing)
 {
-    auto manager = EventManager::getInstance();
+    auto manager = docker_cpp::docker_cpp::EventManager::getInstance();
 
     std::atomic<int> received_count{0};
-    EventListener listener = [&](const Event& event) {
+    docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) {
         received_count++;
         EXPECT_EQ(event.getType(), "test.event");
         EXPECT_EQ(event.getData(), "Test data");
@@ -76,7 +75,7 @@ TEST_F(EventSimpleTest, BasicEventPublishing)
 
     manager->subscribe("test.event", listener);
 
-    Event event("test.event", "Test data");
+    docker_cpp::Event event("test.event", "Test data");
     manager->publish(event);
 
     // Wait for async event processing
@@ -85,19 +84,19 @@ TEST_F(EventSimpleTest, BasicEventPublishing)
     EXPECT_EQ(received_count, 1);
 }
 
-TEST_F(EventSimpleTest, MultipleSubscribers)
+TEST_F(docker_cpp::EventSimpleTest, MultipleSubscribers)
 {
-    auto manager = EventManager::getInstance();
+    auto manager = docker_cpp::docker_cpp::EventManager::getInstance();
 
     std::atomic<int> received1_count{0};
     std::atomic<int> received2_count{0};
 
-    EventListener listener1 = [&](const Event& event) {
+    docker_cpp::EventListener listener1 = [&](const docker_cpp::Event& event) {
         received1_count++;
         EXPECT_EQ(event.getData(), "Test data");
     };
 
-    EventListener listener2 = [&](const Event& event) {
+    docker_cpp::EventListener listener2 = [&](const docker_cpp::Event& event) {
         received2_count++;
         EXPECT_EQ(event.getData(), "Test data");
     };
@@ -105,7 +104,7 @@ TEST_F(EventSimpleTest, MultipleSubscribers)
     manager->subscribe("test.event", listener1);
     manager->subscribe("test.event", listener2);
 
-    Event event("test.event", "Test data");
+    docker_cpp::Event event("test.event", "Test data");
     manager->publish(event);
 
     // Wait for async event processing
@@ -115,12 +114,12 @@ TEST_F(EventSimpleTest, MultipleSubscribers)
     EXPECT_EQ(received2_count, 1);
 }
 
-TEST_F(EventSimpleTest, EventFiltering)
+TEST_F(docker_cpp::EventSimpleTest, docker_cpp::EventFiltering)
 {
-    auto manager = EventManager::getInstance();
+    auto manager = docker_cpp::docker_cpp::EventManager::getInstance();
 
     std::atomic<int> received_count{0};
-    EventListener listener = [&](const Event& event) {
+    docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) {
         received_count++;
         // Should only receive test.event events
         EXPECT_EQ(event.getType(), "test.event");
@@ -129,9 +128,9 @@ TEST_F(EventSimpleTest, EventFiltering)
     manager->subscribe("test.event", listener);
 
     // Publish events of different types
-    Event event1("test.event", "Should receive");
-    Event event2("other.event", "Should not receive");
-    Event event3("test.event", "Should also receive");
+    docker_cpp::Event event1("test.event", "Should receive");
+    docker_cpp::Event event2("other.event", "Should not receive");
+    docker_cpp::Event event3("test.event", "Should also receive");
 
     manager->publish(event1);
     manager->publish(event2);
@@ -143,19 +142,19 @@ TEST_F(EventSimpleTest, EventFiltering)
     EXPECT_EQ(received_count, 2);
 }
 
-TEST_F(EventSimpleTest, UnsubscribeEvents)
+TEST_F(docker_cpp::EventSimpleTest, Unsubscribedocker_cpp::Events)
 {
-    auto manager = EventManager::getInstance();
+    auto manager = docker_cpp::docker_cpp::EventManager::getInstance();
 
     std::atomic<int> received_count{0};
-    EventListener listener = [&](const Event& event) {
+    docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) {
         (void)event; // Suppress unused parameter warning
         received_count++;
     };
 
     SubscriptionId subscription = manager->subscribe("test.event", listener);
 
-    Event event1("test.event", "Before unsubscribe");
+    docker_cpp::Event event1("test.event", "Before unsubscribe");
     manager->publish(event1);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -164,7 +163,7 @@ TEST_F(EventSimpleTest, UnsubscribeEvents)
 
     manager->unsubscribe(subscription);
 
-    Event event2("test.event", "After unsubscribe");
+    docker_cpp::Event event2("test.event", "After unsubscribe");
     manager->publish(event2);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -173,12 +172,12 @@ TEST_F(EventSimpleTest, UnsubscribeEvents)
     EXPECT_EQ(received_count, 1);
 }
 
-TEST_F(EventSimpleTest, EventStatistics)
+TEST_F(docker_cpp::EventSimpleTest, docker_cpp::EventStatistics)
 {
-    auto manager = EventManager::getInstance();
+    auto manager = docker_cpp::docker_cpp::EventManager::getInstance();
 
     std::atomic<int> received_count{0};
-    EventListener listener = [&](const Event& event) {
+    docker_cpp::EventListener listener = [&](const docker_cpp::Event& event) {
         (void)event; // Suppress unused parameter warning
         received_count++;
     };
@@ -187,9 +186,9 @@ TEST_F(EventSimpleTest, EventStatistics)
     manager->subscribe("test.event2", listener);
 
     // Publish events
-    manager->publish(Event("test.event1", "Event 1"));
-    manager->publish(Event("test.event1", "Event 2"));
-    manager->publish(Event("test.event2", "Event 3"));
+    manager->publish(docker_cpp::Event("test.event1", "docker_cpp::Event 1"));
+    manager->publish(docker_cpp::Event("test.event1", "docker_cpp::Event 2"));
+    manager->publish(docker_cpp::Event("test.event2", "docker_cpp::Event 3"));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

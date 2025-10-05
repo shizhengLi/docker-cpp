@@ -9,7 +9,6 @@
 #include <thread>
 #include <vector>
 
-using namespace docker_cpp;
 
 class LoggerTest : public ::testing::Test {
 protected:
@@ -19,12 +18,12 @@ protected:
         std::filesystem::create_directories(test_dir);
 
         // Reset logger instance before each test
-        Logger::resetInstance();
+        docker_cpp::Logger::resetInstance();
     }
 
     void TearDown() override
     {
-        Logger::resetInstance();
+        docker_cpp::Logger::resetInstance();
         std::filesystem::remove_all(test_dir);
     }
 
@@ -40,39 +39,39 @@ private:
 
 TEST_F(LoggerTest, DefaultConstructorCreatesDefaultLogger)
 {
-    auto* logger = Logger::getInstance();
+    auto* logger = docker_cpp::Logger::getInstance();
 
     EXPECT_NE(logger, nullptr);
-    EXPECT_EQ(logger->getLevel(), LogLevel::INFO);
-    EXPECT_TRUE(logger->isLevelEnabled(LogLevel::INFO));
-    EXPECT_FALSE(logger->isLevelEnabled(LogLevel::DEBUG));
+    EXPECT_EQ(logger->getLevel(), docker_cpp::LogLevel::INFO);
+    EXPECT_TRUE(logger->isLevelEnabled(docker_cpp::LogLevel::INFO));
+    EXPECT_FALSE(logger->isLevelEnabled(docker_cpp::LogLevel::DEBUG));
 }
 
-TEST_F(LoggerTest, SetAndGetLogLevel)
+TEST_F(LoggerTest, SetAndGetdocker_cpp::LogLevel)
 {
-    auto* logger = Logger::getInstance();
+    auto* logger = docker_cpp::Logger::getInstance();
 
-    logger->setLevel(LogLevel::DEBUG);
-    EXPECT_EQ(logger->getLevel(), LogLevel::DEBUG);
-    EXPECT_TRUE(logger->isLevelEnabled(LogLevel::DEBUG));
-    EXPECT_TRUE(logger->isLevelEnabled(LogLevel::INFO));
-    EXPECT_TRUE(logger->isLevelEnabled(LogLevel::WARNING));
-    EXPECT_TRUE(logger->isLevelEnabled(LogLevel::ERROR));
-    EXPECT_TRUE(logger->isLevelEnabled(LogLevel::CRITICAL));
+    logger->setLevel(docker_cpp::LogLevel::DEBUG);
+    EXPECT_EQ(logger->getLevel(), docker_cpp::LogLevel::DEBUG);
+    EXPECT_TRUE(logger->isLevelEnabled(docker_cpp::LogLevel::DEBUG));
+    EXPECT_TRUE(logger->isLevelEnabled(docker_cpp::LogLevel::INFO));
+    EXPECT_TRUE(logger->isLevelEnabled(docker_cpp::LogLevel::WARNING));
+    EXPECT_TRUE(logger->isLevelEnabled(docker_cpp::LogLevel::ERROR));
+    EXPECT_TRUE(logger->isLevelEnabled(docker_cpp::LogLevel::CRITICAL));
 
-    logger->setLevel(LogLevel::ERROR);
-    EXPECT_EQ(logger->getLevel(), LogLevel::ERROR);
-    EXPECT_FALSE(logger->isLevelEnabled(LogLevel::DEBUG));
-    EXPECT_FALSE(logger->isLevelEnabled(LogLevel::INFO));
-    EXPECT_FALSE(logger->isLevelEnabled(LogLevel::WARNING));
-    EXPECT_TRUE(logger->isLevelEnabled(LogLevel::ERROR));
-    EXPECT_TRUE(logger->isLevelEnabled(LogLevel::CRITICAL));
+    logger->setLevel(docker_cpp::LogLevel::ERROR);
+    EXPECT_EQ(logger->getLevel(), docker_cpp::LogLevel::ERROR);
+    EXPECT_FALSE(logger->isLevelEnabled(docker_cpp::LogLevel::DEBUG));
+    EXPECT_FALSE(logger->isLevelEnabled(docker_cpp::LogLevel::INFO));
+    EXPECT_FALSE(logger->isLevelEnabled(docker_cpp::LogLevel::WARNING));
+    EXPECT_TRUE(logger->isLevelEnabled(docker_cpp::LogLevel::ERROR));
+    EXPECT_TRUE(logger->isLevelEnabled(docker_cpp::LogLevel::CRITICAL));
 }
 
 TEST_F(LoggerTest, BasicLoggingOperations)
 {
-    auto* logger = Logger::getInstance();
-    logger->setLevel(LogLevel::DEBUG);
+    auto* logger = docker_cpp::Logger::getInstance();
+    logger->setLevel(docker_cpp::LogLevel::DEBUG);
 
     // Capture console output
     testing::internal::CaptureStdout();
@@ -94,8 +93,8 @@ TEST_F(LoggerTest, BasicLoggingOperations)
 
 TEST_F(LoggerTest, LoggingWithParameters)
 {
-    auto* logger = Logger::getInstance();
-    logger->setLevel(LogLevel::DEBUG);
+    auto* logger = docker_cpp::Logger::getInstance();
+    logger->setLevel(docker_cpp::LogLevel::DEBUG);
 
     testing::internal::CaptureStdout();
 
@@ -112,11 +111,11 @@ TEST_F(LoggerTest, LoggingWithParameters)
 
 TEST_F(LoggerTest, FileLogging)
 {
-    auto* logger = Logger::getInstance();
+    auto* logger = docker_cpp::Logger::getInstance();
     std::filesystem::path log_file = getTestDir() / "test.log";
 
-    logger->addFileSink(log_file, LogLevel::INFO);
-    logger->setLevel(LogLevel::DEBUG);
+    logger->addFileSink(log_file, docker_cpp::LogLevel::INFO);
+    logger->setLevel(docker_cpp::LogLevel::DEBUG);
 
     logger->debug("Debug message");
     logger->info("Info message");
@@ -141,13 +140,13 @@ TEST_F(LoggerTest, FileLogging)
 
 TEST_F(LoggerTest, MultipleFileSinks)
 {
-    auto* logger = Logger::getInstance();
+    auto* logger = docker_cpp::Logger::getInstance();
     std::filesystem::path info_file = getTestDir() / "info.log";
     std::filesystem::path error_file = getTestDir() / "error.log";
 
-    logger->addFileSink(info_file, LogLevel::INFO);
-    logger->addFileSink(error_file, LogLevel::ERROR);
-    logger->setLevel(LogLevel::DEBUG);
+    logger->addFileSink(info_file, docker_cpp::LogLevel::INFO);
+    logger->addFileSink(error_file, docker_cpp::LogLevel::ERROR);
+    logger->setLevel(docker_cpp::LogLevel::DEBUG);
 
     logger->debug("Debug message");
     logger->info("Info message");
@@ -182,7 +181,7 @@ TEST_F(LoggerTest, MultipleFileSinks)
 
 TEST_F(LoggerTest, CustomSink)
 {
-    auto* logger = Logger::getInstance();
+    auto* logger = docker_cpp::Logger::getInstance();
     std::vector<std::string> captured_messages;
 
     auto custom_sink = [&](const LogMessage& message) {
@@ -191,8 +190,8 @@ TEST_F(LoggerTest, CustomSink)
         captured_messages.push_back(oss.str());
     };
 
-    logger->addSink(custom_sink, LogLevel::WARNING);
-    logger->setLevel(LogLevel::DEBUG);
+    logger->addSink(custom_sink, docker_cpp::LogLevel::WARNING);
+    logger->setLevel(docker_cpp::LogLevel::DEBUG);
 
     logger->debug("Debug message");
     logger->info("Info message");
@@ -208,17 +207,17 @@ TEST_F(LoggerTest, CustomSink)
 
 TEST_F(LoggerTest, LogMessageFormatting)
 {
-    auto* logger = Logger::getInstance();
+    auto* logger = docker_cpp::Logger::getInstance();
     (void)logger; // Suppress unused variable warning
 
     LogMessage msg;
-    msg.level = LogLevel::ERROR;
+    msg.level = docker_cpp::LogLevel::ERROR;
     msg.message = "Test error";
     msg.logger_name = "test_logger";
     msg.thread_id = std::this_thread::get_id();
     msg.timestamp = std::chrono::system_clock::now();
 
-    EXPECT_EQ(msg.level, LogLevel::ERROR);
+    EXPECT_EQ(msg.level, docker_cpp::LogLevel::ERROR);
     EXPECT_EQ(msg.message, "Test error");
     EXPECT_EQ(msg.logger_name, "test_logger");
     EXPECT_EQ(msg.thread_id, std::this_thread::get_id());
@@ -227,8 +226,8 @@ TEST_F(LoggerTest, LogMessageFormatting)
 
 TEST_F(LoggerTest, LoggerNaming)
 {
-    auto* default_logger = Logger::getInstance("default");
-    auto* custom_logger = Logger::getInstance("custom");
+    auto* default_logger = docker_cpp::Logger::getInstance("default");
+    auto* custom_logger = docker_cpp::Logger::getInstance("custom");
 
     EXPECT_NE(default_logger, nullptr);
     EXPECT_NE(custom_logger, nullptr);
@@ -236,16 +235,16 @@ TEST_F(LoggerTest, LoggerNaming)
     EXPECT_EQ(custom_logger->getName(), "custom");
 
     // Same name should return same instance
-    auto* same_logger = Logger::getInstance("default");
+    auto* same_logger = docker_cpp::Logger::getInstance("default");
     EXPECT_EQ(default_logger, same_logger);
 }
 
 TEST_F(LoggerTest, RemoveFileSink)
 {
-    auto* logger = Logger::getInstance();
+    auto* logger = docker_cpp::Logger::getInstance();
     std::filesystem::path log_file = getTestDir() / "test.log";
 
-    logger->addFileSink(log_file, LogLevel::INFO);
+    logger->addFileSink(log_file, docker_cpp::LogLevel::INFO);
     logger->info("Message before removal");
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -263,11 +262,11 @@ TEST_F(LoggerTest, RemoveFileSink)
 
 TEST_F(LoggerTest, ThreadSafety)
 {
-    auto* logger = Logger::getInstance();
-    logger->setLevel(LogLevel::INFO);
+    auto* logger = docker_cpp::Logger::getInstance();
+    logger->setLevel(docker_cpp::LogLevel::INFO);
 
     std::filesystem::path log_file = getTestDir() / "thread_test.log";
-    logger->addFileSink(log_file, LogLevel::INFO);
+    logger->addFileSink(log_file, docker_cpp::LogLevel::INFO);
 
     const int num_threads = 10;
     const int messages_per_thread = 100;
@@ -303,30 +302,30 @@ TEST_F(LoggerTest, ThreadSafety)
     EXPECT_EQ(thread_count, num_threads * messages_per_thread);
 }
 
-TEST_F(LoggerTest, LogLevelToString)
+TEST_F(LoggerTest, docker_cpp::LogLevelToString)
 {
-    EXPECT_EQ(toString(LogLevel::TRACE), "TRACE");
-    EXPECT_EQ(toString(LogLevel::DEBUG), "DEBUG");
-    EXPECT_EQ(toString(LogLevel::INFO), "INFO");
-    EXPECT_EQ(toString(LogLevel::WARNING), "WARNING");
-    EXPECT_EQ(toString(LogLevel::ERROR), "ERROR");
-    EXPECT_EQ(toString(LogLevel::CRITICAL), "CRITICAL");
+    EXPECT_EQ(toString(docker_cpp::LogLevel::TRACE), "TRACE");
+    EXPECT_EQ(toString(docker_cpp::LogLevel::DEBUG), "DEBUG");
+    EXPECT_EQ(toString(docker_cpp::LogLevel::INFO), "INFO");
+    EXPECT_EQ(toString(docker_cpp::LogLevel::WARNING), "WARNING");
+    EXPECT_EQ(toString(docker_cpp::LogLevel::ERROR), "ERROR");
+    EXPECT_EQ(toString(docker_cpp::LogLevel::CRITICAL), "CRITICAL");
 }
 
-TEST_F(LoggerTest, StringToLogLevel)
+TEST_F(LoggerTest, StringTodocker_cpp::LogLevel)
 {
-    EXPECT_EQ(fromString("TRACE"), LogLevel::TRACE);
-    EXPECT_EQ(fromString("DEBUG"), LogLevel::DEBUG);
-    EXPECT_EQ(fromString("INFO"), LogLevel::INFO);
-    EXPECT_EQ(fromString("WARNING"), LogLevel::WARNING);
-    EXPECT_EQ(fromString("ERROR"), LogLevel::ERROR);
-    EXPECT_EQ(fromString("CRITICAL"), LogLevel::CRITICAL);
-    EXPECT_EQ(fromString("invalid"), LogLevel::INFO); // Default
+    EXPECT_EQ(fromString("TRACE"), docker_cpp::LogLevel::TRACE);
+    EXPECT_EQ(fromString("DEBUG"), docker_cpp::LogLevel::DEBUG);
+    EXPECT_EQ(fromString("INFO"), docker_cpp::LogLevel::INFO);
+    EXPECT_EQ(fromString("WARNING"), docker_cpp::LogLevel::WARNING);
+    EXPECT_EQ(fromString("ERROR"), docker_cpp::LogLevel::ERROR);
+    EXPECT_EQ(fromString("CRITICAL"), docker_cpp::LogLevel::CRITICAL);
+    EXPECT_EQ(fromString("invalid"), docker_cpp::LogLevel::INFO); // Default
 }
 
 TEST_F(LoggerTest, ConsoleSinkToggle)
 {
-    auto* logger = Logger::getInstance();
+    auto* logger = docker_cpp::Logger::getInstance();
 
     testing::internal::CaptureStdout();
     logger->info("Message with console enabled");
@@ -349,7 +348,7 @@ TEST_F(LoggerTest, ConsoleSinkToggle)
 
 TEST_F(LoggerTest, LogPatternFormatting)
 {
-    auto* logger = Logger::getInstance();
+    auto* logger = docker_cpp::Logger::getInstance();
     logger->setPattern("[%l] %n: %v"); // [level] name: message
 
     testing::internal::CaptureStdout();
@@ -362,17 +361,17 @@ TEST_F(LoggerTest, LogPatternFormatting)
 
 TEST_F(LoggerTest, LoggerReset)
 {
-    auto logger1 = Logger::getInstance("test");
-    logger1->setLevel(LogLevel::ERROR);
+    auto logger1 = docker_cpp::Logger::getInstance("test");
+    logger1->setLevel(docker_cpp::LogLevel::ERROR);
 
     // Verify initial state
-    EXPECT_EQ(logger1->getLevel(), LogLevel::ERROR);
+    EXPECT_EQ(logger1->getLevel(), docker_cpp::LogLevel::ERROR);
 
-    Logger::resetInstance("test");
+    docker_cpp::Logger::resetInstance("test");
 
-    auto logger2 = Logger::getInstance("test");
+    auto logger2 = docker_cpp::Logger::getInstance("test");
     // Should return to default level after reset
-    EXPECT_EQ(logger2->getLevel(), LogLevel::INFO);
+    EXPECT_EQ(logger2->getLevel(), docker_cpp::LogLevel::INFO);
 
     // The logger should be functional after reset
     logger2->info("Test message after reset");

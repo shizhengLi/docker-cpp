@@ -19,6 +19,11 @@ namespace docker_cpp {
 using EventId = uint64_t;
 using SubscriptionId = uint64_t;
 
+// Event system constants
+constexpr std::chrono::milliseconds DEFAULT_FLUSH_WAIT_TIME{10};
+constexpr size_t DEFAULT_MAX_QUEUE_SIZE = 10000;
+constexpr size_t DEFAULT_MAX_BATCH_SIZE = 100;
+
 enum class EventPriority { LOW = 0, NORMAL = 1, HIGH = 2, CRITICAL = 3 };
 
 class Event {
@@ -104,7 +109,7 @@ public:
     // Batch processing
     void enableBatching(const std::string& event_type,
                         std::chrono::milliseconds batch_interval,
-                        size_t max_batch_size = 100);
+                        size_t max_batch_size = DEFAULT_MAX_BATCH_SIZE);
     void disableBatching(const std::string& event_type);
 
     // Statistics and monitoring
@@ -165,7 +170,7 @@ private:
 
     std::atomic<uint64_t> next_subscription_id_{1};
     EventStatistics stats_;
-    size_t max_queue_size_ = 10000;
+    size_t max_queue_size_ = DEFAULT_MAX_QUEUE_SIZE;
 
     friend class EventManagerTest; // For testing
 };

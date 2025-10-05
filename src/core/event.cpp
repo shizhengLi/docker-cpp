@@ -180,7 +180,7 @@ void EventManager::flush()
         }
 
         // Give some time for processing
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(DEFAULT_FLUSH_WAIT_TIME);
     }
 
     // Process all batches
@@ -261,6 +261,7 @@ void EventManager::processEvent(const Event& event)
     {
         std::lock_guard<std::mutex> lock(subscriptions_mutex_);
 
+        active_subscriptions.reserve(subscriptions_.size());
         for (const auto& subscription : subscriptions_) {
             if (subscription.active
                 && matchesPattern(event.getType(), subscription.event_type_pattern)) {
@@ -304,6 +305,7 @@ void EventManager::processBatch(const std::string& event_type)
         {
             std::lock_guard<std::mutex> lock(subscriptions_mutex_);
 
+            active_subscriptions.reserve(subscriptions_.size());
             for (const auto& subscription : subscriptions_) {
                 if (subscription.active
                     && matchesPattern(event.getType(), subscription.event_type_pattern)) {

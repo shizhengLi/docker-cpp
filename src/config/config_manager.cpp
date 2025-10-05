@@ -152,6 +152,7 @@ void ConfigManager::clear()
 std::vector<std::string> ConfigManager::getKeys() const // NOLINT(misc-no-recursion)
 {
     std::vector<std::string> keys;
+    keys.reserve(values_.size() + 20); // Reserve space for estimated keys
 
     // Add keys from this config
     for (const auto& [key, value] : values_) {
@@ -546,7 +547,7 @@ std::string ConfigManager::serializeToJson() const
         add_value(json, key, value);
     }
 
-    return json.dump(4);
+    return json.dump(4); // NOLINT(readability-magic-numbers)
 #else
     // Simple JSON serialization fallback
     std::stringstream ss;

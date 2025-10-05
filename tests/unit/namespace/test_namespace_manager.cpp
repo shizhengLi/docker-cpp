@@ -3,9 +3,8 @@
 #include <string>
 #include <system_error>
 
-using namespace docker_cpp;
 
-class NamespaceManagerTest : public ::testing::Test {
+class docker_cpp::NamespaceManagerTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
@@ -19,41 +18,41 @@ protected:
 };
 
 // Test namespace manager creation with different types
-TEST_F(NamespaceManagerTest, CreateNamespaceTypes)
+TEST_F(docker_cpp::NamespaceManagerTest, CreateNamespaceTypes)
 {
     // Test that we can create namespace managers for different types
     // Note: Some namespace types might not be available on all systems
 
     try {
-        NamespaceManager uts_ns(NamespaceType::UTS);
+        docker_cpp::NamespaceManager uts_ns(NamespaceType::UTS);
         EXPECT_EQ(uts_ns.getType(), NamespaceType::UTS);
         EXPECT_TRUE(uts_ns.isValid());
     }
-    catch (const ContainerError& e) {
+    catch (const docker_cpp::ContainerError& e) {
         // UTS namespace creation might fail on some systems - this is acceptable
         GTEST_LOG_(INFO) << "UTS namespace creation failed (acceptable): " << e.what();
     }
 
     try {
-        NamespaceManager pid_ns(NamespaceType::PID);
+        docker_cpp::NamespaceManager pid_ns(NamespaceType::PID);
         EXPECT_EQ(pid_ns.getType(), NamespaceType::PID);
         EXPECT_TRUE(pid_ns.isValid());
     }
-    catch (const ContainerError& e) {
+    catch (const docker_cpp::ContainerError& e) {
         // PID namespace creation might fail on some systems - this is acceptable
         GTEST_LOG_(INFO) << "PID namespace creation failed (acceptable): " << e.what();
     }
 }
 
 // Test namespace move constructor
-TEST_F(NamespaceManagerTest, MoveConstructor)
+TEST_F(docker_cpp::NamespaceManagerTest, MoveConstructor)
 {
     try {
-        NamespaceManager ns1(NamespaceType::UTS);
+        docker_cpp::NamespaceManager ns1(NamespaceType::UTS);
         NamespaceType original_type = ns1.getType();
         bool original_valid = ns1.isValid();
 
-        NamespaceManager ns2 = std::move(ns1);
+        docker_cpp::NamespaceManager ns2 = std::move(ns1);
 
         EXPECT_EQ(ns2.getType(), original_type);
         EXPECT_EQ(ns2.isValid(), original_valid);
@@ -61,31 +60,31 @@ TEST_F(NamespaceManagerTest, MoveConstructor)
         // After move, ns1 should be in an undefined state - don't access it
         // The move constructor should have transferred ownership to ns2
     }
-    catch (const ContainerError& e) {
+    catch (const docker_cpp::ContainerError& e) {
         GTEST_LOG_(INFO) << "Move constructor test skipped due to namespace creation failure: "
                          << e.what();
     }
 }
 
 // Test namespace move assignment
-TEST_F(NamespaceManagerTest, MoveAssignment)
+TEST_F(docker_cpp::NamespaceManagerTest, MoveAssignment)
 {
     try {
-        NamespaceManager ns1(NamespaceType::UTS);
-        NamespaceManager ns2(NamespaceType::PID);
+        docker_cpp::NamespaceManager ns1(NamespaceType::UTS);
+        docker_cpp::NamespaceManager ns2(NamespaceType::PID);
 
         ns1 = std::move(ns2);
 
         EXPECT_EQ(ns1.getType(), NamespaceType::PID);
     }
-    catch (const ContainerError& e) {
+    catch (const docker_cpp::ContainerError& e) {
         GTEST_LOG_(INFO) << "Move assignment test skipped due to namespace creation failure: "
                          << e.what();
     }
 }
 
 // Test namespace type to string conversion
-TEST_F(NamespaceManagerTest, NamespaceTypeToString)
+TEST_F(docker_cpp::NamespaceManagerTest, NamespaceTypeToString)
 {
     EXPECT_EQ(namespaceTypeToString(NamespaceType::PID), "PID");
     EXPECT_EQ(namespaceTypeToString(NamespaceType::NETWORK), "Network");
@@ -97,18 +96,18 @@ TEST_F(NamespaceManagerTest, NamespaceTypeToString)
 }
 
 // Test namespace join functionality (current process)
-TEST_F(NamespaceManagerTest, JoinCurrentProcessNamespace)
+TEST_F(docker_cpp::NamespaceManagerTest, JoinCurrentProcessNamespace)
 {
     try {
         pid_t current_pid = getpid();
 
         // This should work for the current process
-        NamespaceManager::joinNamespace(current_pid, NamespaceType::UTS);
+        docker_cpp::NamespaceManager::joinNamespace(current_pid, NamespaceType::UTS);
 
         // If we reach here, the join was successful
         SUCCEED() << "Successfully joined current process UTS namespace";
     }
-    catch (const ContainerError& e) {
+    catch (const docker_cpp::ContainerError& e) {
         // This might fail on some systems, which is acceptable
         GTEST_LOG_(INFO) << "Namespace join failed (acceptable): " << e.what();
     }

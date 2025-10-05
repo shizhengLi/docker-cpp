@@ -5,7 +5,6 @@
 #include <iostream>
 #include <string>
 
-using namespace docker_cpp;
 
 // Simple test framework
 class TestRunner {
@@ -67,68 +66,68 @@ int TestRunner::failed_count_ = 0;
 // Test functions
 void testErrorCreation()
 {
-    ContainerError error(ErrorCode::CONTAINER_NOT_FOUND, "Container with ID 'test' not found");
+    docker_cpp::ContainerError error(ErrorCode::CONTAINER_NOT_FOUND, "Container with ID 'test' not found");
     assert(error.getErrorCode() == ErrorCode::CONTAINER_NOT_FOUND);
     assert(std::string(error.what()).find("Container not found") != std::string::npos);
 }
 
 void testErrorCodeConversion()
 {
-    ContainerError error1(ErrorCode::NAMESPACE_CREATION_FAILED, "Test message");
+    docker_cpp::ContainerError error1(ErrorCode::NAMESPACE_CREATION_FAILED, "Test message");
     assert(error1.getErrorCode() == ErrorCode::NAMESPACE_CREATION_FAILED);
 }
 
 void testErrorCopy()
 {
-    ContainerError original(ErrorCode::IMAGE_NOT_FOUND, "Image not found");
+    docker_cpp::ContainerError original(ErrorCode::IMAGE_NOT_FOUND, "Image not found");
     assert(original.getErrorCode() == ErrorCode::IMAGE_NOT_FOUND);
     assert(std::string(original.what()).find("Image not found") != std::string::npos);
 }
 
 void testErrorMove()
 {
-    ContainerError original(ErrorCode::IMAGE_NOT_FOUND, "Image not found");
-    ContainerError moved(std::move(original));
+    docker_cpp::ContainerError original(ErrorCode::IMAGE_NOT_FOUND, "Image not found");
+    docker_cpp::ContainerError moved(std::move(original));
     assert(moved.getErrorCode() == ErrorCode::IMAGE_NOT_FOUND);
 }
 
 void testErrorCategory()
 {
-    assert(std::string(getContainerErrorCategory().name()) == "docker-cpp");
+    assert(std::string(getdocker_cpp::ContainerErrorCategory().name()) == "docker-cpp");
 
-    ContainerError error(ErrorCode::CONTAINER_NOT_FOUND, "Test");
+    docker_cpp::ContainerError error(ErrorCode::CONTAINER_NOT_FOUND, "Test");
     assert(error.code().category().name() == std::string("docker-cpp"));
 }
 
 void testSystemError()
 {
     std::system_error sys_error(errno, std::system_category(), "System call failed");
-    ContainerError container_error = makeSystemError(ErrorCode::SYSTEM_ERROR, sys_error);
+    docker_cpp::ContainerError container_error = makeSystemError(ErrorCode::SYSTEM_ERROR, sys_error);
     assert(container_error.getErrorCode() == ErrorCode::SYSTEM_ERROR);
     assert(std::string(container_error.what()).find("System call failed") != std::string::npos);
 }
 
 // Namespace manager tests
-void testNamespaceManagerCreation()
+void testdocker_cpp::NamespaceManagerCreation()
 {
     try {
         // Test creating a UTS namespace (usually available)
         {
-            NamespaceManager ns(NamespaceType::UTS);
+            docker_cpp::NamespaceManager ns(NamespaceType::UTS);
             assert(ns.getType() == NamespaceType::UTS);
             assert(ns.isValid());
         } // Destructor should be called here
 
         // Test creating a PID namespace
         {
-            NamespaceManager ns(NamespaceType::PID);
+            docker_cpp::NamespaceManager ns(NamespaceType::PID);
             assert(ns.getType() == NamespaceType::PID);
             assert(ns.isValid());
         }
 
         std::cout << "Namespace creation tests passed" << std::endl;
     }
-    catch (const ContainerError& e) {
+    catch (const docker_cpp::ContainerError& e) {
         std::cout << "Namespace creation test failed (expected in some environments): " << e.what()
                   << std::endl;
         // In some environments, namespace creation might be restricted
@@ -142,7 +141,7 @@ void testNamespaceManagerCreation()
     }
 }
 
-void testNamespaceManagerTypes()
+void testdocker_cpp::NamespaceManagerTypes()
 {
     try {
         // Test namespace type string conversion
@@ -160,11 +159,11 @@ void testNamespaceManagerTypes()
              ++i) {
             auto type = static_cast<NamespaceType>(i);
             try {
-                NamespaceManager ns(type);
+                docker_cpp::NamespaceManager ns(type);
                 assert(ns.getType() == type);
                 assert(ns.isValid());
             }
-            catch (const ContainerError&) {
+            catch (const docker_cpp::ContainerError&) {
                 // Some namespace types might not be available in all environments
                 // This is okay for testing
             }
@@ -179,15 +178,15 @@ void testNamespaceManagerTypes()
     }
 }
 
-void testNamespaceManagerMoveSemantics()
+void testdocker_cpp::NamespaceManagerMoveSemantics()
 {
     try {
         // Test move constructor
         {
-            NamespaceManager ns1(NamespaceType::UTS);
+            docker_cpp::NamespaceManager ns1(NamespaceType::UTS);
             NamespaceType type1 = ns1.getType();
 
-            NamespaceManager ns2 = std::move(ns1);
+            docker_cpp::NamespaceManager ns2 = std::move(ns1);
 
             assert(ns2.getType() == type1);
             assert(ns2.isValid());
@@ -197,8 +196,8 @@ void testNamespaceManagerMoveSemantics()
 
         // Test move assignment
         {
-            NamespaceManager ns1(NamespaceType::PID);
-            NamespaceManager ns2(NamespaceType::UTS);
+            docker_cpp::NamespaceManager ns1(NamespaceType::PID);
+            docker_cpp::NamespaceManager ns2(NamespaceType::UTS);
 
             ns1 = std::move(ns2);
 
@@ -208,7 +207,7 @@ void testNamespaceManagerMoveSemantics()
 
         std::cout << "Namespace move semantics tests passed" << std::endl;
     }
-    catch (const ContainerError& e) {
+    catch (const docker_cpp::ContainerError& e) {
         std::cout << "Namespace move semantics test failed (expected in some environments): "
                   << e.what() << std::endl;
         assert(true); // Don't fail the test for this
@@ -220,18 +219,18 @@ void testNamespaceManagerMoveSemantics()
     }
 }
 
-void testNamespaceManagerJoin()
+void testdocker_cpp::NamespaceManagerJoin()
 {
     try {
         // Test joining current process namespace
         pid_t current_pid = getpid();
 
         // This should work for the current process
-        NamespaceManager::joinNamespace(current_pid, NamespaceType::UTS);
+        docker_cpp::NamespaceManager::joinNamespace(current_pid, NamespaceType::UTS);
 
         std::cout << "Namespace join tests passed" << std::endl;
     }
-    catch (const ContainerError& e) {
+    catch (const docker_cpp::ContainerError& e) {
         std::cout << "Namespace join test failed (expected in some environments): " << e.what()
                   << std::endl;
         assert(true); // Don't fail the test for this
@@ -256,10 +255,10 @@ int main()
     TestRunner::runTest("System Error", testSystemError);
 
     // Namespace manager tests
-    TestRunner::runTest("Namespace Manager Creation", testNamespaceManagerCreation);
-    TestRunner::runTest("Namespace Manager Types", testNamespaceManagerTypes);
-    TestRunner::runTest("Namespace Manager Move Semantics", testNamespaceManagerMoveSemantics);
-    TestRunner::runTest("Namespace Manager Join", testNamespaceManagerJoin);
+    TestRunner::runTest("Namespace Manager Creation", testdocker_cpp::NamespaceManagerCreation);
+    TestRunner::runTest("Namespace Manager Types", testdocker_cpp::NamespaceManagerTypes);
+    TestRunner::runTest("Namespace Manager Move Semantics", testdocker_cpp::NamespaceManagerMoveSemantics);
+    TestRunner::runTest("Namespace Manager Join", testdocker_cpp::NamespaceManagerJoin);
 
     TestRunner::printSummary();
 
