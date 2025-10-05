@@ -8,7 +8,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 // Mock plugin parameters to avoid swappable parameters
 struct MockPluginParams {
     std::string name;
@@ -38,15 +37,19 @@ public:
 
     docker_cpp::PluginInfo getPluginInfo() const override
     {
-        return docker_cpp::PluginInfo(docker_cpp::PluginInfoParams{
-            name_, version_, "Mock Plugin for testing", docker_cpp::PluginType::CUSTOM, "Test Author", "MIT"});
+        return docker_cpp::PluginInfo(docker_cpp::PluginInfoParams{name_,
+                                                                   version_,
+                                                                   "Mock Plugin for testing",
+                                                                   docker_cpp::PluginType::CUSTOM,
+                                                                   "Test Author",
+                                                                   "MIT"});
     }
 
     bool initialize(const docker_cpp::PluginConfig& config) override
     {
         if (should_fail_) {
             throw docker_cpp::ContainerError(docker_cpp::ErrorCode::PLUGIN_INITIALIZATION_FAILED,
-                                 "Mock plugin forced initialization failure");
+                                             "Mock plugin forced initialization failure");
         }
         config_ = config;
         initialized_ = init_result_;
@@ -182,7 +185,7 @@ private:
     std::unique_ptr<docker_cpp::PluginRegistry> registry;
 };
 
-TEST_F(PluginRegistryTest,RegisterPluginSucceeds)
+TEST_F(PluginRegistryTest, RegisterPluginSucceeds)
 {
     auto plugin = std::make_unique<MockPlugin>(MockPluginParams{"plugin1", "1.0.0"});
     getRegistry()->registerPlugin("plugin1", std::move(plugin));
@@ -193,7 +196,7 @@ TEST_F(PluginRegistryTest,RegisterPluginSucceeds)
     EXPECT_EQ(retrieved->getVersion(), "1.0.0");
 }
 
-TEST_F(PluginRegistryTest,RegisterDuplicatePluginThrows)
+TEST_F(PluginRegistryTest, RegisterDuplicatePluginThrows)
 {
     auto plugin1 = std::make_unique<MockPlugin>(MockPluginParams{"plugin1", "1.0.0"});
     getRegistry()->registerPlugin("plugin1", std::move(plugin1));
@@ -203,13 +206,13 @@ TEST_F(PluginRegistryTest,RegisterDuplicatePluginThrows)
                  docker_cpp::ContainerError);
 }
 
-TEST_F(PluginRegistryTest,GetNonExistentPluginReturnsNull)
+TEST_F(PluginRegistryTest, GetNonExistentPluginReturnsNull)
 {
     auto* retrieved = getRegistry()->getPlugin<docker_cpp::IPlugin>("nonexistent");
     EXPECT_EQ(retrieved, nullptr);
 }
 
-TEST_F(PluginRegistryTest,GetPluginAfterMoveReturnsNull)
+TEST_F(PluginRegistryTest, GetPluginAfterMoveReturnsNull)
 {
     // Create a new plugin for this test
     auto test_plugin = std::make_unique<MockPlugin>(MockPluginParams{"test-plugin", "1.0.0"});
@@ -228,7 +231,7 @@ TEST_F(PluginRegistryTest,GetPluginAfterMoveReturnsNull)
     EXPECT_EQ(retrieved->getName(), "test-plugin");
 }
 
-TEST_F(PluginRegistryTest,RegisterMultiplePlugins)
+TEST_F(PluginRegistryTest, RegisterMultiplePlugins)
 {
     auto p1 = std::make_unique<MockPlugin>(MockPluginParams{"plugin1", "1.0.0"});
     auto p2 = std::make_unique<MockPlugin>(MockPluginParams{"plugin2", "2.0.0"});
@@ -251,7 +254,7 @@ TEST_F(PluginRegistryTest,RegisterMultiplePlugins)
     EXPECT_EQ(r3->getName(), "plugin3");
 }
 
-TEST_F(PluginRegistryTest,GetPluginNamesReturnsAllRegisteredPlugins)
+TEST_F(PluginRegistryTest, GetPluginNamesReturnsAllRegisteredPlugins)
 {
     auto p1 = std::make_unique<MockPlugin>(MockPluginParams{"plugin1", "1.0.0"});
     auto p2 = std::make_unique<MockPlugin>(MockPluginParams{"plugin2", "2.0.0"});
@@ -271,7 +274,7 @@ TEST_F(PluginRegistryTest,GetPluginNamesReturnsAllRegisteredPlugins)
     EXPECT_TRUE(name_set.count("plugin3"));
 }
 
-TEST_F(PluginRegistryTest,UnregisterPluginRemovesPlugin)
+TEST_F(PluginRegistryTest, UnregisterPluginRemovesPlugin)
 {
     auto p1 = std::make_unique<MockPlugin>(MockPluginParams{"plugin1", "1.0.0"});
     auto p2 = std::make_unique<MockPlugin>(MockPluginParams{"plugin2", "2.0.0"});
@@ -293,12 +296,12 @@ TEST_F(PluginRegistryTest,UnregisterPluginRemovesPlugin)
     EXPECT_NE(plugin2_retrieved, nullptr);
 }
 
-TEST_F(PluginRegistryTest,UnregisterNonExistentPluginThrows)
+TEST_F(PluginRegistryTest, UnregisterNonExistentPluginThrows)
 {
     EXPECT_THROW(getRegistry()->unregisterPlugin("nonexistent"), docker_cpp::ContainerError);
 }
 
-TEST_F(PluginRegistryTest,InitializePluginSucceeds)
+TEST_F(PluginRegistryTest, InitializePluginSucceeds)
 {
     auto plugin1 = std::make_unique<MockPlugin>(MockPluginParams{"plugin1", "1.0.0"});
     getRegistry()->registerPlugin("plugin1", std::move(plugin1));
@@ -313,13 +316,13 @@ TEST_F(PluginRegistryTest,InitializePluginSucceeds)
     EXPECT_TRUE(p1->isInitialized());
 }
 
-TEST_F(PluginRegistryTest,InitializeNonExistentPluginFails)
+TEST_F(PluginRegistryTest, InitializeNonExistentPluginFails)
 {
     docker_cpp::PluginConfig config;
     EXPECT_FALSE(getRegistry()->initializePlugin("nonexistent", config));
 }
 
-TEST_F(PluginRegistryTest,InitializePluginWithExceptionFails)
+TEST_F(PluginRegistryTest, InitializePluginWithExceptionFails)
 {
     auto throwing_plugin =
         std::make_unique<MockPlugin>(MockPluginParams{"throwing", "1.0.0", true, true});
@@ -329,7 +332,7 @@ TEST_F(PluginRegistryTest,InitializePluginWithExceptionFails)
     EXPECT_FALSE(getRegistry()->initializePlugin("throwing", config));
 }
 
-TEST_F(PluginRegistryTest,ShutdownPluginSucceeds)
+TEST_F(PluginRegistryTest, ShutdownPluginSucceeds)
 {
     auto plugin1 = std::make_unique<MockPlugin>(MockPluginParams{"plugin1", "1.0.0"});
     getRegistry()->registerPlugin("plugin1", std::move(plugin1));
@@ -344,12 +347,12 @@ TEST_F(PluginRegistryTest,ShutdownPluginSucceeds)
     EXPECT_FALSE(p1->isInitialized());
 }
 
-TEST_F(PluginRegistryTest,ShutdownNonExistentPluginFails)
+TEST_F(PluginRegistryTest, ShutdownNonExistentPluginFails)
 {
     EXPECT_FALSE(getRegistry()->shutdownPlugin("nonexistent"));
 }
 
-TEST_F(PluginRegistryTest,InitializeAllPluginsSucceeds)
+TEST_F(PluginRegistryTest, InitializeAllPluginsSucceeds)
 {
     auto plugin1 = std::make_unique<MockPlugin>(MockPluginParams{"plugin1", "1.0.0"});
     getRegistry()->registerPlugin("plugin1", std::move(plugin1));
@@ -367,7 +370,7 @@ TEST_F(PluginRegistryTest,InitializeAllPluginsSucceeds)
     EXPECT_TRUE(results.at("plugin3"));
 }
 
-TEST_F(PluginRegistryTest,ShutdownAllPluginsSucceeds)
+TEST_F(PluginRegistryTest, ShutdownAllPluginsSucceeds)
 {
     auto plugin1 = std::make_unique<MockPlugin>(MockPluginParams{"plugin1", "1.0.0"});
     getRegistry()->registerPlugin("plugin1", std::move(plugin1));
@@ -395,11 +398,11 @@ protected:
     void SetUp() override
     {
         info = docker_cpp::PluginInfo(docker_cpp::PluginInfoParams{"test-plugin",
-                                           "1.0.0",
-                                           "Test Plugin Description",
-                                           docker_cpp::PluginType::CORE,
-                                           "test-author",
-                                           "MIT"});
+                                                                   "1.0.0",
+                                                                   "Test Plugin Description",
+                                                                   docker_cpp::PluginType::CORE,
+                                                                   "test-author",
+                                                                   "MIT"});
     }
 
     docker_cpp::PluginInfo& getInfo()
@@ -415,7 +418,7 @@ private:
     docker_cpp::PluginInfo info{}; // Default construct first
 };
 
-TEST_F(PluginInfoTest,GettersReturnCorrectValues)
+TEST_F(PluginInfoTest, GettersReturnCorrectValues)
 {
     EXPECT_EQ(getInfo().getName(), "test-plugin");
     EXPECT_EQ(getInfo().getVersion(), "1.0.0");
@@ -425,7 +428,7 @@ TEST_F(PluginInfoTest,GettersReturnCorrectValues)
     EXPECT_EQ(getInfo().getLicense(), "MIT");
 }
 
-TEST_F(PluginInfoTest,SettersUpdateValues)
+TEST_F(PluginInfoTest, SettersUpdateValues)
 {
     getInfo().setDescription("Updated Description");
     getInfo().setAuthor("Updated Author");
@@ -436,7 +439,7 @@ TEST_F(PluginInfoTest,SettersUpdateValues)
     EXPECT_EQ(getInfo().getLicense(), "GPL-3.0");
 }
 
-TEST_F(PluginInfoTest,ToStringReturnsFormattedString)
+TEST_F(PluginInfoTest, ToStringReturnsFormattedString)
 {
     std::string str = getInfo().toString();
     EXPECT_TRUE(str.find("test-plugin") != std::string::npos);
@@ -446,29 +449,33 @@ TEST_F(PluginInfoTest,ToStringReturnsFormattedString)
     EXPECT_TRUE(str.find("MIT") != std::string::npos);
 }
 
-TEST_F(PluginInfoTest,EqualityOperatorWorks)
+TEST_F(PluginInfoTest, EqualityOperatorWorks)
 {
-    docker_cpp::PluginInfo info2(docker_cpp::PluginInfoParams{
-        "test-plugin", "1.0.0", "Test Plugin Description", docker_cpp::PluginType::CORE, "test-author", "MIT"});
+    docker_cpp::PluginInfo info2(docker_cpp::PluginInfoParams{"test-plugin",
+                                                              "1.0.0",
+                                                              "Test Plugin Description",
+                                                              docker_cpp::PluginType::CORE,
+                                                              "test-author",
+                                                              "MIT"});
     docker_cpp::PluginInfo info3(docker_cpp::PluginInfoParams{"different-plugin",
-                                      "1.0.0",
-                                      "Test Plugin Description",
-                                      docker_cpp::PluginType::CORE,
-                                      "test-author",
-                                      "MIT"});
+                                                              "1.0.0",
+                                                              "Test Plugin Description",
+                                                              docker_cpp::PluginType::CORE,
+                                                              "test-author",
+                                                              "MIT"});
 
     EXPECT_TRUE(getInfo() == info2);
     EXPECT_FALSE(getInfo() == info3);
 }
 
-TEST_F(PluginInfoTest,InequalityOperatorWorks)
+TEST_F(PluginInfoTest, InequalityOperatorWorks)
 {
     docker_cpp::PluginInfo info2(docker_cpp::PluginInfoParams{"different-plugin",
-                                      "1.0.0",
-                                      "Test Plugin Description",
-                                      docker_cpp::PluginType::CORE,
-                                      "test-author",
-                                      "MIT"});
+                                                              "1.0.0",
+                                                              "Test Plugin Description",
+                                                              docker_cpp::PluginType::CORE,
+                                                              "test-author",
+                                                              "MIT"});
 
     EXPECT_TRUE(getInfo() != info2);
 }

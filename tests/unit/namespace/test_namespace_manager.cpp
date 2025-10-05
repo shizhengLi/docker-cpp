@@ -17,7 +17,7 @@ protected:
 };
 
 // Test namespace manager creation with different types
-TEST_F(NamespaceManagerTest,CreateNamespaceTypes)
+TEST_F(NamespaceManagerTest, CreateNamespaceTypes)
 {
     // Test that we can create namespace managers for different types
     // Note: Some namespace types might not be available on all systems
@@ -44,7 +44,7 @@ TEST_F(NamespaceManagerTest,CreateNamespaceTypes)
 }
 
 // Test namespace move constructor
-TEST_F(NamespaceManagerTest,MoveConstructor)
+TEST_F(NamespaceManagerTest, MoveConstructor)
 {
     try {
         docker_cpp::NamespaceManager ns1(docker_cpp::NamespaceType::UTS);
@@ -66,7 +66,7 @@ TEST_F(NamespaceManagerTest,MoveConstructor)
 }
 
 // Test namespace move assignment
-TEST_F(NamespaceManagerTest,MoveAssignment)
+TEST_F(NamespaceManagerTest, MoveAssignment)
 {
     try {
         docker_cpp::NamespaceManager ns1(docker_cpp::NamespaceType::UTS);
@@ -83,7 +83,7 @@ TEST_F(NamespaceManagerTest,MoveAssignment)
 }
 
 // Test namespace type to string conversion
-TEST_F(NamespaceManagerTest,NamespaceTypeToString)
+TEST_F(NamespaceManagerTest, NamespaceTypeToString)
 {
     EXPECT_EQ(namespaceTypeToString(docker_cpp::NamespaceType::PID), "PID");
     EXPECT_EQ(namespaceTypeToString(docker_cpp::NamespaceType::NETWORK), "Network");
@@ -95,7 +95,7 @@ TEST_F(NamespaceManagerTest,NamespaceTypeToString)
 }
 
 // Test namespace join functionality (current process)
-TEST_F(NamespaceManagerTest,JoinCurrentProcessNamespace)
+TEST_F(NamespaceManagerTest, JoinCurrentProcessNamespace)
 {
     try {
         pid_t current_pid = getpid();

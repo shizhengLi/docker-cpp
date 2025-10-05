@@ -83,7 +83,7 @@ TEST_F(EventSimpleTest, BasicEventPublishing)
     EXPECT_EQ(received_count, 1);
 }
 
-TEST_F(EventSimpleTest,MultipleSubscribers)
+TEST_F(EventSimpleTest, MultipleSubscribers)
 {
     auto manager = docker_cpp::EventManager::getInstance();
 

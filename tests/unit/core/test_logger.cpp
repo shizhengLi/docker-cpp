@@ -9,7 +9,6 @@
 #include <thread>
 #include <vector>
 
-
 class LoggerTest : public ::testing::Test {
 protected:
     void SetUp() override
