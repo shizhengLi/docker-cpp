@@ -29,6 +29,8 @@ target_include_directories(tests-core
 # Namespace library tests
 add_executable(tests-namespace
     unit/namespace/test_namespace_manager.cpp
+    unit/namespace/test_namespace_advanced.cpp
+    unit/namespace/test_process_manager.cpp
 )
 
 target_link_libraries(tests-namespace

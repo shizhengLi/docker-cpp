@@ -39,47 +39,54 @@ enum class ErrorCode {
     CGROUP_NOT_FOUND = 4002,
     RESOURCE_LIMIT_EXCEEDED = 4003,
 
+    // Process errors
+    PROCESS_CREATION_FAILED = 5000,
+    PROCESS_STOP_FAILED = 5001,
+    PROCESS_NOT_FOUND = 5002,
+    PROCESS_MONITORING_FAILED = 5003,
+    PROCESS_STATUS_UNKNOWN = 5004,
+
     // Network errors
-    NETWORK_CREATION_FAILED = 5000,
-    NETWORK_CONFIG_FAILED = 5001,
-    NETWORK_NOT_FOUND = 5002,
-    PORT_BINDING_FAILED = 5003,
+    NETWORK_CREATION_FAILED = 6000,
+    NETWORK_CONFIG_FAILED = 6001,
+    NETWORK_NOT_FOUND = 6002,
+    PORT_BINDING_FAILED = 6003,
 
     // Storage errors
-    STORAGE_MOUNT_FAILED = 6000,
-    STORAGE_UNMOUNT_FAILED = 6001,
-    STORAGE_INSUFFICIENT_SPACE = 6002,
-    VOLUME_NOT_FOUND = 6003,
+    STORAGE_MOUNT_FAILED = 7000,
+    STORAGE_UNMOUNT_FAILED = 7001,
+    STORAGE_INSUFFICIENT_SPACE = 7002,
+    VOLUME_NOT_FOUND = 7003,
 
     // Security errors
-    SECURITY_POLICY_VIOLATION = 7000,
-    CAPABILITY_DENIED = 7001,
-    SECCOMP_FILTER_FAILED = 7002,
+    SECURITY_POLICY_VIOLATION = 8000,
+    CAPABILITY_DENIED = 8001,
+    SECCOMP_FILTER_FAILED = 8002,
 
     // System errors
-    SYSTEM_ERROR = 8000,
-    PERMISSION_DENIED = 8001,
-    IO_ERROR = 8002,
-    NETWORK_ERROR = 8003,
+    SYSTEM_ERROR = 9000,
+    PERMISSION_DENIED = 9001,
+    IO_ERROR = 9002,
+    NETWORK_ERROR = 9003,
 
     // Configuration errors
-    CONFIG_INVALID = 9000,
-    CONFIG_MISSING = 9001,
-    INVALID_TYPE = 9002,
-    FILE_NOT_FOUND = 9003,
+    CONFIG_INVALID = 10000,
+    CONFIG_MISSING = 10001,
+    INVALID_TYPE = 10002,
+    FILE_NOT_FOUND = 10003,
 
     // Plugin errors
-    PLUGIN_NOT_FOUND = 10000,
-    PLUGIN_INITIALIZATION_FAILED = 10001,
-    PLUGIN_ALREADY_EXISTS = 10002,
-    INVALID_PLUGIN = 10003,
-    INVALID_PLUGIN_NAME = 10004,
-    DUPLICATE_PLUGIN = 10005,
-    PLUGIN_LOADER_NOT_SET = 10006,
-    PLUGIN_DEPENDENCY_FAILED = 10007,
-    CIRCULAR_DEPENDENCY = 10008,
-    DIRECTORY_NOT_FOUND = 10009,
-    PLUGIN_SHUTDOWN_FAILED = 10010,
+    PLUGIN_NOT_FOUND = 11000,
+    PLUGIN_INITIALIZATION_FAILED = 11001,
+    PLUGIN_ALREADY_EXISTS = 11002,
+    INVALID_PLUGIN = 11003,
+    INVALID_PLUGIN_NAME = 11004,
+    DUPLICATE_PLUGIN = 11005,
+    PLUGIN_LOADER_NOT_SET = 11006,
+    PLUGIN_DEPENDENCY_FAILED = 11007,
+    CIRCULAR_DEPENDENCY = 11008,
+    DIRECTORY_NOT_FOUND = 11009,
+    PLUGIN_SHUTDOWN_FAILED = 11010,
 
     // Generic error
     UNKNOWN_ERROR = 9999
@@ -141,6 +148,17 @@ public:
                 return "Cgroup not found";
             case ErrorCode::RESOURCE_LIMIT_EXCEEDED:
                 return "Resource limit exceeded";
+
+            case ErrorCode::PROCESS_CREATION_FAILED:
+                return "Failed to create process";
+            case ErrorCode::PROCESS_STOP_FAILED:
+                return "Failed to stop process";
+            case ErrorCode::PROCESS_NOT_FOUND:
+                return "Process not found";
+            case ErrorCode::PROCESS_MONITORING_FAILED:
+                return "Process monitoring failed";
+            case ErrorCode::PROCESS_STATUS_UNKNOWN:
+                return "Process status unknown";
 
             case ErrorCode::NETWORK_CREATION_FAILED:
                 return "Failed to create network";
