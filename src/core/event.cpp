@@ -414,21 +414,30 @@ void EventManager::processBatchQueue()
     while (!should_stop_) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Check every 10ms
 
-        std::lock_guard<std::mutex> lock(batches_mutex_);
+        std::vector<std::string> types_to_process;
 
-        auto now = std::chrono::system_clock::now();
+        // First pass: identify which batches need processing (under lock)
+        {
+            std::lock_guard<std::mutex> lock(batches_mutex_);
+            auto now = std::chrono::system_clock::now();
 
-        for (auto& [event_type, config] : batch_configs_) {
-            if (!config.enabled || config.pending_events.empty()) {
-                continue;
+            for (auto& [event_type, config] : batch_configs_) {
+                if (!config.enabled || config.pending_events.empty()) {
+                    continue;
+                }
+
+                auto elapsed = now - config.last_flush;
+                if (elapsed >= config.interval
+                    || config.pending_events.size() >= config.max_batch_size) {
+                    types_to_process.push_back(event_type);
+                    config.last_flush = now;
+                }
             }
+        }
 
-            auto elapsed = now - config.last_flush;
-            if (elapsed >= config.interval
-                || config.pending_events.size() >= config.max_batch_size) {
-                processBatch(event_type);
-                config.last_flush = now;
-            }
+        // Second pass: process batches outside of lock
+        for (const auto& event_type : types_to_process) {
+            processBatch(event_type);
         }
     }
 }
