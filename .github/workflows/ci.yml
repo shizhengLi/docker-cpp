@@ -245,7 +245,17 @@ jobs:
     - name: Install tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang-format-15 clang-tidy-15 cppcheck
+        sudo apt-get install -y clang-format-15 clang-tidy-15
+        # Install cppcheck 2.18.0 to match local environment
+        wget https://github.com/danmar/cppcheck/archive/refs/tags/2.18.0.tar.gz
+        tar -xzf 2.18.0.tar.gz
+        cd cppcheck-2.18.0
+        mkdir -p build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        make -j$(nproc)
+        sudo make install
+        cd ../..
+        rm -rf cppcheck-2.18.0 cppcheck-2.18.0.tar.gz
         python -m pip install --upgrade pip
         pip install conan==2.0.16
 
@@ -298,10 +308,6 @@ jobs:
           --suppress=missingIncludeSystem \
           --suppress=unusedFunction:src/test_runner.cpp \
           --suppress=unusedFunction:src/core/logger.cpp \
-          --suppress=unusedVariable:src/core/logger.cpp \
-          --suppress=unusedVariable:src/plugin/plugin_registry.cpp \
-          --suppress=unassignedVariable:src/plugin/plugin_registry.cpp \
-          --suppress=preprocessorErrorDirective:src/config/config_manager.cpp \
           --suppress=useStlAlgorithm:src/plugin/plugin_registry.cpp \
           -DCPPCHECK \
           include/ src/
