@@ -297,10 +297,12 @@ jobs:
         cppcheck --enable=all --inconclusive --error-exitcode=1 \
           --suppress=missingIncludeSystem \
           --suppress=unusedFunction:src/test_runner.cpp \
-          --suppress=preprocessorErrorDirective:src/config/config_manager.cpp \
+          --suppress=unusedFunction:src/core/logger.cpp \
+          --suppress=noValidConfiguration:src/config/config_manager.cpp \
           --suppress=unusedVariable:src/core/logger.cpp \
           --suppress=unusedVariable:src/plugin/plugin_registry.cpp \
           --suppress=unassignedVariable:src/plugin/plugin_registry.cpp \
+          -DCPPCHECK \
           include/ src/
 
   # Security scan

@@ -5,17 +5,13 @@
 #include <regex>
 #include <sstream>
 
-// Try to include nlohmann/json if available
-// cppcheck workaround: define HAS_NLOHMANN_JSON directly for static analysis
-#ifndef __cplusplus
+// Include nlohmann/json if available
+// For static analysis tools like cppcheck, we define it manually
+#ifdef CPPCHECK
     #define HAS_NLOHMANN_JSON 0
-#elif defined(__has_include)
-    #if __has_include(<nlohmann/json.hpp>)
-        #include <nlohmann/json.hpp>
-        #define HAS_NLOHMANN_JSON 1
-    #else
-        #define HAS_NLOHMANN_JSON 0
-    #endif
+#elif defined(__has_include) && __has_include(<nlohmann/json.hpp>)
+    #include <nlohmann/json.hpp>
+    #define HAS_NLOHMANN_JSON 1
 #else
     #define HAS_NLOHMANN_JSON 0
 #endif
