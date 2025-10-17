@@ -119,7 +119,11 @@ target_include_directories(tests-config
 # Integration tests - comprehensive Phase 1 component tests
 add_executable(tests-integration
     integration/test_phase1_integration.cpp
-    integration/test_performance_benchmarks.cpp
+)
+
+# Performance tests
+add_executable(tests-performance
+    performance/test_container_benchmarks.cpp
 )
 
 target_link_libraries(tests-integration
@@ -134,23 +138,17 @@ target_include_directories(tests-integration
     ${CMAKE_SOURCE_DIR}/include
 )
 
-# Performance tests (currently disabled)
-# add_executable(tests-performance
-#     performance/test_namespace_performance.cpp
-#     performance/test_cgroup_performance.cpp
-# )
+target_link_libraries(tests-performance
+    PRIVATE
+    docker-cpp-lib
+    GTest::gtest
+    GTest::gtest_main
+)
 
-# target_link_libraries(tests-performance
-#     PRIVATE
-#     docker-cpp-lib
-#     GTest::gtest
-#     GTest::gtest_main
-# )
-
-# target_include_directories(tests-performance
-#     PRIVATE
-#     ${CMAKE_SOURCE_DIR}/include
-# )
+target_include_directories(tests-performance
+    PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+)
 
 # Register tests with CTest
 add_test(NAME CoreTests COMMAND tests-core --gtest_output=xml:${CMAKE_BINARY_DIR}/test_results_core.xml)
@@ -161,6 +159,7 @@ add_test(NAME ConfigTests COMMAND tests-config --gtest_output=xml:${CMAKE_BINARY
 # TODO: Re-enable RuntimeTests after fixing compilation issues
 # add_test(NAME RuntimeTests COMMAND tests-runtime --gtest_output=xml:${CMAKE_BINARY_DIR}/test_results_runtime.xml)
 add_test(NAME IntegrationTests COMMAND tests-integration --gtest_output=xml:${CMAKE_BINARY_DIR}/test_results_integration.xml)
+add_test(NAME PerformanceTests COMMAND tests-performance --gtest_output=xml:${CMAKE_BINARY_DIR}/test_results_performance.xml)
 
 # Set test properties
 set_tests_properties(
