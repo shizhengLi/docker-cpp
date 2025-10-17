@@ -3,16 +3,20 @@
 #include <signal.h>
 #include <atomic>
 #include <condition_variable>
+#include <docker-cpp/cgroup/cgroup_manager.hpp>
+#include <docker-cpp/namespace/namespace_manager.hpp>
+#include <docker-cpp/namespace/process_manager.hpp>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <vector>
 #include "container_config.hpp"
 
 namespace docker_cpp {
+class EventManager;
 namespace core {
 class Logger;
-class EventManager;
 } // namespace core
 
 namespace plugin {
@@ -103,14 +107,14 @@ private:
     std::atomic<bool> removed_;
 
     // Process management
-    // std::unique_ptr<process::ProcessManager> process_manager_;  // TODO: Replace with actual type
+    std::unique_ptr<ProcessManager> process_manager_;
     std::atomic<pid_t> main_pid_;
     std::atomic<int> exit_code_;
     std::string exit_reason_;
 
-    // Resource management (placeholders for future integration)
-    // std::unique_ptr<void> cgroup_manager_;  // TODO: Replace with actual type
-    // std::unique_ptr<void> namespace_managers_;  // TODO: Replace with actual type
+    // Resource management
+    std::unique_ptr<CgroupManager> cgroup_manager_;
+    std::vector<std::unique_ptr<NamespaceManager>> namespace_managers_;
 
     // Timing
     std::chrono::system_clock::time_point created_at_;
@@ -136,7 +140,7 @@ private:
 
     // Dependencies (injected)
     core::Logger* logger_;
-    core::EventManager* event_manager_;
+    EventManager* event_manager_;
     plugin::PluginRegistry* plugin_registry_;
 
     // Private methods
@@ -210,7 +214,7 @@ class ContainerRegistry {
 public:
     // Constructor
     ContainerRegistry(core::Logger* logger,
-                      core::EventManager* event_manager,
+                      EventManager* event_manager,
                       plugin::PluginRegistry* plugin_registry);
 
     // Destructor
@@ -262,7 +266,7 @@ private:
 
     // Dependencies
     core::Logger* logger_;
-    core::EventManager* event_manager_;
+    EventManager* event_manager_;
     plugin::PluginRegistry* plugin_registry_;
 
     // Global event callback

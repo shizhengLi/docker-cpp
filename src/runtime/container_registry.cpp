@@ -9,7 +9,7 @@ namespace runtime {
 
 // ContainerRegistry implementation
 ContainerRegistry::ContainerRegistry(core::Logger* logger,
-                                     core::EventManager* event_manager,
+                                     EventManager* event_manager,
                                      plugin::PluginRegistry* plugin_registry)
     : logger_(logger), event_manager_(event_manager), plugin_registry_(plugin_registry)
 {
